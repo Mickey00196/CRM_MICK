@@ -1,0 +1,148 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+  Calm and neutral: near-white paper, soft ink, hairline dividers, one accent.
+  Muted red only for overdue, amber only for a missing next step.
+*/
+:root {
+  --bg: #fbfbfa;
+  --surface: #ffffff;
+  --subtle: #f3f3f1;
+  --hover: #f0f0ed;
+  --fg: #1c1d1f;
+  --muted: #6c6f73;
+  --faint: #9a9da1;
+  --line: #e8e8e5;
+  --line-strong: #d9d9d5;
+  --accent: #2f4fd0;
+  --accent-fg: #ffffff;
+  --accent-soft: #eaeefc;
+  --late: #b4443a;
+  --missing: #a8701a;
+  --ring: #2f4fd0;
+}
+
+.dark {
+  --bg: #141517;
+  --surface: #1a1b1e;
+  --subtle: #1f2023;
+  --hover: #232428;
+  --fg: #e8e8e6;
+  --muted: #9a9da1;
+  --faint: #6c6f73;
+  --line: #2a2b2f;
+  --line-strong: #36383c;
+  --accent: #8da0ff;
+  --accent-fg: #0f1222;
+  --accent-soft: #222a4a;
+  --late: #e2796f;
+  --missing: #d9a24a;
+  --ring: #8da0ff;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-subtle: var(--subtle);
+  --color-hover: var(--hover);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+  --color-late: var(--late);
+  --color-missing: var(--missing);
+  --color-ring: var(--ring);
+  --font-sans: "Archivo", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-bg text-fg antialiased;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    font-variant-numeric: tabular-nums;
+  }
+  *,
+  ::before,
+  ::after {
+    border-color: var(--line);
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"] {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  /* Page titles: a touch wider than body text, never loud. */
+  .title {
+    font-stretch: 108%;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  /* Quiet section labels. */
+  .label {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+    transform: translateX(6px);
+  }
+}
+.fade-out {
+  animation: fade-out 0.28s ease forwards;
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateX(16px);
+    opacity: 0;
+  }
+}
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.99);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
