@@ -85,3 +85,44 @@ test("csvCell neutralises formulas and quotes separators", () => {
   assert.equal(csvCell(null, ";"), "");
   assert.equal(csvCell(850, ";"), "850");
 });
+
+// ---------- readable dates and one-line capture ----------
+import { dueText } from "../shared/dates.js";
+import { parseQuick } from "../shared/quick.js";
+
+test("dueText says when, the way you'd say it", () => {
+  const today = "2026-10-27"; // a Tuesday
+  assert.equal(dueText("2026-10-27", null, today), "Today");
+  assert.equal(dueText("2026-10-27", "14:00", today), "14:00");
+  assert.equal(dueText("2026-10-28", null, today), "Tomorrow");
+  assert.equal(dueText("2026-10-28", "09:30", today), "Tomorrow 09:30");
+  assert.equal(dueText("2026-10-29", null, today), "Thu");
+  assert.equal(dueText("2026-11-03", null, today), "Tue 3 Nov");
+  assert.equal(dueText("2027-01-05", null, today), "Tue 5 Jan 2027");
+  assert.equal(dueText("2026-10-26", null, today), "Yesterday");
+  assert.equal(dueText("2026-10-24", null, today), "3 days late");
+  assert.equal(dueText("2026-10-06", null, today), "3 weeks late");
+  assert.equal(dueText(null, null, today), "");
+});
+
+test("parseQuick reads type, date and time from one line (EN and NL)", () => {
+  const today = "2026-10-27"; // a Tuesday
+  assert.deepEqual(parseQuick("Call Sanne tomorrow 10:00 about break option", today), {
+    title: "Call Sanne about break option", due_date: "2026-10-28", due_time: "10:00", type: "call",
+  });
+  assert.deepEqual(parseQuick("Bel Sanne morgen om 10 over break optie", today), {
+    title: "Bel Sanne over break optie", due_date: "2026-10-28", due_time: "10:00", type: "call",
+  });
+  assert.deepEqual(parseQuick("Email Pieter on friday", today), { title: "Email Pieter", due_date: "2026-10-30", due_time: null, type: "email" });
+  assert.deepEqual(parseQuick("Lunch met Eva volgende week", today), { title: "Lunch met Eva", due_date: "2026-11-02", due_time: null, type: "meeting" });
+  assert.deepEqual(parseQuick("Viewing Vondelstraat 3pm", today), { title: "Viewing Vondelstraat", due_date: null, due_time: "15:00", type: "viewing" });
+  assert.equal(parseQuick("Call back tuesday", today).due_date, "2026-11-03", "same weekday means next week");
+  assert.equal(parseQuick("Send contract 28/10", today).due_date, "2026-10-28");
+  assert.equal(parseQuick("Send contract 3 nov", today).due_date, "2026-11-03");
+  assert.equal(parseQuick("Renewal deadline 1 jan", today).due_date, "2027-01-01", "past day/month rolls to next year");
+  assert.equal(parseQuick("Fix scraper in 3 days", today).due_date, "2026-10-30");
+  assert.equal(parseQuick("Mail Joost over 2 weken", today).due_date, "2026-11-10");
+  const plain = parseQuick("Update LinkedIn headline", today);
+  assert.deepEqual(plain, { title: "Update LinkedIn headline", due_date: null, due_time: null, type: null });
+  assert.equal(parseQuick("Send 2 brochures", today).title, "Send 2 brochures", "plain numbers stay in the title");
+});

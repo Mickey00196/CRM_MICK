@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { projectStageLabel, type TodoList, type TodoRow } from "@shared/model";
 import { api, DATA_CHANGED } from "@/lib/api";
-import { longDate, relative } from "@/lib/format";
+import { addDays, longDate, relative } from "@/lib/format";
 import { TASK_DONE, useUI } from "@/components/ui-context";
 import { TodoItem } from "@/components/TodoItem";
+import { Skeleton } from "@/components/Skeleton";
 
 // Last list, so coming back to this page is instant.
 let lastList: TodoList | null = null;
@@ -54,18 +55,66 @@ export function Todos() {
   }, []);
 
   if (error && !data) return <p className="text-sm text-late">{error}</p>;
-  if (!data) return null;
+  if (!data) return <Skeleton />;
 
   const empty = !data.overdue.length && !data.due_today.length && !data.upcoming.length;
+  const weekEnd = addDays(data.today, 7);
+  const nextWeek = data.upcoming.filter((r) => r.due_date && r.due_date <= weekEnd);
+  const later = data.upcoming.filter((r) => r.due_date && r.due_date > weekEnd);
+  const undated = data.upcoming.filter((r) => !r.due_date);
+  const stalled = data.no_next_step;
+  const shownStalled = showStalled ? stalled : stalled.slice(0, 3);
 
   return (
     <div className="mx-auto max-w-2xl">
-      <header className="mb-10 flex items-baseline justify-between gap-4">
+      <header className="mb-8 flex items-baseline justify-between gap-4">
         <h1 className="title text-2xl">{longDate(data.today)}</h1>
-        <button onClick={() => ui.openCapture("todo")} className="text-sm text-muted transition-colors hover:text-fg">
-          + Add
-        </button>
+        <div className="hidden items-baseline gap-4 text-sm sm:flex">
+          <Link to="/review" className="text-muted transition-colors hover:text-fg">
+            Weekly review
+          </Link>
+          <button onClick={() => ui.openCapture("todo")} className="text-muted transition-colors hover:text-fg" title="New to-do (N)">
+            + Add
+          </button>
+        </div>
       </header>
+
+      {stalled.length > 0 && (
+        <section className="mb-10 rounded-lg border border-missing/30 bg-missing/[0.06] px-4 pb-1 pt-3" aria-labelledby="stalled-title">
+          <h2 id="stalled-title" className="text-sm font-medium text-missing">
+            {stalled.length === 1 ? "1 project has" : `${stalled.length} projects have`} no next step
+          </h2>
+          <ul className="mt-1">
+            {shownStalled.map((p) => (
+              <li key={p.id} className="flex items-center justify-between gap-4 border-t border-missing/15 py-2.5 first:border-t-0">
+                <Link to={`/projects/${p.id}`} className="min-w-0 truncate text-sm hover:underline">
+                  {p.name}
+                  <span className="text-muted">
+                    {p.account_name && ` · ${p.account_name}`}
+                    {p.last_activity_at ? ` · last update ${relative(p.last_activity_at)}` : ` · ${projectStageLabel(p.stage)}`}
+                  </span>
+                </Link>
+                <button
+                  onClick={() =>
+                    ui.openCapture("todo", {
+                      project: { id: p.id, name: p.name, account_id: p.account_id, account_name: p.account_name },
+                      account: p.account_id ? { id: p.account_id, name: p.account_name ?? "" } : null,
+                    })
+                  }
+                  className="shrink-0 rounded-md px-2 py-1 text-[13px] font-medium text-missing hover:bg-missing/10"
+                >
+                  + Next step
+                </button>
+              </li>
+            ))}
+          </ul>
+          {stalled.length > 3 && (
+            <button onClick={() => setShowStalled((v) => !v)} className="mb-2 text-[13px] text-muted hover:text-fg" aria-expanded={showStalled}>
+              {showStalled ? "Show fewer" : `Show all ${stalled.length}`}
+            </button>
+          )}
+        </section>
+      )}
 
       {empty && (
         <p className="py-10 text-muted">
@@ -76,31 +125,9 @@ export function Todos() {
 
       <Section label="Overdue" rows={data.overdue} fading={fading} />
       <Section label="Today" rows={data.due_today} fading={fading} />
-      <Section label="Upcoming" rows={data.upcoming} fading={fading} />
-
-      {data.no_next_step.length > 0 && (
-        <div className="mt-14 text-[13px]">
-          <button onClick={() => setShowStalled((v) => !v)} className="text-muted hover:text-fg" aria-expanded={showStalled}>
-            Projects without a next step ({data.no_next_step.length})
-          </button>
-          {showStalled && (
-            <ul className="mt-3">
-              {data.no_next_step.map((p) => (
-                <li key={p.id} className="flex items-baseline justify-between gap-4 border-t border-line py-3 first:border-t-0">
-                  <Link to={`/projects/${p.id}`} className="min-w-0 truncate text-sm text-fg hover:text-accent">
-                    {p.name}
-                    {p.account_name && <span className="text-muted"> · {p.account_name}</span>}
-                  </Link>
-                  <span className="shrink-0 text-[13px] text-faint">
-                    {projectStageLabel(p.stage)}
-                    {p.last_activity_at && ` · last update ${relative(p.last_activity_at)}`}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
+      <Section label="Next 7 days" rows={nextWeek} fading={fading} />
+      <Section label="Later" rows={later} fading={fading} />
+      <Section label="No date" rows={undated} fading={fading} />
     </div>
   );
 }
@@ -109,7 +136,9 @@ function Section({ label, rows, fading }: { label: string; rows: TodoRow[]; fadi
   if (!rows.length) return null;
   return (
     <section className="mb-10">
-      <h2 className="label mb-1">{label}</h2>
+      <h2 className="label mb-1">
+        {label} <span className="ml-1 font-normal text-faint">{rows.length}</span>
+      </h2>
       <ul>
         {rows.map((r) => (
           <TodoItem key={r.id} todo={r} context={r.project_name ?? r.account_name} fading={fading.has(r.id)} showType hideToday />

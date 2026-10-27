@@ -58,8 +58,8 @@ export async function createTask(t: Db, owner: string, cols: Record<string, unkn
 
 /** Partial update. Snoozing moves the due date and records it. */
 export async function updateTask(t: Db, owner: string, id: string, body: any) {
-  const existing = await t.one(
-    "select account_id, contact_id, project_id from tasks where id = $1 and owner_id = $2 and archived_at is null",
+  const existing = await t.one<{ account_id: string | null; contact_id: string | null; project_id: string | null; snooze_count: number }>(
+    "select account_id, contact_id, project_id, snooze_count from tasks where id = $1 and owner_id = $2 and archived_at is null",
     [id, owner],
   );
   if (!existing) throw notFound("That to-do");
@@ -69,6 +69,7 @@ export async function updateTask(t: Db, owner: string, id: string, body: any) {
     if (!until) throw bad("Pick a date to snooze to.");
     cols.due_date = until;
     cols.snoozed_until = until;
+    cols.snooze_count = existing.snooze_count + 1;
   }
   if ("account_id" in cols || "contact_id" in cols || "project_id" in cols) {
     Object.assign(cols, await resolveLinks(t, owner, { ...existing, ...pickLinks(cols) }));

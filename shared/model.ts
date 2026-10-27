@@ -230,12 +230,15 @@ export interface TodoRow {
   project_id: string | null;
   project_name: string | null;
   project_stage?: ProjectStage | null;
+  /** How many times it was snoozed. */
+  snooze_count?: number;
 }
 
 export interface StalledProject {
   id: string;
   name: string;
   stage: ProjectStage;
+  account_id: string | null;
   account_name: string | null;
   last_activity_at: string | null;
 }

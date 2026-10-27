@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, MoreHorizontal, Phone, Mail, Users, StickyNote } from "lucide-react";
+import { ArrowLeft, MoreHorizontal, Pencil, Phone, Mail, Users, StickyNote } from "lucide-react";
 import { PROJECT_STAGES, type Channel, type ProjectDetail, type ProjectStage, type TaskType } from "@shared/model";
 import { api, useApi } from "@/lib/api";
 import { addDays, dmy, relative, todayISO, workday } from "@/lib/format";
@@ -12,6 +12,8 @@ import { AccountPicker } from "@/components/Pickers";
 import { Timeline } from "@/components/Timeline";
 import { TodoItem } from "@/components/TodoItem";
 import { TASK_DONE, usePageContext, useUI } from "@/components/ui-context";
+import { Skeleton } from "@/components/Skeleton";
+import { useStageChange } from "@/components/StageChange";
 
 export function ProjectPage() {
   const id = useParams().id!;
@@ -28,6 +30,7 @@ export function ProjectPage() {
       : null,
   );
   const fading = useFading(data);
+  const [changeStage, stageDialog] = useStageChange();
 
   if (error && !data)
     return (
@@ -38,11 +41,13 @@ export function ProjectPage() {
         </Link>
       </div>
     );
-  if (!data || !p) return null;
+  if (!data || !p) return <Skeleton rows={4} className="max-w-5xl" />;
 
   const save = (patch: Record<string, unknown>) => api(`/projects/${p.id}`, "PATCH", patch);
   const ctx = { project: { id: p.id, name: p.name, account_id: p.account_id, account_name: p.account_name }, account: p.account_id ? { id: p.account_id, name: p.account_name ?? "" } : null };
   const log = (channel: Channel) => ui.openLog({ ...ctx, channel });
+
+  const stageTarget = { id: p.id, name: p.name, stage: p.stage, waiting_on: p.waiting_on, open_tasks: data.tasks.length };
 
   async function archive() {
     if (!confirm(`Archive "${p!.name}"? Its open to-dos disappear from your list.`)) return;
@@ -76,7 +81,8 @@ export function ProjectPage() {
         </Menu>
       </header>
 
-      <StageSwitcher stage={p.stage} waitingOn={p.waiting_on} onStage={(stage) => save({ stage })} onWaitingOn={(waiting_on) => save({ waiting_on })} />
+      <StageSwitcher stage={p.stage} waitingOn={p.waiting_on} onStage={(stage) => changeStage(stageTarget, stage)} onWaitingOn={(waiting_on) => save({ waiting_on })} />
+      {stageDialog}
 
       <div className="mt-10 grid gap-12 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="min-w-0">
@@ -112,7 +118,7 @@ export function ProjectPage() {
                 </Button>
               </div>
             </div>
-            <Timeline items={data.activities} empty="Nothing logged yet. Notes, calls and meetings for this project show up here." />
+            <Timeline items={data.activities} empty="What happened, in order: calls, emails, meetings and notes. The brief lives in Notes." />
           </section>
         </div>
 
@@ -172,8 +178,9 @@ function EditableTitle({ value, onSave }: { value: string; onSave: (v: string) =
   useEffect(() => setV(value), [value]);
   if (!editing)
     return (
-      <h1 className="title cursor-text text-3xl" onClick={() => setEditing(true)} title="Click to rename">
-        {value}
+      <h1 className="group/title title flex cursor-text items-center gap-2 text-3xl" onClick={() => setEditing(true)} title="Click to rename">
+        <span className="min-w-0">{value}</span>
+        <Pencil className="size-4 shrink-0 text-faint opacity-0 transition-opacity group-hover/title:opacity-100" aria-hidden="true" />
       </h1>
     );
   const commit = () => {
@@ -413,7 +420,7 @@ function Notes({ value, onSave }: { value: string; onSave: (v: string) => void }
           await onSave(v);
           setSaved(true);
         }}
-        placeholder="Requirements, background, anything to remember"
+        placeholder="The brief: requirements, budget, must-haves. Calls and meetings go in the Log."
         className="text-sm"
       />
     </section>

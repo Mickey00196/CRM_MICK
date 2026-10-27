@@ -186,6 +186,45 @@ describe("projects", () => {
     assert.equal(r2.data.activity.project_id, p.id);
   });
 
+  test("moving to Waiting can add a follow-up to-do in the same step", async () => {
+    const p = (await a.post("/projects", { name: "Waiting flow" })).data;
+    const r = await a.patch(`/projects/${p.id}`, {
+      stage: "waiting",
+      waiting_on: "Landlord's counter-offer",
+      follow_up: { title: "Follow up: Landlord's counter-offer", due_date: "2026-11-05" },
+    });
+    assert.equal(r.status, 200, JSON.stringify(r.data));
+    const detail = (await a.get(`/projects/${p.id}`)).data;
+    assert.equal(detail.tasks.length, 1);
+    assert.equal(detail.tasks[0].due_date, "2026-11-05");
+    // A bad follow-up rolls the whole change back.
+    const bad = await a.patch(`/projects/${p.id}`, { stage: "active", follow_up: { title: "", due_date: "2026-11-05" } });
+    assert.equal(bad.status, 400);
+    assert.equal((await a.get(`/projects/${p.id}`)).data.project.stage, "waiting");
+  });
+
+  test("moving to Done can close open to-dos and log an outcome", async () => {
+    const p = (await a.post("/projects", { name: "Done flow", next: { title: "Last step", due_date: "2026-11-03" } })).data;
+    await a.post("/tasks", { title: "Call landlord", type: "call", project_id: p.id });
+    const r = await a.patch(`/projects/${p.id}`, { stage: "done", close_open_tasks: true, outcome_note: "Signed for 5 years" });
+    assert.equal(r.status, 200, JSON.stringify(r.data));
+    const detail = (await a.get(`/projects/${p.id}`)).data;
+    assert.equal(detail.tasks.length, 0, "no open to-dos left");
+    assert.equal(detail.done_tasks.length, 2);
+    assert.equal(detail.activities.length, 1, "only the outcome is logged, not fake calls");
+    assert.equal(detail.activities[0].summary, "Signed for 5 years");
+  });
+
+  test("snoozing counts how often a to-do was pushed back", async () => {
+    const task = (await a.post("/tasks", { title: "Avoided task", due_date: "2030-11-02" })).data;
+    await a.patch(`/tasks/${task.id}`, { snooze_until: "2030-11-03" });
+    await a.patch(`/tasks/${task.id}`, { snooze_until: "2030-11-04" });
+    await a.patch(`/tasks/${task.id}`, { title: "Avoided task (renamed)" });
+    const row = (await a.get("/todos")).data.upcoming.find((t: any) => t.id === task.id);
+    assert.equal(row.snooze_count, 2);
+    assert.equal(row.due_date, "2030-11-04");
+  });
+
   test("giving a project a company moves its to-dos along", async () => {
     const p = (await a.post("/projects", { name: "Needs a company", next: { title: "Step", due_date: "2026-11-03" } })).data;
     const co = await account(a, { name: "Later Co" });

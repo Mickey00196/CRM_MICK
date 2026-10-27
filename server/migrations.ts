@@ -303,4 +303,9 @@ alter table custom_field_definitions add constraint custom_field_definitions_ent
   check (entity in ('account', 'contact', 'project', 'office_location'));
 `,
   },
+  {
+    // How often a to-do was pushed back, so the weekly review can surface the ones you keep avoiding.
+    id: "004_snooze_count",
+    sql: `alter table tasks add column snooze_count integer not null default 0;`,
+  },
 ];

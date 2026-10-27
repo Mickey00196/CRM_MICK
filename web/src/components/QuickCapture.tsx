@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { PROJECT_STAGES, TASK_TYPES, type Project, type ProjectStage, type TaskType } from "@shared/model";
+import { PROJECT_STAGES, TASK_TYPES, taskTypeLabel, type Project, type ProjectStage, type TaskType } from "@shared/model";
+import { dueText } from "@shared/dates";
+import { parseQuick } from "@shared/quick";
 import { api } from "@/lib/api";
 import { addDays, todayISO, workday } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -73,14 +75,20 @@ const DUE = [
 
 function TodoForm({ ctx, onDone }: { ctx: PageContext; onDone: () => void }) {
   const [title, setTitle] = useState("");
-  const [type, setType] = useState<TaskType>("todo");
+  const [type, setType] = useState<TaskType | null>(null);
   const [project, setProject] = useState<PickedProject | null>(ctx.project ?? null);
   const [account, setAccount] = useState<PickedAccount | null>(ctx.project ? null : ctx.account ?? null);
-  const [due, setDue] = useState(todayISO());
+  const [due, setDue] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const today = todayISO();
-  const presetKey = DUE.find((d) => (d.key === "0" ? today : workday(addDays(today, Number(d.key)))) === due)?.key ?? null;
+
+  // "Call Sanne tomorrow 10:00" fills in type, date and time; anything you pick yourself wins.
+  const parsed = useMemo(() => parseQuick(title, today), [title, today]);
+  const effectiveType: TaskType = type ?? parsed.type ?? "todo";
+  const effectiveDue = due ?? parsed.due_date ?? today;
+  const understood = Boolean((parsed.due_date && due === null) || parsed.due_time || (parsed.type && type === null));
+  const presetKey = DUE.find((d) => (d.key === "0" ? today : workday(addDays(today, Number(d.key)))) === effectiveDue)?.key ?? null;
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -88,9 +96,10 @@ function TodoForm({ ctx, onDone }: { ctx: PageContext; onDone: () => void }) {
     setError(null);
     try {
       await api("/tasks", "POST", {
-        title,
-        type,
-        due_date: due || null,
+        title: parsed.title || title,
+        type: effectiveType,
+        due_date: effectiveDue || null,
+        due_time: parsed.due_time,
         project_id: project?.id ?? null,
         account_id: project ? null : account?.id ?? null,
       });
@@ -103,10 +112,28 @@ function TodoForm({ ctx, onDone }: { ctx: PageContext; onDone: () => void }) {
 
   return (
     <form className="grid gap-4" onSubmit={save}>
-      <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="What needs doing?" autoFocus className="h-11 text-base" aria-label="To-do" />
+      <div className="grid gap-1.5">
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="What needs doing? e.g. Call Sanne tomorrow 10:00"
+          autoFocus
+          className="h-11 text-base"
+          aria-label="To-do"
+        />
+        {understood && (
+          <p className="px-1 text-[13px] text-muted" aria-live="polite">
+            Saves as <span className="text-fg">“{parsed.title}”</span>
+            {" · "}
+            {taskTypeLabel(effectiveType)}
+            {" · "}
+            {dueText(effectiveDue, parsed.due_time, today)}
+          </p>
+        )}
+      </div>
       <div className="grid gap-3 sm:grid-cols-[1fr_9rem]">
         <ProjectPicker value={project} onChange={setProject} placeholder="Project (optional)" />
-        <Select value={type} onChange={(e) => setType(e.target.value as TaskType)} aria-label="Type">
+        <Select value={effectiveType} onChange={(e) => setType(e.target.value as TaskType)} aria-label="Type">
           {TASK_TYPES.map((t) => (
             <option key={t.key} value={t.key}>
               {t.label}
@@ -117,7 +144,7 @@ function TodoForm({ ctx, onDone }: { ctx: PageContext; onDone: () => void }) {
       {!project && <AccountPicker value={account} onChange={setAccount} placeholder="Company (optional)" />}
       <div className="flex flex-wrap items-center gap-2">
         <Chips options={DUE} value={presetKey} onChange={(k) => setDue(k === "0" ? today : workday(addDays(today, Number(k))))} size="sm" />
-        <Input type="date" value={due} onChange={(e) => setDue(e.target.value)} className="h-7 w-auto px-2 text-[13px]" aria-label="Due date" />
+        <Input type="date" value={effectiveDue} onChange={(e) => setDue(e.target.value)} className="h-7 w-auto px-2 text-[13px]" aria-label="Due date" />
       </div>
       <ErrorText>{error}</ErrorText>
       <div className="flex justify-end">

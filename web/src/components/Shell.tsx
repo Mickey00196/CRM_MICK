@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
+  CalendarCheck,
   CheckCircle2,
+  ChevronDown,
+  MoreHorizontal,
   FolderKanban,
   FolderPlus,
   Building2,
@@ -28,14 +31,25 @@ import { LogForm } from "./LogForm";
 import { TaskPanel } from "./TaskPanel";
 import { Toaster } from "./Toast";
 
-const NAV = [
-  { to: "/", label: "To-dos", short: "To-dos", icon: CheckCircle2, end: true },
-  { to: "/projects", label: "Projects", short: "Projects", icon: FolderKanban },
-  { to: "/accounts", label: "Companies", short: "Companies", icon: Building2 },
-  { to: "/contacts", label: "Contacts", short: "Contacts", icon: Users },
-  { to: "/communication", label: "Log", short: "Log", icon: MessagesSquare },
-  { to: "/settings", label: "Settings", short: "Settings", icon: Settings },
+interface NavItem {
+  to: string;
+  label: string;
+  icon: typeof Plus;
+  end?: boolean;
+}
+
+// What you use every day first; the address book below it; settings out of the way.
+const MAIN: NavItem[] = [
+  { to: "/", label: "To-dos", icon: CheckCircle2, end: true },
+  { to: "/projects", label: "Projects", icon: FolderKanban },
+  { to: "/review", label: "Weekly review", icon: CalendarCheck },
 ];
+const ADDRESS_BOOK: NavItem[] = [
+  { to: "/accounts", label: "Companies", icon: Building2 },
+  { to: "/contacts", label: "Contacts", icon: Users },
+  { to: "/communication", label: "Log", icon: MessagesSquare },
+];
+const SETTINGS: NavItem = { to: "/settings", label: "Settings", icon: Settings };
 
 function isTyping(e: KeyboardEvent) {
   const t = e.target as HTMLElement;
@@ -76,7 +90,7 @@ export function Shell({ children }: { children: ReactNode }) {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        ui.openCapture("todo");
+        setSearching(true);
         return;
       }
       if (isTyping(e) || e.metaKey || e.ctrlKey || e.altKey) return;
@@ -124,28 +138,43 @@ export function Shell({ children }: { children: ReactNode }) {
             </button>
           </div>
 
-          <Menu>
-            <MenuTrigger asChild>
-              <button
-                className={cn(
-                  "mb-2 flex h-9 items-center gap-2 rounded-md bg-fg text-sm font-medium text-bg transition-colors hover:bg-accent hover:text-accent-fg",
-                  collapsed ? "justify-center" : "px-3",
-                )}
-                aria-label="New"
-              >
-                <Plus className="size-4" />
-                {!collapsed && "New"}
-              </button>
-            </MenuTrigger>
-            <MenuContent>
-              {newItems.map((i) => (
-                <MenuItem key={i.kind} onSelect={() => ui.openCapture(i.kind)}>
-                  <i.icon /> {i.label}
-                  {i.key && <kbd className="ml-auto pl-4 font-sans text-xs text-faint">{i.key}</kbd>}
-                </MenuItem>
-              ))}
-            </MenuContent>
-          </Menu>
+          {/* New to-do in one click; everything else behind the arrow. */}
+          <div className={cn("mb-2 flex", collapsed && "flex-col gap-1")}>
+            <button
+              onClick={() => ui.openCapture("todo")}
+              className={cn(
+                "flex h-9 flex-1 items-center gap-2 bg-fg text-sm font-medium text-bg transition-colors hover:bg-accent hover:text-accent-fg",
+                collapsed ? "justify-center rounded-md" : "rounded-l-md px-3",
+              )}
+              aria-label="New to-do"
+              title="New to-do (N)"
+            >
+              <Plus className="size-4" />
+              {!collapsed && "New to-do"}
+            </button>
+            <Menu>
+              <MenuTrigger asChild>
+                <button
+                  className={cn(
+                    "grid h-9 place-items-center bg-fg text-bg transition-colors hover:bg-accent hover:text-accent-fg",
+                    collapsed ? "rounded-md" : "w-8 rounded-r-md border-l border-bg/20",
+                  )}
+                  aria-label="New something else"
+                  title="New project, log, company or contact"
+                >
+                  <ChevronDown className="size-4" />
+                </button>
+              </MenuTrigger>
+              <MenuContent align="end">
+                {newItems.map((i) => (
+                  <MenuItem key={i.kind} onSelect={() => ui.openCapture(i.kind)}>
+                    <i.icon /> {i.label}
+                    {i.key && <kbd className="ml-auto pl-4 font-sans text-xs text-faint">{i.key}</kbd>}
+                  </MenuItem>
+                ))}
+              </MenuContent>
+            </Menu>
+          </div>
 
           <button
             onClick={() => setSearching(true)}
@@ -153,39 +182,26 @@ export function Shell({ children }: { children: ReactNode }) {
               "mb-4 flex h-9 items-center gap-2 rounded-md text-sm text-muted transition-colors hover:bg-hover hover:text-fg",
               collapsed ? "justify-center" : "px-3",
             )}
-            aria-label="Search"
+            aria-label="Search or run a command"
+            title="Search or run a command (⌘K or /)"
           >
             <Search className="size-4" />
             {!collapsed && (
               <>
-                Search <kbd className="ml-auto rounded border border-line px-1.5 text-[11px] text-faint">/</kbd>
+                Search or jump to <kbd className="ml-auto rounded border border-line px-1.5 text-[11px] text-faint">⌘K</kbd>
               </>
             )}
           </button>
 
-          <nav className="grid gap-0.5">
-            {NAV.map((n) => (
-              <NavLink
-                key={n.to}
-                to={n.to}
-                end={n.end}
-                title={collapsed ? n.label : undefined}
-                className={({ isActive }) =>
-                  cn(
-                    "flex h-9 items-center gap-2.5 rounded-md text-sm transition-colors",
-                    collapsed ? "justify-center" : "px-3",
-                    isActive ? "bg-hover font-medium text-fg" : "text-muted hover:bg-hover hover:text-fg",
-                  )
-                }
-              >
-                <n.icon className="size-4 shrink-0" />
-                {!collapsed && n.label}
-              </NavLink>
-            ))}
-          </nav>
+          <SideNav items={MAIN} collapsed={collapsed} />
+          {!collapsed ? <p className="label mb-1 mt-6 px-3 text-[11px]">Address book</p> : <div className="my-3 border-t border-line" />}
+          <SideNav items={ADDRESS_BOOK} collapsed={collapsed} />
+          <div className="mt-auto">
+            <SideNav items={[SETTINGS]} collapsed={collapsed} />
+          </div>
 
           {!collapsed && (
-            <p className="mt-auto px-3 text-xs leading-relaxed text-faint">
+            <p className="mt-3 px-3 text-xs leading-relaxed text-faint">
               <kbd className="font-sans">N</kbd> to-do · <kbd className="font-sans">P</kbd> project · <kbd className="font-sans">L</kbd> log
             </p>
           )}
@@ -209,27 +225,35 @@ export function Shell({ children }: { children: ReactNode }) {
 
         {/* Bottom bar (mobile) */}
         <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-line bg-bg/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
-          {[NAV[0], NAV[1], null, NAV[2], NAV[4]].map((n, i) =>
-            n ? (
-              <NavLink
-                key={n.to}
-                to={n.to}
-                end={n.end}
-                className={({ isActive }) => cn("flex flex-col items-center gap-0.5 py-2 text-[11px]", isActive ? "text-fg" : "text-faint")}
+          <TabLink item={MAIN[0]} />
+          <TabLink item={MAIN[1]} />
+          <button onClick={() => ui.openCapture("todo")} className="flex flex-col items-center justify-center" aria-label="New to-do">
+            <span className="grid size-11 place-items-center rounded-full bg-fg text-bg">
+              <Plus className="size-5" />
+            </span>
+          </button>
+          <TabLink item={ADDRESS_BOOK[0]} />
+          <Menu>
+            <MenuTrigger asChild>
+              <button
+                className={cn(
+                  "flex flex-col items-center gap-0.5 py-2 text-[11px]",
+                  [...ADDRESS_BOOK.slice(1), MAIN[2], SETTINGS].some((n) => location.pathname.startsWith(n.to)) ? "text-fg" : "text-faint",
+                )}
               >
-                <n.icon className="size-5" />
-                {n.short}
-              </NavLink>
-            ) : (
-              <button key={i} onClick={() => ui.openCapture("todo")} className="flex flex-col items-center justify-center" aria-label="New">
-                <span className="grid size-10 place-items-center rounded-full bg-fg text-bg">
-                  <Plus className="size-5" />
-                </span>
+                <MoreHorizontal className="size-5" />
+                More
               </button>
-            ),
-          )}
+            </MenuTrigger>
+            <MenuContent align="end">
+              {[...ADDRESS_BOOK.slice(1), MAIN[2], SETTINGS].map((n) => (
+                <MenuItem key={n.to} onSelect={() => navigate(n.to)}>
+                  <n.icon /> {n.label}
+                </MenuItem>
+              ))}
+            </MenuContent>
+          </Menu>
         </nav>
-
       </div>
 
       <QuickCapture
@@ -265,3 +289,40 @@ export function Shell({ children }: { children: ReactNode }) {
   );
 }
 
+function SideNav({ items, collapsed }: { items: NavItem[]; collapsed: boolean }) {
+  return (
+    <nav className="grid gap-0.5">
+      {items.map((n) => (
+        <NavLink
+          key={n.to}
+          to={n.to}
+          end={n.end}
+          title={collapsed ? n.label : undefined}
+          className={({ isActive }) =>
+            cn(
+              "flex h-9 items-center gap-2.5 rounded-md text-sm transition-colors",
+              collapsed ? "justify-center" : "px-3",
+              isActive ? "bg-hover font-medium text-fg" : "text-muted hover:bg-hover hover:text-fg",
+            )
+          }
+        >
+          <n.icon className="size-4 shrink-0" />
+          {!collapsed && n.label}
+        </NavLink>
+      ))}
+    </nav>
+  );
+}
+
+function TabLink({ item }: { item: NavItem }) {
+  return (
+    <NavLink
+      to={item.to}
+      end={item.end}
+      className={({ isActive }) => cn("flex flex-col items-center gap-0.5 py-2 text-[11px]", isActive ? "text-fg" : "text-faint")}
+    >
+      <item.icon className="size-5" />
+      {item.label}
+    </NavLink>
+  );
+}

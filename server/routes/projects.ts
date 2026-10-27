@@ -6,6 +6,7 @@ import { OPEN_TASK_ORDER } from "../sql.js";
 import { PROJECT_STAGES } from "../../shared/model.js";
 import { resolveLinks } from "../domain/links.js";
 import { createTask, parseNext } from "../domain/tasks.js";
+import { logActivity } from "../domain/activities.js";
 
 const PROJECT_SPEC: Spec = {
   name: [f.required(200), "Project name"],
@@ -138,8 +139,20 @@ projects.patch("/projects/:id", async (req, res) => {
       cols.stage_changed_at = new Date().toISOString();
       cols.done_at = cols.stage === "done" ? new Date().toISOString() : null;
     }
+    // Optional extras that come with a stage change, all in the same transaction.
+    const outcome = f.text(5000)(req.body?.outcome_note, "Outcome") as string;
+    const followUp = req.body?.follow_up ? parseNext({ next: req.body.follow_up }) : null;
     const { text, values } = updateSql("projects", id, owner, cols);
-    return t.one(text, values);
+    const updated = await t.one(text, values);
+    if (req.body?.close_open_tasks === true) {
+      await t.q(
+        "update tasks set status = 'done', completed_at = now() where project_id = $1 and owner_id = $2 and status <> 'done' and archived_at is null",
+        [id, owner],
+      );
+    }
+    if (outcome) await logActivity(t, owner, { project_id: id, channel: "note", summary: outcome });
+    if (followUp) await createTask(t, owner, { ...followUp, project_id: id });
+    return updated;
   });
   res.json(row);
 });

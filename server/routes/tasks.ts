@@ -12,7 +12,7 @@ tasks.get("/todos", async (req, res) => {
   const owner = uid(req);
   const today = todayISO();
   const rows = await db.q<TodoRow>(
-    `select t.id, t.title, t.type, t.due_date, t.due_time, t.priority,
+    `select t.id, t.title, t.type, t.due_date, t.due_time, t.priority, t.snooze_count,
             t.account_id, a.name as account_name, t.project_id, p.name as project_name, p.stage as project_stage
      from tasks t
      left join accounts a on a.id = t.account_id
@@ -25,7 +25,7 @@ tasks.get("/todos", async (req, res) => {
   );
   // Open projects with nothing lined up: the ones that silently stall.
   const no_next_step = await db.q(
-    `select p.id, p.name, p.stage, a.name as account_name,
+    `select p.id, p.name, p.stage, p.account_id, a.name as account_name,
             (select max(x.occurred_at) from activities x where x.project_id = p.id and x.archived_at is null) as last_activity_at
      from projects p
      left join accounts a on a.id = p.account_id

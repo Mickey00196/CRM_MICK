@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowDown, ArrowUp, Columns3, Download, Search } from "lucide-react";
 import { ACCOUNT_STATUSES, accountStatusLabel, type AccountRow } from "@shared/model";
 import { api, useApi, useStored } from "@/lib/api";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Menu, MenuCheckbox, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger } from "@/components/ui/dropdown";
 import { useUI } from "@/components/ui-context";
+import { dueLabel } from "@/components/TodoItem";
 
 type ColKey = "status" | "location" | "size" | "lease_end" | "next_step" | "last_contact" | "industry" | "source";
 
@@ -213,7 +214,27 @@ export function Accounts() {
           {data.length === 0 ? "No companies yet. Add one when a project involves a client or prospect." : "No companies match this view."}
         </p>
       ) : (
-        <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+        <>
+        {/* Phones: a simple list instead of a wide table. */}
+        <ul className="sm:hidden">
+          {rows.map((a) => {
+            const late = a.next_step?.due_date && a.next_step.due_date < today;
+            return (
+              <li key={a.id} className="border-b border-line">
+                <Link to={`/accounts/${a.id}`} className="block py-3">
+                  <span className="flex items-baseline justify-between gap-3">
+                    <span className="truncate font-medium">{a.name}</span>
+                    <span className="shrink-0 text-[13px] text-muted">{accountStatusLabel(a.status)}</span>
+                  </span>
+                  <span className={cn("mt-0.5 block truncate text-[13px]", late ? "text-late" : "text-muted")}>
+                    {a.next_step ? `${a.next_step.title}${a.next_step.due_date ? ` · ${dueLabel(a.next_step.due_date, null, today)}` : ""}` : "No next step"}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+        <div className="-mx-4 hidden overflow-x-auto px-4 sm:mx-0 sm:block sm:px-0">
           <table className="w-full min-w-[760px] text-sm">
             <thead>
               <tr className="border-b border-line text-left text-[13px] text-muted">
@@ -263,6 +284,7 @@ export function Accounts() {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );
@@ -310,7 +332,7 @@ function Cell({ row: a, col, today }: { row: AccountRow; col: ColKey; today: str
       return (
         <span className={cn("block max-w-56 truncate", late ? "text-late" : "text-fg")}>
           {a.next_step.title}
-          {a.next_step.due_date && <span className={late ? "" : "text-muted"}> · {dmy(a.next_step.due_date)}</span>}
+          {a.next_step.due_date && <span className={late ? "" : "text-muted"}> · {dueLabel(a.next_step.due_date, null, today)}</span>}
         </span>
       );
     }

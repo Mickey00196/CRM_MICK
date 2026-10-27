@@ -10,6 +10,8 @@ import { Sheet } from "@/components/ui/dialog";
 import { Timeline } from "@/components/Timeline";
 import { usePageContext, useUI } from "@/components/ui-context";
 import { ContactForm } from "@/components/ContactForm";
+import { Skeleton } from "@/components/Skeleton";
+import { dueLabel } from "@/components/TodoItem";
 
 export function ContactPage() {
   const id = useParams().id!;
@@ -20,7 +22,7 @@ export function ContactPage() {
   usePageContext(data?.contact.account_id ? { account: { id: data.contact.account_id, name: data.contact.account_name ?? "" } } : null);
 
   if (error) return <p className="text-sm text-late">{error}</p>;
-  if (!data) return null;
+  if (!data) return <Skeleton rows={4} className="max-w-4xl" />;
   const { contact: c, activities, tasks } = data;
   const account = c.account_id ? { id: c.account_id, name: c.account_name ?? "" } : null;
 
@@ -90,7 +92,7 @@ export function ContactPage() {
                   <span>
                     {t.title} <span className="text-sm text-muted">· {taskTypeLabel(t.type)}</span>
                   </span>
-                  <span className={cn("text-sm", t.due_date && t.due_date < today ? "text-late" : "text-muted")}>{dmy(t.due_date)}</span>
+                  <span className={cn("text-sm", t.due_date && t.due_date < today ? "text-late" : "text-muted")} title={dmy(t.due_date)}>{dueLabel(t.due_date, t.due_time, today)}</span>
                 </button>
               </li>
             ))}

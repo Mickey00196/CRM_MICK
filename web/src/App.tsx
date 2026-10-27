@@ -14,6 +14,7 @@ import { Contacts } from "@/pages/Contacts";
 import { ContactPage } from "@/pages/Contact";
 import { Communication } from "@/pages/Communication";
 import { SettingsPage } from "@/pages/Settings";
+import { Review } from "@/pages/Review";
 
 export default function App() {
   const [authed, setAuthed] = useState<boolean | null>(null);
@@ -55,6 +56,7 @@ function Pages({ onLogout }: { onLogout: () => void }) {
         <Route path="/" element={<Todos />} />
         <Route path="/projects" element={<Projects />} />
         <Route path="/projects/:id" element={<ProjectPage />} />
+        <Route path="/review" element={<Review />} />
         <Route path="/accounts" element={<Accounts />} />
         <Route path="/accounts/:id" element={<AccountPage />} />
         <Route path="/contacts" element={<Contacts />} />

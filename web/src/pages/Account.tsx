@@ -27,6 +27,8 @@ import { usePageContext, useUI } from "@/components/ui-context";
 import { Timeline } from "@/components/Timeline";
 import { OfficeCard, OfficeForm } from "@/components/Office";
 import { ContactForm } from "@/components/ContactForm";
+import { Skeleton } from "@/components/Skeleton";
+import { dueLabel } from "@/components/TodoItem";
 
 const TABS = [
   { value: "overview", label: "Overview" },
@@ -51,7 +53,7 @@ export function AccountPage() {
         </Link>
       </div>
     );
-  if (!data) return null;
+  if (!data) return <Skeleton rows={5} className="max-w-4xl" />;
 
   const { account } = data;
   const picked = { id: account.id, name: account.name };
@@ -171,7 +173,7 @@ function Header({ data }: { data: AccountDetail }) {
               {next.title} <span className="text-sm text-muted">· {taskTypeLabel(next.type)}</span>
             </span>
             <span className={cn("shrink-0 text-sm", next.due_date && next.due_date < today ? "text-late" : "text-muted")}>
-              {next.due_date ? dmy(next.due_date) : "No date"}
+              {next.due_date ? dueLabel(next.due_date, null, today) : "No date"}
               {next.due_time && ` ${next.due_time}`}
             </span>
           </button>
@@ -316,7 +318,7 @@ function Overview({ data }: { data: AccountDetail }) {
                       {t.project_name && ` · ${t.project_name}`}
                     </span>
                   </span>
-                  <span className={cn("shrink-0 text-sm", t.due_date && t.due_date < today ? "text-late" : "text-muted")}>{dmy(t.due_date)}</span>
+                  <span className={cn("shrink-0 text-sm", t.due_date && t.due_date < today ? "text-late" : "text-muted")} title={dmy(t.due_date)}>{dueLabel(t.due_date, t.due_time, today)}</span>
                 </button>
               </li>
             ))}
