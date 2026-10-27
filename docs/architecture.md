@@ -95,7 +95,7 @@ Before shipping a change, add a test that would have caught the bug it fixes.
 | 16 | Time zone interpolated into SQL | Low | Fixed (parameter) |
 | 17 | No graceful shutdown; request logs missing | Low | Fixed |
 | 18 | `body-parser` advisory (DoS) | Medium | Fixed (`npm audit fix`) |
-| 19 | Not deployed; region and backups not set | High | **Open**: see README |
+| 19 | Not deployed; region and backups not set | High | Deployed 27 Oct on Railway, app and database in EU West (Amsterdam). **Backups still to switch on (Mick).** |
 
 ## Deliberately not done yet
 
@@ -114,6 +114,6 @@ Each of these is the right move at some point. Doing it now would add weight wit
 ## Before real client data goes in
 
 1. **Check C&W policy.** Most firms require client and prospect data (names, contacts, lease terms) to live in approved systems. Ask compliance or IT. If the answer is no, use it only for your own prospecting pipeline, or for the side business.
-2. **Host in the EU.** Put the service and the database in Railway's EU West (Amsterdam) region.
+2. **Host in the EU.** Done: the service and the database are in Railway's EU West (Amsterdam) region.
 3. **Back up.** Turn on Railway Postgres backups and test one restore. **Settings → Export everything** is a second copy.
 4. **Use a strong password.** At least 16 characters for `APP_PASSWORD`, from a password manager.
