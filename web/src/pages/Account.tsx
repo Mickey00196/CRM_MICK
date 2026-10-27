@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Phone, Mail, Link2, Users, StickyNote, Plus, MoreHorizontal, ArrowLeft } from "lucide-react";
+import { Phone, Mail, Link2, Users, StickyNote, Plus, MoreHorizontal, ArrowLeft, FolderPlus } from "lucide-react";
 import {
   ACCOUNT_STATUSES,
+  projectStageLabel,
   CHANNELS,
   ICP_FIT,
   LANGUAGES,
@@ -14,7 +15,7 @@ import {
   type Channel,
   type Contact,
 } from "@shared/model";
-import { api, useLoad } from "@/lib/api";
+import { api, useApi } from "@/lib/api";
 import { dmy, relative, todayISO } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,7 @@ import { ErrorText, Field, Input, Select, Textarea } from "@/components/ui/input
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/dropdown";
 import { Tabs, TabList, TabPanelBody } from "@/components/ui/tabs";
 import { Sheet } from "@/components/ui/dialog";
-import { useCurrentAccount, useUI } from "@/components/ui-context";
+import { usePageContext, useUI } from "@/components/ui-context";
 import { Timeline } from "@/components/Timeline";
 import { OfficeCard, OfficeForm } from "@/components/Office";
 import { ContactForm } from "@/components/ContactForm";
@@ -37,16 +38,16 @@ export function AccountPage() {
   const id = useParams().id!;
   const [params, setParams] = useSearchParams();
   const tab = TABS.some((t) => t.value === params.get("tab")) ? params.get("tab")! : "overview";
-  const { data, error } = useLoad(() => api<AccountDetail>(`/accounts/${id}`), [id]);
+  const { data, error } = useApi<AccountDetail>(`/accounts/${id}`);
   const ui = useUI();
-  useCurrentAccount(data ? { id: data.account.id, name: data.account.name } : null);
+  usePageContext(data ? { account: { id: data.account.id, name: data.account.name } } : null);
 
   if (error)
     return (
       <div className="mx-auto max-w-4xl">
         <p className="text-sm text-late">{error}</p>
         <Link to="/accounts" className="mt-3 inline-block text-sm text-muted hover:text-fg">
-          Back to accounts
+          Back to companies
         </Link>
       </div>
     );
@@ -59,7 +60,7 @@ export function AccountPage() {
   return (
     <div className="mx-auto max-w-4xl">
       <Link to="/accounts" className="mb-6 inline-flex items-center gap-1 text-[13px] text-muted hover:text-fg">
-        <ArrowLeft className="size-3.5" /> Accounts
+        <ArrowLeft className="size-3.5" /> Companies
       </Link>
 
       <Header data={data} />
@@ -82,6 +83,9 @@ export function AccountPage() {
         </Button>
         <Button variant="outline" size="sm" onClick={() => ui.openCapture("todo", { account: picked })}>
           <Plus /> Add to-do
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => ui.openCapture("project", { account: picked })}>
+          <FolderPlus /> New project
         </Button>
       </div>
 
@@ -109,7 +113,6 @@ function Header({ data }: { data: AccountDetail }) {
   const ui = useUI();
   const navigate = useNavigate();
   const today = todayISO();
-  const needsStep = !next && ["prospect", "client"].includes(account.status);
 
   async function setStatus(status: string) {
     await api(`/accounts/${account.id}`, "PATCH", { status });
@@ -155,7 +158,7 @@ function Header({ data }: { data: AccountDetail }) {
             </Button>
           </MenuTrigger>
           <MenuContent align="end">
-            <MenuItem onSelect={archive}>Archive account</MenuItem>
+            <MenuItem onSelect={archive}>Archive company</MenuItem>
           </MenuContent>
         </Menu>
       </div>
@@ -174,7 +177,7 @@ function Header({ data }: { data: AccountDetail }) {
           </button>
         ) : (
           <div className="flex items-baseline justify-between gap-4">
-            <span className={cn("text-lg", needsStep ? "text-missing" : "text-muted")}>No next step</span>
+            <span className="text-lg text-muted">No next step</span>
             <button onClick={() => ui.openCapture("todo", { account: { id: account.id, name: account.name } })} className="text-sm text-accent hover:underline">
               Set next step
             </button>
@@ -197,6 +200,31 @@ function Overview({ data }: { data: AccountDetail }) {
 
   return (
     <div className="grid gap-12">
+      <section>
+        <div className="mb-3 flex items-baseline justify-between">
+          <h2 className="label">Projects</h2>
+          <Button variant="ghost" size="xs" onClick={() => ui.openCapture("project", { account: { id: account.id, name: account.name } })}>
+            + New
+          </Button>
+        </div>
+        {data.projects.length === 0 ? (
+          <p className="border-t border-line pt-5 text-sm text-muted">No projects with this company yet.</p>
+        ) : (
+          <ul>
+            {data.projects.map((p) => (
+              <li key={p.id} className="border-t border-line">
+                <Link to={`/projects/${p.id}`} className="flex items-baseline justify-between gap-4 py-3.5 hover:text-accent">
+                  <span className={cn("min-w-0 truncate", p.stage === "done" && "text-muted")}>{p.name}</span>
+                  <span className="shrink-0 text-sm text-muted">
+                    {p.stage === "waiting" && p.waiting_on ? `Waiting on ${p.waiting_on}` : projectStageLabel(p.stage)}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       <section>
         <div className="mb-3 flex items-baseline justify-between">
           <h2 className="label">Company</h2>
@@ -281,8 +309,12 @@ function Overview({ data }: { data: AccountDetail }) {
             {tasks.map((t) => (
               <li key={t.id} className="border-t border-line">
                 <button onClick={() => ui.openTask(t.id)} className="flex w-full items-baseline justify-between gap-4 py-3.5 text-left hover:text-accent">
-                  <span>
-                    {t.title} <span className="text-sm text-muted">· {taskTypeLabel(t.type)}</span>
+                  <span className="min-w-0 truncate">
+                    {t.title}{" "}
+                    <span className="text-sm text-muted">
+                      · {taskTypeLabel(t.type)}
+                      {t.project_name && ` · ${t.project_name}`}
+                    </span>
                   </span>
                   <span className={cn("shrink-0 text-sm", t.due_date && t.due_date < today ? "text-late" : "text-muted")}>{dmy(t.due_date)}</span>
                 </button>
@@ -292,7 +324,7 @@ function Overview({ data }: { data: AccountDetail }) {
         )}
       </section>
 
-      <Sheet open={editing} onOpenChange={setEditing} title="Edit account">
+      <Sheet open={editing} onOpenChange={setEditing} title="Edit company">
         {editing && <AccountEdit data={data} onDone={() => setEditing(false)} />}
       </Sheet>
       <Sheet open={contactForm !== null} onOpenChange={(o) => !o && setContactForm(null)} title={contactForm === "new" ? "Add contact" : "Edit contact"}>
@@ -461,7 +493,7 @@ function Communication({ data }: { data: AccountDetail }) {
     if (contact) p.set("contact_id", contact);
     return p.toString();
   }, [data.account.id, channel, contact]);
-  const { data: items } = useLoad(() => api<ActivityRow[]>(`/activities?${qs}`), [qs]);
+  const { data: items } = useApi<ActivityRow[]>(`/activities?${qs}`);
 
   return (
     <div>
@@ -485,7 +517,7 @@ function Communication({ data }: { data: AccountDetail }) {
           </Select>
         )}
       </div>
-      {items && <Timeline items={items} empty={channel || contact ? "Nothing logged that matches." : "Nothing logged yet. Use the buttons above to log a call, email or note."} />}
+      {items && <Timeline items={items} showProject empty={channel || contact ? "Nothing logged that matches." : "Nothing logged yet. Use the buttons above to log a call, email or note."} />}
     </div>
   );
 }

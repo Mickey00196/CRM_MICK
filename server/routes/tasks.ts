@@ -2,8 +2,8 @@ import { Router } from "express";
 import { db, tx } from "../db.js";
 import { uid } from "../auth.js";
 import { pick, idOf, notFound } from "../validate.js";
-import { LAST_CONTACT, OPEN_TASK_ORDER, todayISO } from "../sql.js";
-import { ACTIVE_ACCOUNT_STATUSES, CLOSED_DEAL_STAGES, type TodoRow } from "../../shared/model.js";
+import { OPEN_TASK_ORDER, todayISO } from "../sql.js";
+import { OPEN_PROJECT_STAGES, type TodoRow } from "../../shared/model.js";
 import { TASK_SPEC, completeTask, createTask, updateTask } from "../domain/tasks.js";
 
 export const tasks = Router();
@@ -12,27 +12,27 @@ tasks.get("/todos", async (req, res) => {
   const owner = uid(req);
   const today = todayISO();
   const rows = await db.q<TodoRow>(
-    `select t.id, t.title, t.type, t.due_date, t.due_time, t.priority, t.account_id, a.name as account_name
+    `select t.id, t.title, t.type, t.due_date, t.due_time, t.priority,
+            t.account_id, a.name as account_name, t.project_id, p.name as project_name
      from tasks t
      left join accounts a on a.id = t.account_id
+     left join projects p on p.id = t.project_id
      where t.owner_id = $1 and t.status = 'open' and t.archived_at is null
        and (a.id is null or a.archived_at is null)
+       and (p.id is null or p.archived_at is null)
      order by ${OPEN_TASK_ORDER}`,
     [owner],
   );
+  // Open projects with nothing lined up: the ones that silently stall.
   const no_next_step = await db.q(
-    `select a.id, a.name, a.status, lc.last_contact_at
-     from accounts a
-     ${LAST_CONTACT}
-     where a.owner_id = $1 and a.archived_at is null
-       and (a.status = any($2::text[]) or exists (
-         select 1 from deals d where d.account_id = a.id and d.archived_at is null and d.stage <> all($3::text[])
-       ))
-       and not exists (
-         select 1 from tasks t where t.account_id = a.id and t.status = 'open' and t.archived_at is null
-       )
-     order by lc.last_contact_at asc nulls first, a.name`,
-    [owner, ACTIVE_ACCOUNT_STATUSES, CLOSED_DEAL_STAGES],
+    `select p.id, p.name, p.stage, a.name as account_name,
+            (select max(x.occurred_at) from activities x where x.project_id = p.id and x.archived_at is null) as last_activity_at
+     from projects p
+     left join accounts a on a.id = p.account_id
+     where p.owner_id = $1 and p.archived_at is null and p.stage = any($2::text[])
+       and not exists (select 1 from tasks t where t.project_id = p.id and t.status = 'open' and t.archived_at is null)
+     order by p.stage_changed_at asc`,
+    [owner, OPEN_PROJECT_STAGES],
   );
   res.json({
     today,
@@ -47,11 +47,14 @@ tasks.get("/tasks/:id", async (req, res) => {
   const owner = uid(req);
   const id = idOf(req.params.id, "That to-do");
   const task = await db.one(
-    `select t.*, a.name as account_name from tasks t left join accounts a on a.id = t.account_id
+    `select t.*, a.name as account_name, p.name as project_name from tasks t
+     left join accounts a on a.id = t.account_id
+     left join projects p on p.id = t.project_id
      where t.id = $1 and t.owner_id = $2 and t.archived_at is null`,
     [id, owner],
   );
   if (!task) throw notFound("That to-do");
+  const project = task.project_id ? await db.one("select id, name, stage from projects where id = $1", [task.project_id]) : null;
 
   const [account, contact, contacts, last_activity, office] = task.account_id
     ? await Promise.all([
@@ -87,15 +90,18 @@ tasks.get("/tasks/:id", async (req, res) => {
         null,
       ];
 
-  const other = task.account_id
+  // Other open to-dos on the same project (or company, without a project): if there are, no new next step is needed.
+  const scope = task.project_id ? ["project_id", task.project_id] : task.account_id ? ["account_id", task.account_id] : null;
+  const other = scope
     ? await db.one<{ n: number }>(
-        `select count(*)::int as n from tasks where account_id = $1 and id <> $2 and status = 'open' and archived_at is null`,
-        [task.account_id, id],
+        `select count(*)::int as n from tasks where ${scope[0]} = $1 and id <> $2 and status = 'open' and archived_at is null`,
+        [scope[1], id],
       )
     : null;
   res.json({
     task,
     account: account ?? null,
+    project: project ?? null,
     contact: contact ?? null,
     contacts,
     last_activity: last_activity ?? null,

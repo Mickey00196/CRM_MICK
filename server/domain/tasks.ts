@@ -13,9 +13,9 @@ export const TASK_SPEC: Spec = {
   due_date: [f.date(), "Due date"],
   due_time: [f.time(), "Time"],
   priority: [f.oneOf(["normal", "high"], false), "Priority"],
-  account_id: [f.uuid(), "Account"],
+  account_id: [f.uuid(), "Company"],
   contact_id: [f.uuid(), "Contact"],
-  deal_id: [f.uuid(), "Deal"],
+  project_id: [f.uuid(), "Project"],
   notes: [f.text(5000), "Notes"],
 };
 
@@ -50,7 +50,7 @@ export async function createTask(t: Db, owner: string, cols: Record<string, unkn
   const links = await resolveLinks(t, owner, {
     account_id: cols.account_id as string | null,
     contact_id: cols.contact_id as string | null,
-    deal_id: cols.deal_id as string | null,
+    project_id: cols.project_id as string | null,
   });
   const { text, values } = insertSql("tasks", { type: "todo", priority: "normal", ...cols, ...links, owner_id: owner });
   return t.one(text, values);
@@ -59,7 +59,7 @@ export async function createTask(t: Db, owner: string, cols: Record<string, unkn
 /** Partial update. Snoozing moves the due date and records it. */
 export async function updateTask(t: Db, owner: string, id: string, body: any) {
   const existing = await t.one(
-    "select account_id, contact_id, deal_id from tasks where id = $1 and owner_id = $2 and archived_at is null",
+    "select account_id, contact_id, project_id from tasks where id = $1 and owner_id = $2 and archived_at is null",
     [id, owner],
   );
   if (!existing) throw notFound("That to-do");
@@ -70,7 +70,7 @@ export async function updateTask(t: Db, owner: string, id: string, body: any) {
     cols.due_date = until;
     cols.snoozed_until = until;
   }
-  if ("account_id" in cols || "contact_id" in cols || "deal_id" in cols) {
+  if ("account_id" in cols || "contact_id" in cols || "project_id" in cols) {
     Object.assign(cols, await resolveLinks(t, owner, { ...existing, ...pickLinks(cols) }));
   }
   const { text, values } = updateSql("tasks", id, owner, cols);
@@ -79,7 +79,7 @@ export async function updateTask(t: Db, owner: string, id: string, body: any) {
 
 function pickLinks(cols: Record<string, unknown>) {
   const out: Record<string, unknown> = {};
-  for (const k of ["account_id", "contact_id", "deal_id"]) if (k in cols) out[k] = cols[k];
+  for (const k of ["account_id", "contact_id", "project_id"]) if (k in cols) out[k] = cols[k];
   return out;
 }
 
@@ -108,17 +108,17 @@ export async function completeTask(t: Db, owner: string, id: string, input: Comp
   const links = await resolveLinks(t, owner, {
     account_id: task.account_id,
     contact_id: contactId ?? task.contact_id,
-    deal_id: task.deal_id,
+    project_id: task.project_id,
   });
 
   const channel = channelForTaskType(task.type);
   const outcome = channel ? validateOutcome(channel, input.outcome) : null;
   let activity = null;
-  if (task.account_id && (channel || note)) {
+  if ((links.account_id || links.project_id) && (channel || note)) {
     activity = await t.one(
-      `insert into activities (owner_id, account_id, contact_id, deal_id, task_id, channel, direction, outcome, summary, source)
+      `insert into activities (owner_id, account_id, contact_id, project_id, task_id, channel, direction, outcome, summary, source)
        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'todo') returning *`,
-      [owner, links.account_id, links.contact_id, links.deal_id, task.id, channel ?? "note", direction, outcome, note || task.title],
+      [owner, links.account_id, links.contact_id, links.project_id, task.id, channel ?? "note", direction, outcome, note || task.title],
     );
   }
   await t.q("update tasks set status = 'done', completed_at = now(), completion_activity_id = $2 where id = $1", [
@@ -129,7 +129,7 @@ export async function completeTask(t: Db, owner: string, id: string, input: Comp
     ? await createTask(t, owner, {
         ...next,
         account_id: task.account_id,
-        deal_id: task.deal_id,
+        project_id: task.project_id,
         contact_id: next.contact_id ?? links.contact_id,
       })
     : null;

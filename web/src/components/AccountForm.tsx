@@ -23,7 +23,7 @@ export function AccountForm({ onDone }: { onDone: () => void }) {
     contact_role: "",
   });
   const [next, setNext] = useState<NextStepValue>({
-    mode: "new",
+    mode: "none",
     type: "call",
     title: "Intro call",
     due_date: workday(addDays(todayISO(), 1)),
@@ -66,7 +66,7 @@ export function AccountForm({ onDone }: { onDone: () => void }) {
         save();
       }}
     >
-      <Field label="Account name">
+      <Field label="Company name">
         <Input value={f.name} onChange={set("name")} required autoFocus placeholder="Company name" />
       </Field>
       <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
@@ -120,7 +120,7 @@ export function AccountForm({ onDone }: { onDone: () => void }) {
         </div>
       )}
       <div className="flex justify-end">
-        <Button disabled={busy || !f.name.trim()}>Add account</Button>
+        <Button disabled={busy || !f.name.trim()}>Add company</Button>
       </div>
     </form>
   );

@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   CheckCircle2,
+  FolderKanban,
+  FolderPlus,
   Building2,
   Users,
   MessagesSquare,
@@ -19,19 +21,20 @@ import { useStored } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/dropdown";
 import { Sheet } from "@/components/ui/dialog";
-import { UIContext, TASK_DONE, type CaptureKind, type UIActions } from "./ui-context";
+import { UIContext, TASK_DONE, type CaptureKind, type LogPreset, type PageContext, type UIActions } from "./ui-context";
 import { QuickCapture } from "./QuickCapture";
 import { SearchDialog } from "./Search";
-import { LogForm, type LogPreset } from "./LogForm";
+import { LogForm } from "./LogForm";
 import { TaskPanel } from "./TaskPanel";
-import type { PickedAccount } from "./AccountPicker";
+import { Toaster } from "./Toast";
 
 const NAV = [
-  { to: "/", label: "To-dos", icon: CheckCircle2, end: true },
-  { to: "/accounts", label: "Accounts", icon: Building2 },
-  { to: "/contacts", label: "Contacts", icon: Users },
-  { to: "/communication", label: "Communication", icon: MessagesSquare },
-  { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/", label: "To-dos", short: "To-dos", icon: CheckCircle2, end: true },
+  { to: "/projects", label: "Projects", short: "Projects", icon: FolderKanban },
+  { to: "/accounts", label: "Companies", short: "Companies", icon: Building2 },
+  { to: "/contacts", label: "Contacts", short: "Contacts", icon: Users },
+  { to: "/communication", label: "Log", short: "Log", icon: MessagesSquare },
+  { to: "/settings", label: "Settings", short: "Settings", icon: Settings },
 ];
 
 function isTyping(e: KeyboardEvent) {
@@ -41,7 +44,7 @@ function isTyping(e: KeyboardEvent) {
 
 export function Shell({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useStored("nav-collapsed", false);
-  const [capture, setCapture] = useState<{ kind: CaptureKind; account: PickedAccount | null } | null>(null);
+  const [capture, setCapture] = useState<{ kind: CaptureKind; ctx: PageContext } | null>(null);
   const [searching, setSearching] = useState(false);
   const [log, setLog] = useState<LogPreset | null>(null);
   const [task, setTask] = useState<{ id: string; step: "view" | "complete" } | null>(null);
@@ -53,20 +56,20 @@ export function Shell({ children }: { children: ReactNode }) {
     setTask(null);
   }, [location.pathname]);
 
-  const current = useRef<PickedAccount | null>(null);
-  const currentAccount = useCallback(() => current.current, []);
-  const setCurrentAccount = useCallback((a: PickedAccount | null) => {
-    current.current = a;
+  const page = useRef<PageContext | null>(null);
+  const pageContext = useCallback((): PageContext => page.current ?? {}, []);
+  const setPageContext = useCallback((ctx: PageContext | null) => {
+    page.current = ctx;
   }, []);
 
   const ui: UIActions = useMemo(
     () => ({
-      openCapture: (kind = "todo", preset) => setCapture({ kind, account: preset?.account ?? currentAccount() }),
+      openCapture: (kind = "todo", preset) => setCapture({ kind, ctx: preset ?? pageContext() }),
       openLog: (preset) => setLog(preset),
       openTask: (id, step = "view") => setTask({ id, step }),
-      setCurrentAccount,
+      setPageContext,
     }),
-    [currentAccount, setCurrentAccount],
+    [pageContext, setPageContext],
   );
 
   useEffect(() => {
@@ -84,21 +87,25 @@ export function Shell({ children }: { children: ReactNode }) {
       } else if (e.key === "n") {
         e.preventDefault();
         ui.openCapture("todo");
+      } else if (e.key === "p") {
+        e.preventDefault();
+        ui.openCapture("project");
       } else if (e.key === "l") {
         e.preventDefault();
-        const acc = currentAccount();
-        acc ? setLog({ account: acc }) : ui.openCapture("log");
+        const ctx = pageContext();
+        ctx.account || ctx.project ? setLog(ctx) : ui.openCapture("log");
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [ui, currentAccount]);
+  }, [ui, pageContext]);
 
-  const newItems: { kind: CaptureKind; label: string; icon: typeof Plus }[] = [
-    { kind: "todo", label: "To-do", icon: ListTodo },
-    { kind: "log", label: "Log communication", icon: MessageSquarePlus },
-    { kind: "account", label: "Account", icon: Building },
-    { kind: "contact", label: "Contact", icon: UserPlus },
+  const newItems: { kind: CaptureKind; label: string; key: string; icon: typeof Plus }[] = [
+    { kind: "todo", label: "To-do", key: "N", icon: ListTodo },
+    { kind: "project", label: "Project", key: "P", icon: FolderPlus },
+    { kind: "log", label: "Log a call, email or note", key: "L", icon: MessageSquarePlus },
+    { kind: "account", label: "Company", key: "", icon: Building },
+    { kind: "contact", label: "Contact", key: "", icon: UserPlus },
   ];
 
   return (
@@ -134,6 +141,7 @@ export function Shell({ children }: { children: ReactNode }) {
               {newItems.map((i) => (
                 <MenuItem key={i.kind} onSelect={() => ui.openCapture(i.kind)}>
                   <i.icon /> {i.label}
+                  {i.key && <kbd className="ml-auto pl-4 font-sans text-xs text-faint">{i.key}</kbd>}
                 </MenuItem>
               ))}
             </MenuContent>
@@ -178,7 +186,7 @@ export function Shell({ children }: { children: ReactNode }) {
 
           {!collapsed && (
             <p className="mt-auto px-3 text-xs leading-relaxed text-faint">
-              <kbd className="font-sans">⌘K</kbd> capture · <kbd className="font-sans">L</kbd> log · <kbd className="font-sans">/</kbd> search
+              <kbd className="font-sans">N</kbd> to-do · <kbd className="font-sans">P</kbd> project · <kbd className="font-sans">L</kbd> log
             </p>
           )}
         </aside>
@@ -201,7 +209,7 @@ export function Shell({ children }: { children: ReactNode }) {
 
         {/* Bottom bar (mobile) */}
         <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-line bg-bg/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
-          {[NAV[0], NAV[1], null, NAV[3], NAV[2]].map((n, i) =>
+          {[NAV[0], NAV[1], null, NAV[2], NAV[4]].map((n, i) =>
             n ? (
               <NavLink
                 key={n.to}
@@ -210,7 +218,7 @@ export function Shell({ children }: { children: ReactNode }) {
                 className={({ isActive }) => cn("flex flex-col items-center gap-0.5 py-2 text-[11px]", isActive ? "text-fg" : "text-faint")}
               >
                 <n.icon className="size-5" />
-                {n.label === "Communication" ? "Log" : n.label}
+                {n.short}
               </NavLink>
             ) : (
               <button key={i} onClick={() => ui.openCapture("todo")} className="flex flex-col items-center justify-center" aria-label="New">
@@ -227,8 +235,8 @@ export function Shell({ children }: { children: ReactNode }) {
       <QuickCapture
         open={capture !== null}
         kind={capture?.kind ?? "todo"}
-        account={capture?.account ?? null}
-        onKind={(kind) => setCapture((c) => ({ kind, account: c?.account ?? null }))}
+        ctx={capture?.ctx ?? {}}
+        onKind={(kind) => setCapture((c) => ({ kind, ctx: c?.ctx ?? {} }))}
         onClose={() => setCapture(null)}
       />
       <SearchDialog open={searching} onClose={() => setSearching(false)} />
@@ -252,6 +260,7 @@ export function Shell({ children }: { children: ReactNode }) {
         )}
       </Sheet>
 
+      <Toaster />
     </UIContext.Provider>
   );
 }

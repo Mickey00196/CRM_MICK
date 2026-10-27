@@ -260,4 +260,47 @@ ${["users", "accounts", "office_locations", "contacts", "deals", "tasks", "activ
     id: "002_session_version",
     sql: `alter table users add column session_version integer not null default 1;`,
   },
+  {
+    // Personal use: projects you add yourself replace the sales "deals" (which were never used).
+    id: "003_projects",
+    sql: `
+create table projects (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references users(id) on delete cascade,
+  name text not null,
+  stage text not null default 'todo' check (stage in ('todo', 'active', 'waiting', 'done')),
+  account_id uuid references accounts(id) on delete set null,
+  contact_id uuid references contacts(id) on delete set null,
+  waiting_on text not null default '',
+  target_date date,
+  notes text not null default '',
+  stage_changed_at timestamptz not null default now(),
+  done_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  archived_at timestamptz
+);
+create index projects_owner_idx on projects (owner_id, stage) where archived_at is null;
+create index projects_account_idx on projects (account_id);
+${updatedAtTrigger("projects")}
+
+alter table tasks add column project_id uuid references projects(id) on delete set null;
+create index tasks_project_idx on tasks (project_id) where status = 'open' and archived_at is null;
+
+alter table activities add column project_id uuid references projects(id) on delete set null;
+alter table activities alter column account_id drop not null;
+alter table activities add constraint activities_has_subject check (account_id is not null or project_id is not null);
+create index activities_project_idx on activities (project_id, occurred_at desc) where archived_at is null;
+
+alter table tasks drop column deal_id;
+alter table activities drop column deal_id;
+alter table documents drop column deal_id;
+alter table documents add column project_id uuid references projects(id) on delete set null;
+drop table deals;
+
+alter table custom_field_definitions drop constraint custom_field_definitions_entity_check;
+alter table custom_field_definitions add constraint custom_field_definitions_entity_check
+  check (entity in ('account', 'contact', 'project', 'office_location'));
+`,
+  },
 ];

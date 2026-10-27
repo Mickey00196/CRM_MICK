@@ -1,36 +1,45 @@
 import { createContext, useContext, useEffect } from "react";
-import type { LogPreset } from "./LogForm";
-import type { PickedAccount } from "./AccountPicker";
+import type { Channel } from "@shared/model";
+import type { PickedAccount, PickedProject } from "./Pickers";
 
-export type CaptureKind = "todo" | "log" | "account" | "contact";
+export type CaptureKind = "todo" | "project" | "log" | "account" | "contact";
+
+/** What the open page is about, so capture and "L" default to it. */
+export interface PageContext {
+  account?: PickedAccount | null;
+  project?: PickedProject | null;
+}
+
+export interface LogPreset extends PageContext {
+  contact_id?: string | null;
+  channel?: Channel;
+}
 
 export interface UIActions {
-  openCapture: (kind?: CaptureKind, preset?: { account?: PickedAccount | null }) => void;
+  openCapture: (kind?: CaptureKind, preset?: PageContext) => void;
   openLog: (preset: LogPreset) => void;
   openTask: (id: string, step?: "view" | "complete") => void;
-  /** The account the open page is about, so capture and "L" can default to it. */
-  setCurrentAccount: (account: PickedAccount | null) => void;
+  setPageContext: (ctx: PageContext | null) => void;
 }
 
 export const UIContext = createContext<UIActions>({
   openCapture: () => {},
   openLog: () => {},
   openTask: () => {},
-  setCurrentAccount: () => {},
+  setPageContext: () => {},
 });
 
 export const useUI = () => useContext(UIContext);
 
-/** Registers the page's account while it's mounted. */
-export function useCurrentAccount(account: PickedAccount | null) {
-  const { setCurrentAccount } = useUI();
-  const id = account?.id ?? null;
-  const name = account?.name ?? "";
+/** Registers the page's company and/or project while it's mounted. */
+export function usePageContext(ctx: PageContext | null) {
+  const { setPageContext } = useUI();
+  const key = JSON.stringify(ctx ?? null);
   useEffect(() => {
-    setCurrentAccount(id ? { id, name } : null);
-    return () => setCurrentAccount(null);
-  }, [id, name, setCurrentAccount]);
+    setPageContext(JSON.parse(key));
+    return () => setPageContext(null);
+  }, [key, setPageContext]);
 }
 
-/** Window event with the id of a to-do that was just completed or snoozed from the panel. */
+/** Window event with the id of a to-do that was just completed or snoozed, so lists can fade it out. */
 export const TASK_DONE = "crm:task-done";

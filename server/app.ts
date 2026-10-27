@@ -11,6 +11,7 @@ import { activities } from "./routes/activities.js";
 import { accounts } from "./routes/accounts.js";
 import { contacts } from "./routes/contacts.js";
 import { misc } from "./routes/misc.js";
+import { projects } from "./routes/projects.js";
 
 const CSP = [
   "default-src 'self'",
@@ -72,7 +73,7 @@ export function createApp() {
 
   app.use("/api", requireAuth);
   app.post("/api/logout-everywhere", logoutEverywhere);
-  app.use("/api", tasks, activities, accounts, contacts, misc);
+  app.use("/api", tasks, projects, activities, accounts, contacts, misc);
   app.use("/api", (_req, res) => {
     res.status(404).json({ error: "Not found." });
   });

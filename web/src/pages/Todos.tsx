@@ -1,14 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { accountStatusLabel, type TodoList, type TodoRow } from "@shared/model";
+import { projectStageLabel, type TodoList, type TodoRow } from "@shared/model";
 import { api, DATA_CHANGED } from "@/lib/api";
-import { daysBetween, dmy, longDate, relative } from "@/lib/format";
-import { cn } from "@/lib/utils";
+import { longDate, relative } from "@/lib/format";
 import { TASK_DONE, useUI } from "@/components/ui-context";
+import { TodoItem } from "@/components/TodoItem";
 
-/** Calm list of what to follow up. Rows show only the account (or title) and the due date. */
+// Last list, so coming back to this page is instant.
+let lastList: TodoList | null = null;
+
+/** Start page: what needs doing, nothing else. */
 export function Todos() {
-  const [data, setData] = useState<TodoList | null>(null);
+  const [data, setData] = useState<TodoList | null>(lastList);
   const [error, setError] = useState<string | null>(null);
   const [fading, setFading] = useState<Set<string>>(new Set());
   const [showStalled, setShowStalled] = useState(false);
@@ -17,28 +20,29 @@ export function Todos() {
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
-    const load = () =>
-      api<TodoList>("/todos")
+    let seq = 0;
+    const load = () => {
+      const n = ++seq;
+      return api<TodoList>("/todos")
         .then((d) => {
+          if (n !== seq) return;
+          lastList = d;
           setData(d);
           setError(null);
           fadingRef.current = new Set();
           setFading(new Set());
         })
         .catch((e) => setError(e.message));
-
-    // Wait a beat so a just-finished row can fade before the list refreshes.
-    const onChange = () =>
-      setTimeout(() => {
-        clearTimeout(timer);
-        timer = setTimeout(load, fadingRef.current.size ? 300 : 0);
-      }, 0);
+    };
+    // Give a finished row a moment to fade before the list refreshes.
+    const onChange = () => {
+      clearTimeout(timer);
+      timer = setTimeout(load, fadingRef.current.size ? 300 : 0);
+    };
     const onDone = (e: Event) => {
-      const id = (e as CustomEvent<string>).detail;
-      fadingRef.current.add(id);
+      fadingRef.current.add((e as CustomEvent<string>).detail);
       setFading(new Set(fadingRef.current));
     };
-
     load();
     window.addEventListener(DATA_CHANGED, onChange);
     window.addEventListener(TASK_DONE, onDone);
@@ -49,7 +53,7 @@ export function Todos() {
     };
   }, []);
 
-  if (error) return <p className="text-sm text-late">{error}</p>;
+  if (error && !data) return <p className="text-sm text-late">{error}</p>;
   if (!data) return null;
 
   const empty = !data.overdue.length && !data.due_today.length && !data.upcoming.length;
@@ -65,28 +69,31 @@ export function Todos() {
 
       {empty && (
         <p className="py-10 text-muted">
-          Nothing to follow up. Press <kbd className="rounded border border-line px-1 text-xs">⌘K</kbd> to add a to-do.
+          Nothing to do. Press <kbd className="rounded border border-line px-1 text-xs">N</kbd> to add a to-do or{" "}
+          <kbd className="rounded border border-line px-1 text-xs">P</kbd> to start a project.
         </p>
       )}
 
-      <Section label="Overdue" rows={data.overdue} today={data.today} fading={fading} />
-      <Section label="Today" rows={data.due_today} today={data.today} fading={fading} />
-      <Section label="Upcoming" rows={data.upcoming} today={data.today} fading={fading} />
+      <Section label="Overdue" rows={data.overdue} fading={fading} />
+      <Section label="Today" rows={data.due_today} fading={fading} />
+      <Section label="Upcoming" rows={data.upcoming} fading={fading} />
 
       {data.no_next_step.length > 0 && (
         <div className="mt-14 text-[13px]">
           <button onClick={() => setShowStalled((v) => !v)} className="text-muted hover:text-fg" aria-expanded={showStalled}>
-            No next step ({data.no_next_step.length})
+            Projects without a next step ({data.no_next_step.length})
           </button>
           {showStalled && (
             <ul className="mt-3">
-              {data.no_next_step.map((a) => (
-                <li key={a.id} className="flex items-baseline justify-between gap-4 border-t border-line py-3 first:border-t-0">
-                  <Link to={`/accounts/${a.id}`} className="text-sm text-fg hover:text-accent">
-                    {a.name}
+              {data.no_next_step.map((p) => (
+                <li key={p.id} className="flex items-baseline justify-between gap-4 border-t border-line py-3 first:border-t-0">
+                  <Link to={`/projects/${p.id}`} className="min-w-0 truncate text-sm text-fg hover:text-accent">
+                    {p.name}
+                    {p.account_name && <span className="text-muted"> · {p.account_name}</span>}
                   </Link>
-                  <span className="text-[13px] text-faint">
-                    {accountStatusLabel(a.status)} · {a.last_contact_at ? `last contact ${relative(a.last_contact_at)}` : "never contacted"}
+                  <span className="shrink-0 text-[13px] text-faint">
+                    {projectStageLabel(p.stage)}
+                    {p.last_activity_at && ` · last update ${relative(p.last_activity_at)}`}
                   </span>
                 </li>
               ))}
@@ -98,40 +105,16 @@ export function Todos() {
   );
 }
 
-function Section({ label, rows, today, fading }: { label: string; rows: TodoRow[]; today: string; fading: Set<string> }) {
-  const ui = useUI();
+function Section({ label, rows, fading }: { label: string; rows: TodoRow[]; fading: Set<string> }) {
   if (!rows.length) return null;
   return (
     <section className="mb-10">
       <h2 className="label mb-1">{label}</h2>
       <ul>
         {rows.map((r) => (
-          <li key={r.id} className={cn("border-b border-line", fading.has(r.id) && "fade-out")}>
-            <div className="flex items-center gap-4 py-4">
-              <button
-                onClick={() => ui.openTask(r.id, "complete")}
-                className="group grid size-5 shrink-0 place-items-center rounded-full border-[1.5px] border-line-strong transition-colors hover:border-fg"
-                aria-label={`Complete ${r.title}`}
-              >
-                <span className="size-2 rounded-full bg-fg opacity-0 transition-opacity group-hover:opacity-30" />
-              </button>
-              <button onClick={() => ui.openTask(r.id)} className="flex min-w-0 flex-1 items-baseline justify-between gap-4 text-left">
-                <span className="truncate">{r.account_name ?? r.title}</span>
-                <span className={cn("shrink-0 text-sm", r.due_date && r.due_date < today ? "text-late" : "text-muted")}>
-                  {dueLabel(r.due_date, r.due_time, today)}
-                </span>
-              </button>
-            </div>
-          </li>
+          <TodoItem key={r.id} todo={r} context={r.project_name ?? r.account_name} fading={fading.has(r.id)} showType hideToday />
         ))}
       </ul>
     </section>
   );
-}
-
-function dueLabel(due: string | null, time: string | null, today: string): string {
-  if (!due) return "";
-  // Today's rows show just the time (the section already says Today).
-  if (due === today) return time ?? "";
-  return time && daysBetween(today, due) < 7 ? `${dmy(due)} ${time}` : dmy(due);
 }

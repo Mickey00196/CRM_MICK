@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowDown, ArrowUp, Columns3, Download, Search } from "lucide-react";
 import { ACCOUNT_STATUSES, accountStatusLabel, type AccountRow } from "@shared/model";
-import { api, useLoad, useStored } from "@/lib/api";
+import { api, useApi, useStored } from "@/lib/api";
 import { dmy, m2, todayISO } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,7 @@ interface SavedView {
 }
 
 export function Accounts() {
-  const { data, error } = useLoad(() => api<AccountRow[]>("/accounts"), []);
+  const { data, error } = useApi<AccountRow[]>("/accounts");
   const [view, setView] = useStored("accounts-view", "all");
   const [cols, setCols] = useStored<ColKey[]>("accounts-cols", DEFAULT_COLS);
   const [sort, setSort] = useStored<{ key: string; dir: 1 | -1 }>("accounts-sort", { key: "name", dir: 1 });
@@ -82,7 +82,7 @@ export function Accounts() {
   }
 
   async function bulk(body: Record<string, unknown>) {
-    if (body.action === "archive" && !confirm(`Archive ${selected.size} account${selected.size === 1 ? "" : "s"}?`)) return;
+    if (body.action === "archive" && !confirm(`Archive ${selected.size} compan${selected.size === 1 ? "y" : "ies"}?`)) return;
     await api("/accounts/bulk", "POST", { ids: [...selected], ...body });
     setSelected(new Set());
   }
@@ -99,9 +99,9 @@ export function Accounts() {
   return (
     <div className="mx-auto max-w-6xl">
       <header className="mb-8 flex flex-wrap items-baseline justify-between gap-4">
-        <h1 className="title text-2xl">Accounts</h1>
+        <h1 className="title text-2xl">Companies</h1>
         <Button variant="ghost" size="sm" onClick={() => ui.openCapture("account")}>
-          + Add account
+          + Add company
         </Button>
       </header>
 
@@ -210,7 +210,7 @@ export function Accounts() {
 
       {data && rows.length === 0 ? (
         <p className="py-12 text-center text-muted">
-          {data.length === 0 ? "No accounts yet. Add your first one to get started." : "No accounts match this view."}
+          {data.length === 0 ? "No companies yet. Add one when a project involves a client or prospect." : "No companies match this view."}
         </p>
       ) : (
         <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
@@ -226,7 +226,7 @@ export function Accounts() {
                     aria-label="Select all"
                   />
                 </th>
-                <SortHeader label="Account" k="name" sort={sort} onSort={toggleSort} />
+                <SortHeader label="Company" k="name" sort={sort} onSort={toggleSort} />
                 {shown.map((c) => (
                   <SortHeader key={c.key} label={c.label} k={c.key} sort={sort} onSort={toggleSort} className={c.className} />
                 ))}
@@ -304,7 +304,7 @@ function Cell({ row: a, col, today }: { row: AccountRow; col: ColKey; today: str
       return <>{dmy(a.lease_end)}</>;
     case "next_step": {
       if (!a.next_step) {
-        return ["prospect", "client"].includes(a.status) ? <span className="text-missing">None</span> : <span className="text-faint">–</span>;
+        return <span className="text-faint">–</span>;
       }
       const late = a.next_step.due_date && a.next_step.due_date < today;
       return (

@@ -12,6 +12,7 @@ const ts = (n: number, hh = 10) => new Date(`${d(n)}T${String(hh).padStart(2, "0
 const ACCOUNTS = [
   {
     name: "Northwind Logistics",
+    project: { name: "Northwind: lease renewal vs relocation", stage: "active" },
     website: "northwind-logistics.example",
     status: "prospect",
     industry: "Logistics",
@@ -22,6 +23,7 @@ const ACCOUNTS = [
   },
   {
     name: "Halden & Roe",
+    project: { name: "Halden & Roe: new office Zuid", stage: "active" },
     website: "haldenroe.example",
     status: "client",
     industry: "Legal",
@@ -38,6 +40,7 @@ const ACCOUNTS = [
   },
   {
     name: "Verity Health",
+    project: { name: "Verity Health: search mandate", stage: "waiting", waiting_on: "Signed proposal back from Mark" },
     website: "verityhealth.example",
     status: "prospect",
     industry: "Healthcare",
@@ -48,6 +51,7 @@ const ACCOUNTS = [
   },
   {
     name: "Stellar Freight",
+    project: { name: "Stellar Freight: flex options", stage: "todo" },
     website: "stellarfreight.example",
     status: "prospect",
     industry: "Logistics",
@@ -58,6 +62,7 @@ const ACCOUNTS = [
   },
   {
     name: "Lumen Studio",
+    project: { name: "Lumen Studio: expansion Noord", stage: "active" },
     website: "lumenstudio.example",
     status: "prospect",
     industry: "Creative agency",
@@ -68,6 +73,7 @@ const ACCOUNTS = [
   },
   {
     name: "Brightwater Capital",
+    project: { name: "Brightwater: intro", stage: "todo" },
     website: "brightwater.example",
     status: "lead",
     industry: "Finance",
@@ -99,6 +105,7 @@ async function main() {
         owner_id: user.id, name: a.name, website: a.website, domain: a.website, status: a.status, industry: a.industry, tags: ["demo"],
       });
       await ins(t, "office_locations", { owner_id: user.id, account_id: acc.id, is_primary: true, ...a.office });
+      const project = await ins(t, "projects", { owner_id: user.id, account_id: acc.id, waiting_on: "", ...a.project });
       const contactIds: string[] = [];
       for (const c of a.contacts) {
         const row = await ins(t, "contacts", { owner_id: user.id, account_id: acc.id, lawful_basis: "legitimate_interest", ...c });
@@ -106,19 +113,24 @@ async function main() {
       }
       for (const l of a.log) {
         await ins(t, "activities", {
-          owner_id: user.id, account_id: acc.id, contact_id: contactIds[0] ?? null, channel: l.channel, outcome: l.outcome,
+          owner_id: user.id, account_id: acc.id, project_id: project.id, contact_id: contactIds[0] ?? null, channel: l.channel, outcome: l.outcome,
           direction: (l as any).direction ?? "outbound", summary: l.summary, occurred_at: ts(l.at), expect_reply: Boolean((l as any).expect_reply),
         });
       }
       for (const k of a.tasks) {
         await ins(t, "tasks", {
-          owner_id: user.id, account_id: acc.id, contact_id: contactIds[0] ?? null, title: k.title, type: k.type, due_date: d(k.due),
+          owner_id: user.id, account_id: acc.id, project_id: project.id, contact_id: contactIds[0] ?? null, title: k.title, type: k.type, due_date: d(k.due),
         });
       }
     }
+    // Projects without a company: your own work.
+    const tool = await ins(t, "projects", { owner_id: user.id, name: "Office Shortlist tool", stage: "active", notes: "Side project." });
+    await ins(t, "tasks", { owner_id: user.id, project_id: tool.id, title: "Fix Funda scraper", type: "todo", due_date: d(1) });
+    await ins(t, "projects", { owner_id: user.id, name: "Q4 market update for partners", stage: "todo" });
+    await ins(t, "projects", { owner_id: user.id, name: "Kantoor Amstel: signed", stage: "done", done_at: ts(-12) });
     await t.q("insert into tasks (owner_id, title, type, due_date) values ($1, 'Update LinkedIn headline', 'todo', $2)", [user.id, d(4)]);
   });
-  console.log(`Added ${ACCOUNTS.length} demo accounts (tagged "demo").`);
+  console.log(`Added ${ACCOUNTS.length} demo companies and ${ACCOUNTS.length + 3} projects (tagged "demo").`);
 }
 
 main()

@@ -70,38 +70,37 @@ describe("authentication and request hygiene", () => {
 describe("tenant isolation", () => {
   let aAccount: string;
   let aTask: string;
-  let bDeal: string;
+  let aProject: string;
+  let bProject: string;
 
   before(async () => {
     aAccount = await account(a, { name: "A Corp", contact: { name: "Ann" } });
     aTask = (await a.post("/tasks", { title: "A's task", account_id: aAccount })).data.id;
-    const bAccount = await account(b, { name: "B Corp" });
-    const [bUser] = await env.q("select id from users where email = $1", [USERS.b.email]);
-    [{ id: bDeal }] = await env.q("insert into deals (owner_id, account_id, name) values ($1, $2, 'B deal') returning id", [
-      bUser.id,
-      bAccount,
-    ]);
+    aProject = (await a.post("/projects", { name: "A's project" })).data.id;
+    bProject = (await b.post("/projects", { name: "B's project" })).data.id;
   });
 
   test("another user can't read, list or change my records", async () => {
     assert.equal((await b.get(`/accounts/${aAccount}`)).status, 404);
     assert.equal((await b.get(`/tasks/${aTask}`)).status, 404);
+    assert.equal((await b.get(`/projects/${aProject}`)).status, 404);
     assert.equal((await b.patch(`/tasks/${aTask}`, { title: "hijacked" })).status, 404);
+    assert.equal((await b.patch(`/projects/${aProject}`, { stage: "done" })).status, 404);
     assert.equal((await b.post(`/tasks/${aTask}/complete`, {})).status, 404);
-    const list = await b.get("/accounts");
-    assert.ok(!list.data.some((x: any) => x.id === aAccount));
-    const search = await b.get("/search?q=A%20Corp");
-    assert.equal(search.data.length, 0);
+    assert.ok(!(await b.get("/accounts")).data.some((x: any) => x.id === aAccount));
+    assert.ok(!(await b.get("/projects")).data.some((x: any) => x.id === aProject));
+    assert.equal((await b.get("/search?q=A%20Corp")).data.length, 0);
   });
 
-  test("another user can't attach records to my account", async () => {
+  test("another user can't attach records to my company or project", async () => {
     assert.equal((await b.post("/tasks", { title: "x", account_id: aAccount })).status, 404);
+    assert.equal((await b.post("/tasks", { title: "x", project_id: aProject })).status, 404);
     assert.equal((await b.post("/activities", { account_id: aAccount, channel: "call" })).status, 404);
+    assert.equal((await b.post("/projects", { name: "x", account_id: aAccount })).status, 404);
   });
 
-  test("I can't link someone else's deal to my to-do", async () => {
-    const r = await a.patch(`/tasks/${aTask}`, { deal_id: bDeal });
-    assert.equal(r.status, 404);
+  test("I can't link someone else's project to my to-do", async () => {
+    assert.equal((await a.patch(`/tasks/${aTask}`, { project_id: bProject })).status, 404);
   });
 });
 
@@ -112,9 +111,87 @@ describe("link integrity", () => {
     const bob = await contactOf(beta);
     const r = await a.post("/activities", { account_id: acme, channel: "call", contact_id: bob });
     assert.equal(r.status, 400);
-    assert.match(r.data.error, /Bob is a contact at a different account/);
+    assert.match(r.data.error, /Bob works at a different company/);
     const t = await a.post("/tasks", { title: "x", account_id: acme, contact_id: bob });
     assert.equal(t.status, 400);
+  });
+
+  test("a to-do can't be on a project and a different company", async () => {
+    const acme = await account(a, { name: "Acme 2" });
+    const beta = await account(a, { name: "Beta 2" });
+    const project = (await a.post("/projects", { name: "Acme move", account_id: acme })).data.id;
+    const r = await a.post("/tasks", { title: "x", project_id: project, account_id: beta });
+    assert.equal(r.status, 400);
+    assert.match(r.data.error, /different company/);
+    const ok = (await a.post("/tasks", { title: "y", project_id: project })).data;
+    assert.equal(ok.account_id, acme, "the project's company is filled in");
+  });
+});
+
+describe("projects", () => {
+  test("a project with a first to-do shows up on the board and the to-do list", async () => {
+    const r = await a.post("/projects", { name: "Q4 market update", stage: "active", next: { title: "Draft outline", due_date: "2026-11-03" } });
+    assert.equal(r.status, 201, JSON.stringify(r.data));
+    const board = (await a.get("/projects")).data.find((p: any) => p.id === r.data.id);
+    assert.equal(board.stage, "active");
+    assert.equal(board.next_step.title, "Draft outline");
+    assert.equal(board.open_tasks, 1);
+    const todos = (await a.get("/todos")).data;
+    const row = [...todos.overdue, ...todos.due_today, ...todos.upcoming].find((t: any) => t.title === "Draft outline");
+    assert.equal(row.project_name, "Q4 market update");
+  });
+
+  test("finishing the last to-do flags the project as having no next step", async () => {
+    const p = (await a.post("/projects", { name: "Lonely project", next: { title: "Only step", due_date: "2026-11-03" } })).data;
+    let todos = (await a.get("/todos")).data;
+    assert.ok(!todos.no_next_step.some((x: any) => x.id === p.id));
+    const [task] = await env.q("select id from tasks where project_id = $1", [p.id]);
+    assert.equal((await a.post(`/tasks/${task.id}/complete`, {})).status, 200);
+    todos = (await a.get("/todos")).data;
+    assert.ok(todos.no_next_step.some((x: any) => x.id === p.id));
+    await a.patch(`/projects/${p.id}`, { stage: "done" });
+    todos = (await a.get("/todos")).data;
+    assert.ok(!todos.no_next_step.some((x: any) => x.id === p.id), "done projects don't need a next step");
+  });
+
+  test("moving to Done records when, moving back clears it", async () => {
+    const p = (await a.post("/projects", { name: "Stage test" })).data;
+    assert.equal(p.stage, "todo");
+    const done = (await a.patch(`/projects/${p.id}`, { stage: "done" })).data;
+    assert.ok(done.done_at);
+    const back = (await a.patch(`/projects/${p.id}`, { stage: "waiting", waiting_on: "Landlord" })).data;
+    assert.equal(back.done_at, null);
+    assert.equal(back.waiting_on, "Landlord");
+    assert.equal((await a.patch(`/projects/${p.id}`, { stage: "archived" })).status, 400);
+  });
+
+  test("a project without a company can still have notes and calls logged", async () => {
+    const p = (await a.post("/projects", { name: "Side project" })).data;
+    const note = await a.post("/activities", { project_id: p.id, channel: "note", summary: "Idea for the scraper" });
+    assert.equal(note.status, 201, JSON.stringify(note.data));
+    assert.equal(note.data.activity.account_id, null);
+    const detail = (await a.get(`/projects/${p.id}`)).data;
+    assert.equal(detail.activities.length, 1);
+    const nothing = await a.post("/activities", { channel: "note", summary: "About nothing" });
+    assert.equal(nothing.status, 400);
+  });
+
+  test("a plain to-do on a project completes without a log entry; a call logs on the project", async () => {
+    const p = (await a.post("/projects", { name: "Logging test" })).data;
+    const todo = (await a.post("/tasks", { title: "Book room", project_id: p.id })).data;
+    const r1 = await a.post(`/tasks/${todo.id}/complete`, {});
+    assert.equal(r1.data.activity, null);
+    const call = (await a.post("/tasks", { title: "Call landlord", type: "call", project_id: p.id })).data;
+    const r2 = await a.post(`/tasks/${call.id}/complete`, { outcome: "reached", note: "Agreed on viewing" });
+    assert.equal(r2.data.activity.project_id, p.id);
+  });
+
+  test("giving a project a company moves its to-dos along", async () => {
+    const p = (await a.post("/projects", { name: "Needs a company", next: { title: "Step", due_date: "2026-11-03" } })).data;
+    const co = await account(a, { name: "Later Co" });
+    await a.patch(`/projects/${p.id}`, { account_id: co });
+    const [task] = await env.q("select account_id from tasks where project_id = $1", [p.id]);
+    assert.equal(task.account_id, co);
   });
 });
 
@@ -186,14 +263,6 @@ describe("to-do completion flow", () => {
     assert.ok(row.replied_at);
   });
 
-  test("an account with a next step leaves the no-next-step list", async () => {
-    const lonely = await account(a, { name: "Lonely BV", status: "prospect" });
-    let todos = (await a.get("/todos")).data;
-    assert.ok(todos.no_next_step.some((x: any) => x.id === lonely));
-    await a.post("/tasks", { title: "Intro", account_id: lonely, due_date: "2026-11-02" });
-    todos = (await a.get("/todos")).data;
-    assert.ok(!todos.no_next_step.some((x: any) => x.id === lonely));
-  });
 });
 
 describe("accounts", () => {

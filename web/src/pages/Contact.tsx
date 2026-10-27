@@ -2,22 +2,22 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Mail, Phone, Link2 } from "lucide-react";
 import { buyingRoleLabel, taskTypeLabel, type ContactDetail } from "@shared/model";
-import { api, useLoad } from "@/lib/api";
+import { api, useApi } from "@/lib/api";
 import { dmy, relative, todayISO } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/dialog";
 import { Timeline } from "@/components/Timeline";
-import { useCurrentAccount, useUI } from "@/components/ui-context";
+import { usePageContext, useUI } from "@/components/ui-context";
 import { ContactForm } from "@/components/ContactForm";
 
 export function ContactPage() {
   const id = useParams().id!;
-  const { data, error } = useLoad(() => api<ContactDetail>(`/contacts/${id}`), [id]);
+  const { data, error } = useApi<ContactDetail>(`/contacts/${id}`);
   const [editing, setEditing] = useState(false);
   const ui = useUI();
   const today = todayISO();
-  useCurrentAccount(data?.contact.account_id ? { id: data.contact.account_id, name: data.contact.account_name ?? "" } : null);
+  usePageContext(data?.contact.account_id ? { account: { id: data.contact.account_id, name: data.contact.account_name ?? "" } } : null);
 
   if (error) return <p className="text-sm text-late">{error}</p>;
   if (!data) return null;
@@ -100,7 +100,7 @@ export function ContactPage() {
 
       <section className="mt-12">
         <h2 className="label mb-3">Communication</h2>
-        <Timeline items={activities} empty="Nothing logged with this contact yet." />
+        <Timeline items={activities} showProject empty="Nothing logged with this contact yet." />
       </section>
 
       <Sheet open={editing} onOpenChange={setEditing} title="Edit contact">

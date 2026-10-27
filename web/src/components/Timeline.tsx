@@ -9,10 +9,14 @@ import { cn } from "@/lib/utils";
 export function Timeline({
   items,
   showAccount = false,
+  showProject = false,
   empty = "Nothing logged yet.",
 }: {
   items: ActivityRow[];
+  /** Show which company each entry is about. */
   showAccount?: boolean;
+  /** Show which project each entry is about. */
+  showProject?: boolean;
   empty?: string;
 }) {
   if (!items.length) return <p className="py-6 text-sm text-muted">{empty}</p>;
@@ -43,7 +47,15 @@ export function Timeline({
               <p className="text-sm">
                 <span className="font-medium">{channelLabel(a.channel)}</span>
                 {meta.length > 0 && <span className="text-muted"> · {meta.join(" · ")}</span>}
-                {showAccount && (
+                {showProject && a.project_id && (
+                  <>
+                    <span className="text-muted"> · </span>
+                    <Link to={`/projects/${a.project_id}`} className="text-muted hover:text-accent">
+                      {a.project_name}
+                    </Link>
+                  </>
+                )}
+                {showAccount && a.account_id && !(showProject && a.project_id) && (
                   <>
                     <span className="text-muted"> · </span>
                     <Link to={`/accounts/${a.account_id}`} className="text-muted hover:text-accent">

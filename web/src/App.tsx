@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { api, setUnauthorizedHandler } from "@/lib/api";
+import { api, clearCache, setUnauthorizedHandler } from "@/lib/api";
 import { setTimezone } from "@/lib/format";
 import { Shell } from "@/components/Shell";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Login } from "@/pages/Login";
 import { Todos } from "@/pages/Todos";
+import { Projects } from "@/pages/Projects";
+import { ProjectPage } from "@/pages/Project";
 import { Accounts } from "@/pages/Accounts";
 import { AccountPage } from "@/pages/Account";
 import { Contacts } from "@/pages/Contacts";
@@ -17,7 +19,10 @@ export default function App() {
   const [authed, setAuthed] = useState<boolean | null>(null);
 
   useEffect(() => {
-    setUnauthorizedHandler(() => setAuthed(false));
+    setUnauthorizedHandler(() => {
+      clearCache();
+      setAuthed(false);
+    });
     api<{ user: unknown; timezone: string }>("/me")
       .then((r) => {
         setTimezone(r.timezone);
@@ -31,7 +36,12 @@ export default function App() {
 
   return (
     <Shell>
-      <Pages onLogout={() => setAuthed(false)} />
+      <Pages
+        onLogout={() => {
+          clearCache();
+          setAuthed(false);
+        }}
+      />
     </Shell>
   );
 }
@@ -43,6 +53,8 @@ function Pages({ onLogout }: { onLogout: () => void }) {
     <ErrorBoundary key={location.pathname}>
       <Routes>
         <Route path="/" element={<Todos />} />
+        <Route path="/projects" element={<Projects />} />
+        <Route path="/projects/:id" element={<ProjectPage />} />
         <Route path="/accounts" element={<Accounts />} />
         <Route path="/accounts/:id" element={<AccountPage />} />
         <Route path="/contacts" element={<Contacts />} />

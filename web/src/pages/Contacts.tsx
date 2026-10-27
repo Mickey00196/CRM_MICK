@@ -2,14 +2,14 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 import { buyingRoleLabel, type Contact } from "@shared/model";
-import { api, useLoad } from "@/lib/api";
+import { api, useApi } from "@/lib/api";
 import { dmy } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useUI } from "@/components/ui-context";
 
 export function Contacts() {
-  const { data, error } = useLoad(() => api<Contact[]>("/contacts"), []);
+  const { data, error } = useApi<Contact[]>("/contacts");
   const [q, setQ] = useState("");
   const navigate = useNavigate();
   const ui = useUI();

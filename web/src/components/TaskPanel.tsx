@@ -9,6 +9,7 @@ import {
   outcomeLabel,
   suggestNextStep,
   taskTypeLabel,
+  projectStageLabel,
   type TaskDetail,
   type TaskType,
 } from "@shared/model";
@@ -89,7 +90,7 @@ function ViewStep({
   onClose: () => void;
   onSnoozed: () => void;
 }) {
-  const { task, account, contact, last_activity: last, office } = data;
+  const { task, account, project, contact, last_activity: last, office } = data;
   const ui = useUI();
   const today = todayISO();
 
@@ -127,19 +128,35 @@ function ViewStep({
             </div>
           </MenuContent>
         </Menu>
-        {account && (
+        {(account || project) && (
           <Button
             variant="outline"
-            onClick={() => ui.openLog({ account: { id: account.id, name: account.name }, contact_id: contact?.id ?? null, channel: channelForTaskType(task.type) ?? "call" })}
+            onClick={() =>
+              ui.openLog({
+                project: project ? { id: project.id, name: project.name } : null,
+                account: account ? { id: account.id, name: account.name } : null,
+                contact_id: contact?.id ?? null,
+                channel: channelForTaskType(task.type) ?? "note",
+              })
+            }
           >
-            Log communication
+            Log something
           </Button>
         )}
       </div>
 
       <div className="mt-6">
+        {project && (
+          <Section label="Project">
+            <Link to={`/projects/${project.id}`} onClick={onClose} className="inline-flex items-center gap-1 font-medium hover:text-accent">
+              {project.name} <ArrowUpRight className="size-3.5 text-faint" />
+            </Link>
+            <span className="ml-2 text-sm text-muted">{projectStageLabel(project.stage)}</span>
+          </Section>
+        )}
+
         {account && (
-          <Section label="Account">
+          <Section label="Company">
             <Link to={`/accounts/${account.id}`} onClick={onClose} className="inline-flex items-center gap-1 font-medium hover:text-accent">
               {account.name} <ArrowUpRight className="size-3.5 text-faint" />
             </Link>
@@ -180,8 +197,8 @@ function ViewStep({
           </Section>
         )}
 
-        {account && (
-          <Section label="Last communication">
+        {(account || project) && last && (
+          <Section label="Last update">
             {last ? (
               <>
                 <p className="text-sm">
@@ -241,7 +258,7 @@ function CompleteStep({ data, onBack, onDone }: { data: TaskDetail; onBack: () =
   const [note, setNote] = useState("");
   const [contactId, setContactId] = useState(task.contact_id ?? "");
   const [next, setNext] = useState<NextStepValue>(() =>
-    data.other_open_tasks > 0 || !task.account_id
+    data.other_open_tasks > 0 || (!task.account_id && !task.project_id)
       ? { ...nextFromSuggestion(null), mode: "none" }
       : nextFromSuggestion(null, { type: task.type as TaskType, title: "Follow up" }),
   );
@@ -281,7 +298,7 @@ function CompleteStep({ data, onBack, onDone }: { data: TaskDetail; onBack: () =
         <h2 className="title mt-1 text-xl">How did it go?</h2>
         <p className="mt-1 text-sm text-muted">
           {task.title}
-          {task.account_name && ` · ${task.account_name}`}
+          {(task.project_name ?? task.account_name) && ` · ${task.project_name ?? task.account_name}`}
         </p>
       </div>
 
@@ -305,11 +322,13 @@ function CompleteStep({ data, onBack, onDone }: { data: TaskDetail; onBack: () =
         <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="One line on what happened" autoFocus={!outcomes.length} />
       </Field>
 
-      {task.account_id && (
+      {(task.account_id || task.project_id) && (
         <NextStepPicker
           value={next}
           onChange={setNext}
-          noneHint={data.other_open_tasks > 0 ? "another to-do is still open" : data.account?.status === "lead" ? undefined : "this account will be flagged"}
+          noneHint={
+            data.other_open_tasks > 0 ? "another to-do is still open" : data.project && data.project.stage !== "done" ? "the project will show as having no next step" : undefined
+          }
         />
       )}
 

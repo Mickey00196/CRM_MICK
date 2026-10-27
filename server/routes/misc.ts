@@ -2,7 +2,7 @@ import { Router } from "express";
 import { db } from "../db.js";
 import { uid } from "../auth.js";
 import { sendDigest, digestEnabled } from "../digest.js";
-import { channelLabel, taskTypeLabel } from "../../shared/model.js";
+import { channelLabel, projectStageLabel, taskTypeLabel } from "../../shared/model.js";
 
 export const misc = Router();
 
@@ -20,7 +20,14 @@ misc.get("/search", async (req, res) => {
   if (term.length < 2) return res.json([]);
   const like = `%${term.replace(/[\\%_]/g, "\\$&")}%`;
 
-  const [accounts, contacts, acts, tasks] = await Promise.all([
+  const [projects, accounts, contacts, acts, tasks] = await Promise.all([
+    db.q(
+      `select p.id, p.name, p.stage, p.account_id, a.name as account_name
+       from projects p left join accounts a on a.id = p.account_id
+       where p.owner_id = $1 and p.archived_at is null and (p.name ilike $2 or p.notes ilike $2 or p.waiting_on ilike $2)
+       order by (p.stage = 'done'), p.stage_changed_at desc limit 10`,
+      [owner, like],
+    ),
     db.q(
       `select distinct on (a.id) a.id, a.name, a.status, o.city, o.submarket
        from accounts a left join office_locations o on o.account_id = a.id and o.archived_at is null
@@ -39,15 +46,17 @@ misc.get("/search", async (req, res) => {
       [owner, like],
     ),
     db.q(
-      `select x.id, x.account_id, x.channel, x.summary, x.occurred_at, a.name as account_name
-       from activities x join accounts a on a.id = x.account_id
-       where x.owner_id = $1 and x.archived_at is null and a.archived_at is null and x.summary ilike $2
+      `select x.id, x.account_id, x.project_id, x.channel, x.summary, x.occurred_at,
+              coalesce(p.name, a.name) as subject_name
+       from activities x left join accounts a on a.id = x.account_id left join projects p on p.id = x.project_id
+       where x.owner_id = $1 and x.archived_at is null and (a.id is null or a.archived_at is null)
+         and (p.id is null or p.archived_at is null) and x.summary ilike $2
        order by x.occurred_at desc limit 8`,
       [owner, like],
     ),
     db.q(
-      `select t.id, t.title, t.type, t.account_id, a.name as account_name
-       from tasks t left join accounts a on a.id = t.account_id
+      `select t.id, t.title, t.type, t.account_id, t.project_id, coalesce(p.name, a.name) as subject_name
+       from tasks t left join accounts a on a.id = t.account_id left join projects p on p.id = t.project_id
        where t.owner_id = $1 and t.archived_at is null and t.status = 'open' and t.title ilike $2
        order by t.due_date nulls last limit 8`,
       [owner, like],
@@ -55,10 +64,19 @@ misc.get("/search", async (req, res) => {
   ]);
 
   res.json([
+    ...projects.map((p) => ({
+      kind: "project",
+      id: p.id,
+      account_id: p.account_id,
+      project_id: p.id,
+      title: p.name,
+      subtitle: [projectStageLabel(p.stage), p.account_name].filter(Boolean).join(" · "),
+    })),
     ...accounts.map((a) => ({
       kind: "account",
       id: a.id,
       account_id: a.id,
+      project_id: null,
       title: a.name,
       subtitle: [a.submarket, a.city].filter(Boolean).join(", "),
     })),
@@ -66,6 +84,7 @@ misc.get("/search", async (req, res) => {
       kind: "contact",
       id: c.id,
       account_id: c.account_id,
+      project_id: null,
       title: c.name,
       subtitle: [c.role, c.account_name].filter(Boolean).join(" · "),
     })),
@@ -73,15 +92,17 @@ misc.get("/search", async (req, res) => {
       kind: "task",
       id: t.id,
       account_id: t.account_id,
+      project_id: t.project_id,
       title: t.title,
-      subtitle: [taskTypeLabel(t.type), t.account_name].filter(Boolean).join(" · "),
+      subtitle: [taskTypeLabel(t.type), t.subject_name].filter(Boolean).join(" · "),
     })),
     ...acts.map((x) => ({
       kind: "activity",
       id: x.id,
       account_id: x.account_id,
+      project_id: x.project_id,
       title: snippet(x.summary, term),
-      subtitle: `${channelLabel(x.channel)} · ${x.account_name}`,
+      subtitle: [channelLabel(x.channel), x.subject_name].filter(Boolean).join(" · "),
     })),
   ]);
 });
@@ -89,7 +110,7 @@ misc.get("/search", async (req, res) => {
 /** Everything you've stored, as one JSON file. */
 misc.get("/export.json", async (req, res) => {
   const owner = uid(req);
-  const tables = ["accounts", "office_locations", "contacts", "deals", "tasks", "activities", "documents", "custom_field_definitions"];
+  const tables = ["accounts", "office_locations", "contacts", "projects", "tasks", "activities", "documents", "custom_field_definitions"];
   const out: Record<string, unknown> = { exported_at: new Date().toISOString() };
   for (const t of tables) out[t] = await db.q(`select * from ${t} where owner_id = $1 order by created_at`, [owner]);
   res.setHeader("Content-Disposition", `attachment; filename="crm-export-${new Date().toISOString().slice(0, 10)}.json"`);

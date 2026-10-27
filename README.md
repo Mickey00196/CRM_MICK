@@ -1,30 +1,28 @@
 # Mick CRM
 
-A guided-selling CRM for office tenant rep. You land on your to-dos; every account has one next step; every call, email, LinkedIn message, meeting and viewing is logged against the account, mostly as a by-product of completing a to-do.
+A fast, personal place to see where every project stands and what you need to do next. It replaces a slow general-purpose CRM.
 
-The full product spec is in [`docs/spec.md`](docs/spec.md). This repo is **Phase 1a**.
+You land on your to-dos. Every project sits in one of four stages (**To do → Active → Waiting on others → Done**). A project with nothing lined up is flagged, so nothing stalls quietly.
 
-## What's in Phase 1a
+The original, broader "guided selling" spec is in [`docs/spec.md`](docs/spec.md). As of 27 October 2026 the scope is a personal tool, so the sales-coach parts of that spec (scorecards, sequences, targets) are out unless they prove useful later.
 
-- **To-dos (start page):** Overdue / Today / Upcoming. Each row shows only the account and the due date. Clicking a row opens a detail panel with the contact, last communication and office summary.
-- **"How did it go?":** completing a to-do asks for the outcome and a one-line note, then suggests the next step based on the outcome (no answer → call again in 2 days, meeting booked → prep the meeting, not interested → check in after 6 months). The communication is logged on the account automatically.
-- **Accounts:** table with Leads / Prospects / Clients / All views, sort, filter, column picker, saved views, bulk status/archive, CSV export (semicolon-separated for Dutch Excel).
-- **Account page:** status, a prominent next step, quick-log buttons, and three tabs:
-  - Overview
-  - Office & lease: every field from the spec, multiple locations, previous locations kept
-  - Communication: the timeline, filterable by channel and contact
-- **Lease intelligence:** remaining term, next key date (break, notice deadline or lease end), the 24-month decision window, and a lease timeline bar.
-- **Contacts:** a table plus a contact page with its own timeline, buying role, do-not-contact and lawful basis.
-- **Communication:** everything logged, filterable by account, channel, outcome and date, with weekly counts per channel.
-- **Quick capture:** `⌘K` / `Ctrl K` from anywhere adds a to-do, communication, account or contact. `L` logs communication (for the current account when you're on one), `N` adds a to-do, `/` searches.
-- **Flags:** active accounts (prospects and clients) without a next step show under "No next step" on To-dos and in amber in the accounts table.
-- **Reminder email:** weekdays at 07:30, listing overdue items, today's items and accounts without a next step (needs Resend).
-- **Your data:** export everything as JSON from Settings.
-- **Appearance:** light and dark mode, dates as dd-mm-yyyy, 24h time, EUR, m².
+## What it does
 
-### Coming next: Phase 1b
-
-Deals board, documents upload, custom fields, CSV import. The tables for deals, documents and custom fields already exist.
+- **To-dos (start page).** Overdue, Today and Upcoming. Each row shows the to-do, what it's for, and when it's due.
+  - Plain to-dos complete in one click, with Undo.
+  - Calls, emails, meetings and viewings ask "How did it go?" instead. That logs the outcome and suggests the next step.
+- **Projects.** A board with four columns: drag a card to change its stage. Each card shows its company, what you're waiting on, and the next to-do with its date.
+  - Projects with no next step show in amber, both on the board and at the bottom of To-dos.
+- **Project page.**
+  - Rename by clicking the title. Switch the stage, and say what you're waiting on.
+  - Add to-dos inline, keep notes, and log calls, emails and meetings.
+  - Link a company (optional) and see its people.
+- **Companies and contacts.** The address book behind your projects, with full office and lease details for tenant rep work: lease timeline, notice deadlines, decision window.
+- **Log.** Everything you've logged, across all projects, with weekly counts.
+- **Speed.**
+  - Pages open instantly from cache and refresh in the background.
+  - Keyboard shortcuts: `N` new to-do, `P` new project, `L` log something for the project or company you're on, `/` search, `⌘K` quick capture from anywhere.
+- **Reminder email (optional).** On weekdays at 07:30: overdue items, today's items, and projects without a next step.
 
 ## Stack
 

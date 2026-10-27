@@ -138,7 +138,7 @@ accounts.get("/accounts/export.csv", async (req, res) => {
   const owner = uid(req);
   const sep = req.query.sep === "comma" ? "," : ";";
   const rows = await db.q(`${LIST_SQL} where a.owner_id = $1 and a.archived_at is null order by lower(a.name)`, [owner]);
-  const header = ["Account", "Status", "Domain", "Industry", "Lead source", "Language", "Tags", "City", "Area", "Building", "m²", "Lease end", "Next step", "Next step due", "Last contact"];
+  const header = ["Company", "Status", "Domain", "Industry", "Lead source", "Language", "Tags", "City", "Area", "Building", "m²", "Lease end", "Next step", "Next step due", "Last contact"];
   const lines = rows.map((r) =>
     [
       r.name,
@@ -216,7 +216,7 @@ accounts.get("/accounts/:id", async (req, res) => {
   const id = idOf(req.params.id, "That account");
   const account = await db.one("select * from accounts where id = $1 and owner_id = $2", [id, owner]);
   if (!account) throw notFound("That account");
-  const [offices, contacts, tasks, lc] = await Promise.all([
+  const [offices, contacts, tasks, lc, projects] = await Promise.all([
     db.q(
       `select * from office_locations where account_id = $1 and archived_at is null
        order by is_current desc, is_primary desc, lease_end desc nulls last, created_at`,
@@ -229,7 +229,8 @@ accounts.get("/accounts/:id", async (req, res) => {
       [id],
     ),
     db.q(
-      `select t.id, t.title, t.type, t.due_date, t.due_time, t.priority, t.contact_id from tasks t
+      `select t.id, t.title, t.type, t.due_date, t.due_time, t.priority, t.contact_id, t.project_id, p.name as project_name
+       from tasks t left join projects p on p.id = t.project_id
        where t.account_id = $1 and t.status = 'open' and t.archived_at is null order by ${OPEN_TASK_ORDER}`,
       [id],
     ),
@@ -238,8 +239,14 @@ accounts.get("/accounts/:id", async (req, res) => {
        where account_id = $1 and archived_at is null and channel <> 'note'`,
       [id],
     ),
+    db.q(
+      `select p.id, p.name, p.stage, p.waiting_on, p.target_date, p.done_at, p.stage_changed_at from projects p
+       where p.account_id = $1 and p.archived_at is null
+       order by (p.stage = 'done'), p.stage_changed_at desc`,
+      [id],
+    ),
   ]);
-  res.json({ account, offices, contacts, tasks, last_contact_at: lc?.last_contact_at ?? null });
+  res.json({ account, offices, contacts, tasks, projects, last_contact_at: lc?.last_contact_at ?? null });
 });
 
 accounts.patch("/accounts/:id", async (req, res) => {

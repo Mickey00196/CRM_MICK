@@ -36,14 +36,25 @@ export async function api<T = any>(path: string, method: Method = "GET", body?: 
   return data as T;
 }
 
+// Last response per GET path, so revisiting a page renders instantly and refreshes in the background.
+const cache = new Map<string, unknown>();
+
 /** Loads data, and reloads whenever deps change or any change is saved elsewhere. */
-export function useLoad<T>(load: () => Promise<T>, deps: unknown[], { live = true } = {}) {
-  const [data, setData] = useState<T | null>(null);
+export function useLoad<T>(load: () => Promise<T>, deps: unknown[], { live = true, key }: { live?: boolean; key?: string } = {}) {
+  const [data, setData] = useState<T | null>(() => (key && cache.has(key) ? (cache.get(key) as T) : null));
   const [error, setError] = useState<string | null>(null);
   const loadRef = useRef(load);
   loadRef.current = load;
   // Only the latest request may update state; a slow earlier response can't overwrite a newer one.
   const seq = useRef(0);
+
+  // When the key changes (another record), show its cached copy right away instead of the previous one.
+  const lastKey = useRef(key);
+  if (key !== lastKey.current) {
+    lastKey.current = key;
+    const cached = key && cache.has(key) ? (cache.get(key) as T) : null;
+    if (cached !== data) setData(cached);
+  }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const reload = useCallback(() => {
@@ -52,13 +63,14 @@ export function useLoad<T>(load: () => Promise<T>, deps: unknown[], { live = tru
       .current()
       .then((d) => {
         if (n !== seq.current) return;
+        if (key) cache.set(key, d);
         setData(d);
         setError(null);
       })
       .catch((e: Error) => {
         if (n === seq.current) setError(e.message);
       });
-  }, deps);
+  }, [...deps, key]);
 
   useEffect(() => {
     reload();
@@ -68,6 +80,16 @@ export function useLoad<T>(load: () => Promise<T>, deps: unknown[], { live = tru
   }, [reload, live]);
 
   return { data, error, reload, setData };
+}
+
+/** GET a path with caching: the path is the cache key. */
+export function useApi<T>(path: string, opts: { live?: boolean } = {}) {
+  return useLoad(() => api<T>(path), [path], { ...opts, key: path });
+}
+
+/** Clears cached pages (on logout, so the next user never sees them). */
+export function clearCache() {
+  cache.clear();
 }
 
 /** Persists a small piece of UI state per browser. */

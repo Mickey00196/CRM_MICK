@@ -44,8 +44,9 @@ contacts.get("/contacts/:id", async (req, res) => {
   if (!contact) throw notFound("That contact");
   const [activities, tasks] = await Promise.all([
     db.q(
-      `select x.*, a.name as account_name, c.name as contact_name
-       from activities x join accounts a on a.id = x.account_id left join contacts c on c.id = x.contact_id
+      `select x.*, a.name as account_name, p.name as project_name, c.name as contact_name
+       from activities x left join accounts a on a.id = x.account_id
+       left join projects p on p.id = x.project_id left join contacts c on c.id = x.contact_id
        where x.contact_id = $1 and x.archived_at is null order by x.occurred_at desc limit 200`,
       [id],
     ),

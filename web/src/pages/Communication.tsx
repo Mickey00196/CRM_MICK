@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
 import { CHANNELS, OUTCOMES, type ActivityRow, type Channel } from "@shared/model";
-import { api, useLoad } from "@/lib/api";
+import { api, useApi } from "@/lib/api";
 import { addDays, dmy, todayISO } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
 import { Timeline } from "@/components/Timeline";
-import { AccountPicker, type PickedAccount } from "@/components/AccountPicker";
+import { AccountPicker, type PickedAccount } from "@/components/Pickers";
 import { useUI } from "@/components/ui-context";
 
 interface WeekCount {
@@ -36,8 +36,8 @@ export function Communication() {
     return p.toString();
   }, [channel, outcome, account, from, to]);
 
-  const { data: items, error } = useLoad(() => api<ActivityRow[]>(`/activities?${qs}`), [qs]);
-  const { data: weekly } = useLoad(() => api<WeekCount[]>(`/activities/weekly?weeks=${WEEKS}`), []);
+  const { data: items, error } = useApi<ActivityRow[]>(`/activities?${qs}`);
+  const { data: weekly } = useApi<WeekCount[]>(`/activities/weekly?weeks=${WEEKS}`);
 
   const weeks = useMemo(() => {
     // Monday of the current week, then the previous WEEKS-1 Mondays.
@@ -54,9 +54,9 @@ export function Communication() {
   return (
     <div className="mx-auto max-w-4xl">
       <header className="mb-8 flex flex-wrap items-baseline justify-between gap-4">
-        <h1 className="title text-2xl">Communication</h1>
+        <h1 className="title text-2xl">Log</h1>
         <Button variant="ghost" size="sm" onClick={() => ui.openCapture("log")}>
-          + Log communication
+          + Log something
         </Button>
       </header>
 
@@ -94,7 +94,7 @@ export function Communication() {
       </section>
 
       <div className="mb-4 grid gap-2 sm:grid-cols-[1fr_9rem_9rem]">
-        <AccountPicker value={account} onChange={setAccount} placeholder="All accounts" />
+        <AccountPicker value={account} onChange={setAccount} placeholder="All companies" />
         <Select
           value={channel}
           onChange={(e) => {
@@ -141,7 +141,7 @@ export function Communication() {
       </div>
 
       {error && <p className="text-sm text-late">{error}</p>}
-      {items && <Timeline items={items} showAccount empty={filtered ? "Nothing matches these filters." : "Nothing logged yet."} />}
+      {items && <Timeline items={items} showAccount showProject empty={filtered ? "Nothing matches these filters." : "Nothing logged yet."} />}
     </div>
   );
 }

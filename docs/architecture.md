@@ -1,6 +1,6 @@
 # Architecture
 
-How the CRM is put together, why, and what to change when. The product spec is in [spec.md](spec.md).
+How the CRM is put together, why, and what to change when. It is a personal project and to-do tracker for one user (see README). The original broader spec is in [spec.md](spec.md).
 
 ## Shape
 
@@ -12,6 +12,7 @@ server/
   routes/   HTTP: parse input, check auth, call domain or query, respond.
   domain/   Workflows shared by routes, jobs and (later) automations:
             createTask, completeTask, logActivity, resolveLinks.
+  routes/projects.ts  The board and project pages.
   digest.ts Weekday reminder email (in-process schedule).
   app.ts    Middleware, security headers, routing. No side effects, so tests boot it.
   index.ts  Migrate, create login, listen, schedule, shut down cleanly.
@@ -24,7 +25,12 @@ test/       Unit tests and API tests against a real Postgres.
 
 ## Data
 
-- Every row has `owner_id`, and every query filters on it. `domain/links.ts` is the single gate for links between records. A linked account, contact or deal must have the same owner and must not be archived. The contact and deal must also belong to the same account.
+- **Core objects.** Projects have four stages: `todo`, `active`, `waiting`, `done`. To-dos and log entries hang off a project, a company, or both.
+  - A project's company is optional. When it has one, that company wins: to-dos and log entries on the project get it too.
+  - A project's next step is its earliest open to-do.
+  - An open project with no open to-do is flagged.
+- **Companies.** Each has contacts and office locations (all the lease fields). They are the address book behind projects.
+- Every row has `owner_id`, and every query filters on it. `domain/links.ts` is the single gate for links between records. A linked company, contact or project must have the same owner and must not be archived. A contact must work at the same company, and a project can't point at a different company from the record.
 - Deletes are soft (`archived_at`), except future GDPR "forget contact", which must be a real delete.
 - Migrations are append-only in `server/migrations.ts`. They run on boot, one transaction each, under an advisory lock so two instances can't migrate at once.
 - `DATE` columns hold calendar things (due dates, lease dates). `TIMESTAMPTZ` columns hold events (when a call happened). The server's `TIMEZONE` decides what "today" is, and the browser takes it from `/api/me`.
@@ -55,6 +61,7 @@ test/       Unit tests and API tests against a real Postgres.
 The tests cover:
 - tenant isolation between two users
 - link integrity
+- projects: board, stages, flagging, logging without a company
 - the completion flow, including rollback on failure
 - CSRF
 - session revocation
@@ -71,7 +78,7 @@ Before shipping a change, add a test that would have caught the bug it fixes.
 | # | Finding | Severity | Status |
 |---|---|---|---|
 | 1 | Client data in a personally hosted app: C&W policy unchecked | High | **Open (Mick)** |
-| 2 | A to-do could be linked to another user's deal | High | Fixed (`resolveLinks`) |
+| 2 | A to-do could be linked to another user's deal (deals since replaced by projects) | High | Fixed (`resolveLinks`) |
 | 3 | A contact from one account could be logged on another | Medium | Fixed (`resolveLinks`) |
 | 4 | Sessions survived a password change; no "log out everywhere" | Medium | Fixed (`session_version`) |
 | 5 | CSRF relied only on SameSite cookies | Medium | Fixed (app header) |
@@ -102,7 +109,7 @@ Each of these is the right move at some point. Doing it now would add weight wit
 | Job queue (pg-boss, or a jobs table with `SKIP LOCKED`) | Phase 2: waiting-for-reply follow-ups and lease-date to-dos need retries and a run log. The in-process tick only suits the single daily email. |
 | Trigram index for search | Past roughly 10,000 log entries. `ILIKE` is fine below that. |
 | Saved views in the database | When you use the accounts views on more than one device. |
-| Document storage | Phase 1b: an S3-compatible bucket (Railway buckets), never in Postgres. |
+| Document storage | When you want files on a project: an S3-compatible bucket (Railway buckets), never in Postgres. |
 
 ## Before real client data goes in
 

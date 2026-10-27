@@ -15,8 +15,6 @@ export const ACCOUNT_STATUSES = [
 ] as const;
 export type AccountStatus = (typeof ACCOUNT_STATUSES)[number]["key"];
 export const accountStatusLabel = (k: string) => label(ACCOUNT_STATUSES, k);
-/** Accounts that must always have a next step. Leads are the backlog until you start working them. */
-export const ACTIVE_ACCOUNT_STATUSES: AccountStatus[] = ["prospect", "client"];
 
 export const SIZE_BANDS = [
   { key: "1-10", label: "1–10" },
@@ -75,20 +73,18 @@ export const LAWFUL_BASIS = [
   { key: "contract", label: "Contract" },
 ] as const;
 
-// ---------- deals ----------
+// ---------- projects ----------
 
-export const DEAL_STAGES = [
-  { key: "new", label: "New" },
-  { key: "contacted", label: "Contacted" },
-  { key: "qualified", label: "Qualified" },
-  { key: "discovery", label: "Discovery" },
-  { key: "proposal", label: "Proposal" },
-  { key: "negotiation", label: "Negotiation" },
-  { key: "won", label: "Won" },
-  { key: "lost", label: "Lost" },
-  { key: "nurture", label: "Nurture" },
+export const PROJECT_STAGES = [
+  { key: "todo", label: "To do" },
+  { key: "active", label: "Active" },
+  { key: "waiting", label: "Waiting on others" },
+  { key: "done", label: "Done" },
 ] as const;
-export const CLOSED_DEAL_STAGES = ["won", "lost"];
+export type ProjectStage = (typeof PROJECT_STAGES)[number]["key"];
+export const projectStageLabel = (k: string) => label(PROJECT_STAGES, k);
+/** Projects in these stages should always have a next to-do. */
+export const OPEN_PROJECT_STAGES: ProjectStage[] = ["todo", "active", "waiting"];
 
 // ---------- communication ----------
 
@@ -231,13 +227,16 @@ export interface TodoRow {
   priority: "normal" | "high";
   account_id: string | null;
   account_name: string | null;
+  project_id: string | null;
+  project_name: string | null;
 }
 
-export interface StalledAccount {
+export interface StalledProject {
   id: string;
   name: string;
-  status: AccountStatus;
-  last_contact_at: string | null;
+  stage: ProjectStage;
+  account_name: string | null;
+  last_activity_at: string | null;
 }
 
 export interface TodoList {
@@ -245,16 +244,17 @@ export interface TodoList {
   overdue: TodoRow[];
   due_today: TodoRow[];
   upcoming: TodoRow[];
-  no_next_step: StalledAccount[];
+  no_next_step: StalledProject[];
 }
 
 export interface ActivityRow {
   id: string;
-  account_id: string;
-  account_name?: string;
+  account_id: string | null;
+  account_name?: string | null;
+  project_id: string | null;
+  project_name?: string | null;
   contact_id: string | null;
   contact_name?: string | null;
-  deal_id: string | null;
   task_id: string | null;
   channel: Channel;
   direction: "outbound" | "inbound";
@@ -289,13 +289,13 @@ export interface ContactLite {
 export interface TaskDetail {
   task: TodoRow & {
     contact_id: string | null;
-    deal_id: string | null;
     notes: string;
     status: "open" | "done" | "snoozed";
     completed_at: string | null;
     created_by: string;
   };
   account: { id: string; name: string; status: AccountStatus } | null;
+  project: { id: string; name: string; stage: ProjectStage } | null;
   contact: ContactLite | null;
   contacts: ContactLite[];
   last_activity: ActivityRow | null;
@@ -406,6 +406,48 @@ export interface Contact extends ContactLite {
 export interface OpenTask extends NextStep {
   priority: "normal" | "high";
   contact_id: string | null;
+  project_id: string | null;
+  project_name?: string | null;
+}
+
+export interface ProjectRow {
+  id: string;
+  name: string;
+  stage: ProjectStage;
+  account_id: string | null;
+  account_name: string | null;
+  waiting_on: string;
+  target_date: string | null;
+  next_step: NextStep | null;
+  open_tasks: number;
+  last_activity_at: string | null;
+  stage_changed_at: string;
+  done_at: string | null;
+  updated_at: string;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  stage: ProjectStage;
+  account_id: string | null;
+  account_name: string | null;
+  contact_id: string | null;
+  waiting_on: string;
+  target_date: string | null;
+  notes: string;
+  stage_changed_at: string;
+  done_at: string | null;
+  created_at: string;
+  archived_at: string | null;
+}
+
+export interface ProjectDetail {
+  project: Project;
+  tasks: OpenTask[];
+  done_tasks: (OpenTask & { completed_at: string })[];
+  activities: ActivityRow[];
+  contacts: ContactLite[];
 }
 
 export interface AccountDetail {
@@ -413,6 +455,7 @@ export interface AccountDetail {
   offices: OfficeLocation[];
   contacts: Contact[];
   tasks: OpenTask[];
+  projects: ProjectRow[];
   last_contact_at: string | null;
 }
 
@@ -423,9 +466,10 @@ export interface ContactDetail {
 }
 
 export interface SearchHit {
-  kind: "account" | "contact" | "activity" | "task";
+  kind: "project" | "account" | "contact" | "activity" | "task";
   id: string;
   account_id: string | null;
+  project_id: string | null;
   title: string;
   subtitle: string;
 }

@@ -11,9 +11,9 @@ export const CHANNEL_KEYS = CHANNELS.map((c) => c.key);
 export const REPLY_DAYS = 5;
 
 const ACTIVITY_SPEC: Spec = {
-  account_id: [f.uuid(false), "Account"],
+  account_id: [f.uuid(), "Company"],
   contact_id: [f.uuid(), "Contact"],
-  deal_id: [f.uuid(), "Deal"],
+  project_id: [f.uuid(), "Project"],
   channel: [f.oneOf(CHANNEL_KEYS, false), "Channel"],
   direction: [f.oneOf(["outbound", "inbound"], false), "Direction"],
   summary: [f.text(20000), "Summary"],
@@ -45,16 +45,18 @@ export async function logActivity(t: Db, owner: string, body: any) {
   Object.assign(
     cols,
     await resolveLinks(t, owner, {
-      account_id: cols.account_id as string,
+      account_id: cols.account_id as string | null,
       contact_id: cols.contact_id as string | null,
-      deal_id: cols.deal_id as string | null,
+      project_id: cols.project_id as string | null,
     }),
   );
+  if (!cols.account_id && !cols.project_id) throw bad("Pick a company or a project.");
 
   if (completeTaskId) {
     const open = await t.one(
-      `select id from tasks where id = $1 and owner_id = $2 and account_id = $3 and status = 'open' and archived_at is null for update`,
-      [completeTaskId, owner, cols.account_id],
+      `select id from tasks where id = $1 and owner_id = $2 and status = 'open' and archived_at is null
+         and (account_id is not distinct from $3 or project_id is not distinct from $4) for update`,
+      [completeTaskId, owner, cols.account_id, cols.project_id],
     );
     if (!open) throw bad("That to-do is no longer open.");
     cols.task_id = completeTaskId;
@@ -72,19 +74,20 @@ export async function logActivity(t: Db, owner: string, body: any) {
       activity.id,
     ]);
   }
-  // An inbound message clears anything waiting on a reply from this account.
+  // An inbound message clears anything waiting on a reply from this company (or project, if no company).
   if (cols.direction === "inbound" && cols.channel !== "note") {
+    const [col, val] = cols.account_id ? ["account_id", cols.account_id] : ["project_id", cols.project_id];
     await t.q(
       `update activities set replied_at = $3
-       where owner_id = $1 and account_id = $2 and expect_reply and replied_at is null and occurred_at <= $3`,
-      [owner, cols.account_id, activity.occurred_at],
+       where owner_id = $1 and ${col} = $2 and expect_reply and replied_at is null and occurred_at <= $3`,
+      [owner, val, activity.occurred_at],
     );
   }
   const next_task = next
     ? await createTask(t, owner, {
         ...next,
         account_id: cols.account_id,
-        deal_id: cols.deal_id,
+        project_id: cols.project_id,
         contact_id: next.contact_id ?? cols.contact_id,
       })
     : null;
@@ -93,21 +96,21 @@ export async function logActivity(t: Db, owner: string, body: any) {
 
 export async function updateActivity(t: Db, owner: string, id: string, body: any) {
   const existing = await t.one(
-    "select account_id, contact_id, deal_id, channel from activities where id = $1 and owner_id = $2 and archived_at is null",
+    "select account_id, contact_id, project_id, channel from activities where id = $1 and owner_id = $2 and archived_at is null",
     [id, owner],
   );
   if (!existing) throw notFound("That log entry");
-  const { account_id: _accountIsFixed, ...spec } = ACTIVITY_SPEC;
+  const { account_id: _companyIsFixed, ...spec } = ACTIVITY_SPEC;
   const cols = pick(body, spec, true);
   if (body && "outcome" in body) cols.outcome = validateOutcome((cols.channel as string) ?? existing.channel, body.outcome);
-  if ("contact_id" in cols || "deal_id" in cols) {
+  if ("contact_id" in cols || "project_id" in cols) {
     const links = await resolveLinks(t, owner, {
       account_id: existing.account_id,
       contact_id: "contact_id" in cols ? (cols.contact_id as string | null) : existing.contact_id,
-      deal_id: "deal_id" in cols ? (cols.deal_id as string | null) : existing.deal_id,
+      project_id: "project_id" in cols ? (cols.project_id as string | null) : existing.project_id,
     });
     cols.contact_id = links.contact_id;
-    cols.deal_id = links.deal_id;
+    cols.project_id = links.project_id;
   }
   const { text, values } = updateSql("activities", id, owner, cols);
   return t.one(text, values);

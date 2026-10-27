@@ -78,7 +78,7 @@ export function SettingsPage({ onLogout }: { onLogout: () => void }) {
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" asChild>
             <a href="/api/accounts/export.csv" download>
-              Export accounts (CSV)
+              Export companies (CSV)
             </a>
           </Button>
           <Button variant="outline" size="sm" asChild>
@@ -92,10 +92,11 @@ export function SettingsPage({ onLogout }: { onLogout: () => void }) {
       <Row label="Keyboard">
         <dl className="grid grid-cols-[5rem_1fr] gap-y-1.5 text-sm">
           {[
-            ["⌘K / Ctrl K", "Quick capture"],
             ["N", "New to-do"],
-            ["L", "Log communication (on an account: for that account)"],
+            ["P", "New project"],
+            ["L", "Log a call, email or note (for the project or company you're on)"],
             ["/", "Search"],
+            ["⌘K / Ctrl K", "Quick capture, from anywhere"],
           ].map(([k, v]) => (
             <div key={k} className="contents">
               <dt className="text-muted">{k}</dt>

@@ -43,6 +43,7 @@ export function NextStepPicker({
   onChange,
   existing,
   noneHint,
+  label = "Next step",
 }: {
   value: NextStepValue;
   onChange: (v: NextStepValue) => void;
@@ -50,6 +51,7 @@ export function NextStepPicker({
   existing?: { title: string; type: string; due_date: string | null } | null;
   /** Shown when "No next step" is chosen. */
   noneHint?: string;
+  label?: string;
 }) {
   const set = (patch: Partial<NextStepValue>) => onChange({ ...value, ...patch });
   const today = todayISO();
@@ -57,7 +59,7 @@ export function NextStepPicker({
   if (value.mode !== "new") {
     return (
       <div className="grid gap-1.5">
-        <span className="text-[13px] text-muted">Next step</span>
+        <span className="text-[13px] text-muted">{label}</span>
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm">
           {value.mode === "keep" && existing ? (
             <span>
@@ -69,7 +71,7 @@ export function NextStepPicker({
               </span>
             </span>
           ) : (
-            <span className="text-missing">No next step{noneHint ? ` · ${noneHint}` : ""}</span>
+            <span className="text-missing">None{noneHint ? ` · ${noneHint}` : ""}</span>
           )}
           <button type="button" className="text-accent hover:underline" onClick={() => set({ mode: "new" })}>
             {value.mode === "keep" ? "Add another" : "Add one"}
@@ -82,7 +84,7 @@ export function NextStepPicker({
   return (
     <div className="grid gap-2.5">
       <div className="flex items-baseline justify-between">
-        <span className="text-[13px] text-muted">Next step</span>
+        <span className="text-[13px] text-muted">{label}</span>
         <div className="flex gap-3 text-[13px]">
           {existing && (
             <button type="button" className="text-muted hover:text-fg" onClick={() => set({ mode: "keep" })}>
@@ -90,7 +92,7 @@ export function NextStepPicker({
             </button>
           )}
           <button type="button" className="text-muted hover:text-fg" onClick={() => set({ mode: "none" })}>
-            No next step
+            Skip
           </button>
         </div>
       </div>

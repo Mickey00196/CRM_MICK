@@ -1,24 +1,26 @@
 import { useEffect, useMemo, useState } from "react";
-import { CHANNELS, OUTCOMES, suggestNextStep, type AccountDetail, type Channel } from "@shared/model";
+import { CHANNELS, OUTCOMES, suggestNextStep, type Channel, type ContactLite, type OpenTask } from "@shared/model";
 import { api } from "@/lib/api";
 import { addDays, fromLocalInput, toLocalInput, todayISO } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Chips, ErrorText, Field, Input, Select, Textarea } from "@/components/ui/input";
-import { AccountPicker, type PickedAccount } from "./AccountPicker";
+import { AccountPicker, ProjectPicker, type PickedAccount, type PickedProject } from "./Pickers";
 import { NextStepPicker, nextFromSuggestion, nextPayload, type NextStepValue } from "./NextStepPicker";
+import type { LogPreset } from "./ui-context";
 
-export interface LogPreset {
-  account?: PickedAccount | null;
-  contact_id?: string | null;
-  channel?: Channel;
+/** Open to-dos and people for whatever the entry is about (project first, else company). */
+interface Scope {
+  tasks: OpenTask[];
+  contacts: ContactLite[];
 }
 
 const MESSAGE_CHANNELS: Channel[] = ["email", "linkedin", "whatsapp"];
 
 /** Log a call, email, meeting, note… with an optional next step. */
 export function LogForm({ preset, onSaved, onCancel }: { preset: LogPreset; onSaved: () => void; onCancel?: () => void }) {
-  const [account, setAccount] = useState<PickedAccount | null>(preset.account ?? null);
-  const [detail, setDetail] = useState<AccountDetail | null>(null);
+  const [project, setProject] = useState<PickedProject | null>(preset.project ?? null);
+  const [account, setAccount] = useState<PickedAccount | null>(preset.project ? null : preset.account ?? null);
+  const [detail, setDetail] = useState<Scope | null>(null);
   const [channel, setChannel] = useState<Channel>(preset.channel ?? "call");
   const [direction, setDirection] = useState<"outbound" | "inbound">("outbound");
   const [contactId, setContactId] = useState(preset.contact_id ?? "");
@@ -39,16 +41,17 @@ export function LogForm({ preset, onSaved, onCancel }: { preset: LogPreset; onSa
     [detail, channel],
   );
 
-  // Load contacts and the current next step for the chosen account.
+  // Load contacts and the current next step for the chosen project or company.
+  const scopePath = project ? `/projects/${project.id}` : account ? `/accounts/${account.id}` : null;
   useEffect(() => {
     setDetail(null);
-    if (!account) return;
-    api<AccountDetail>(`/accounts/${account.id}`).then((d) => {
+    if (!scopePath) return;
+    api<Scope>(scopePath).then((d) => {
       setDetail(d);
       setNext((n) => ({ ...n, mode: d.tasks.length > 1 || (d.tasks.length === 1 && d.tasks[0].type !== channel) ? "keep" : "new" }));
       if (!preset.contact_id && d.contacts.length === 1) setContactId(d.contacts[0].id);
     });
-  }, [account?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [scopePath]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const keepable = existing && !(matching && closeTask && matching.id === existing.id) ? existing : null;
   // If the current next step is being closed, ask for a new one instead of "keeping" it.
@@ -75,12 +78,13 @@ export function LogForm({ preset, onSaved, onCancel }: { preset: LogPreset; onSa
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    if (!account) return setError("Pick an account.");
+    if (!account && !project) return setError("Pick a project or a company.");
     setBusy(true);
     setError(null);
     try {
       await api("/activities", "POST", {
-        account_id: account.id,
+        project_id: project?.id ?? null,
+        account_id: project ? null : account?.id ?? null,
         contact_id: contactId || null,
         channel,
         direction: channel === "note" ? "outbound" : direction,
@@ -100,10 +104,11 @@ export function LogForm({ preset, onSaved, onCancel }: { preset: LogPreset; onSa
 
   return (
     <form className="grid gap-5" onSubmit={save}>
-      {!preset.account && (
-        <Field label="Account">
-          <AccountPicker value={account} onChange={setAccount} autoFocus />
-        </Field>
+      {!preset.account && !preset.project && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <ProjectPicker value={project} onChange={setProject} placeholder="Project" autoFocus />
+          {!project && <AccountPicker value={account} onChange={setAccount} placeholder="or company" />}
+        </div>
       )}
 
       <Chips options={CHANNELS} value={channel} onChange={pickChannel} size="sm" />
@@ -160,7 +165,7 @@ export function LogForm({ preset, onSaved, onCancel }: { preset: LogPreset; onSa
           value={summary}
           onChange={(e) => setSummary(e.target.value)}
           placeholder={channel === "note" ? "What should you remember?" : "What was said, what's agreed"}
-          autoFocus={Boolean(preset.account)}
+          autoFocus={Boolean(preset.account || preset.project)}
         />
       </Field>
 
@@ -180,7 +185,7 @@ export function LogForm({ preset, onSaved, onCancel }: { preset: LogPreset; onSa
         </label>
       )}
 
-      {account && (
+      {(account || project) && (
         <NextStepPicker
           value={next}
           onChange={setNext}

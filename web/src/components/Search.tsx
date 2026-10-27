@@ -8,7 +8,8 @@ import { cn } from "@/lib/utils";
 import { useUI } from "./ui-context";
 
 const KIND: Record<SearchHit["kind"], string> = {
-  account: "Account",
+  project: "Project",
+  account: "Company",
   contact: "Contact",
   task: "To-do",
   activity: "Logged",
@@ -48,9 +49,11 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
   function go(h: SearchHit | undefined) {
     if (!h) return;
     onClose();
-    if (h.kind === "account") navigate(`/accounts/${h.id}`);
+    if (h.kind === "project") navigate(`/projects/${h.id}`);
+    else if (h.kind === "account") navigate(`/accounts/${h.id}`);
     else if (h.kind === "contact") navigate(`/contacts/${h.id}`);
     else if (h.kind === "task") ui.openTask(h.id);
+    else if (h.project_id) navigate(`/projects/${h.project_id}`);
     else if (h.account_id) navigate(`/accounts/${h.account_id}?tab=communication`);
   }
 
@@ -74,7 +77,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
               go(hits[active]);
             }
           }}
-          placeholder="Search accounts, contacts, to-dos, notes…"
+          placeholder="Search projects, companies, people, to-dos, notes…"
           className="h-14 flex-1 bg-transparent text-base outline-none placeholder:text-faint"
           aria-label="Search"
         />
