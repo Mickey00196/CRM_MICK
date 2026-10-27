@@ -6,17 +6,18 @@ const label = <K extends string>(opts: readonly Opt<K>[], key: string | null | u
 
 // ---------- accounts ----------
 
+/** The acquisition funnel. "Not now" is for parked or lost accounts. */
 export const ACCOUNT_STATUSES = [
-  { key: "lead", label: "Lead" },
-  { key: "prospect", label: "Prospect" },
-  { key: "client", label: "Client" },
-  { key: "former_client", label: "Former client" },
-  { key: "not_a_fit", label: "Not a fit" },
+  { key: "target", label: "Target" },
+  { key: "contacted", label: "Contacted" },
+  { key: "in_talks", label: "In talks" },
+  { key: "won", label: "Mandate won" },
+  { key: "not_now", label: "Not now" },
 ] as const;
 export type AccountStatus = (typeof ACCOUNT_STATUSES)[number]["key"];
 export const accountStatusLabel = (k: string) => label(ACCOUNT_STATUSES, k);
 /** Accounts you are working: each should always have a dated follow-up. */
-export const FOLLOW_UP_STATUSES: AccountStatus[] = ["lead", "prospect", "client"];
+export const FOLLOW_UP_STATUSES: AccountStatus[] = ["target", "contacted", "in_talks"];
 
 export const SIZE_BANDS = [
   { key: "1-10", label: "1–10" },
@@ -145,6 +146,27 @@ export const OUTCOMES: Record<Channel, Opt[]> = {
   note: [],
   other: [],
 };
+
+/**
+ * Where logging contact moves an account in the funnel, or null to leave it.
+ * Any real contact (not a note) moves a Target to Contacted; a booked or held meeting or a
+ * viewing moves it to In talks. Never backwards, and Mandate won / Not now are left alone.
+ */
+export function advanceStatus(current: AccountStatus, channel: string, outcome: string | null): AccountStatus | null {
+  if (current === "won" || current === "not_now") return null;
+  if (!CONTACT_CHANNELS.includes(channel as Channel)) return null;
+  const meeting = (channel === "meeting" || channel === "viewing") && outcome !== "no_show";
+  const want: AccountStatus = meeting || outcome === "meeting_booked" ? "in_talks" : "contacted";
+  const order: AccountStatus[] = ["target", "contacted", "in_talks"];
+  return order.indexOf(want) > order.indexOf(current) ? want : null;
+}
+
+export interface StatusMove {
+  account_id: string;
+  account_name: string;
+  from: AccountStatus;
+  to: AccountStatus;
+}
 
 export function outcomeLabel(channel: string, outcome: string | null): string {
   if (!outcome) return "";

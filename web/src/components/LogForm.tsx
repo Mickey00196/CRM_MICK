@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CHANNELS, OUTCOMES, suggestNextStep, type Channel, type ContactLite, type OpenTask } from "@shared/model";
 import { api } from "@/lib/api";
+import { toastMove } from "./Toast";
 import { addDays, fromLocalInput, toLocalInput, todayISO } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Chips, ErrorText, Field, Input, Select, Textarea } from "@/components/ui/input";
@@ -82,7 +83,7 @@ export function LogForm({ preset, onSaved, onCancel }: { preset: LogPreset; onSa
     setBusy(true);
     setError(null);
     try {
-      await api("/activities", "POST", {
+      const res = await api("/activities", "POST", {
         project_id: project?.id ?? null,
         account_id: project ? null : account?.id ?? null,
         contact_id: contactId || null,
@@ -95,6 +96,7 @@ export function LogForm({ preset, onSaved, onCancel }: { preset: LogPreset; onSa
         expect_reply: isMessage && direction === "outbound" && expectReply,
         next: nextPayload(next),
       });
+      toastMove(res);
       onSaved();
     } catch (err) {
       setError((err as Error).message);

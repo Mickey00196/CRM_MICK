@@ -129,8 +129,32 @@ describe("link integrity", () => {
 });
 
 describe("accounts and follow-ups", () => {
+  test("logging contact moves an account along the funnel", async () => {
+    const id = await account(a, { name: "Funnel Co" });
+    const status = async () => (await a.get(`/accounts/${id}`)).data.account.status;
+    assert.equal(await status(), "target", "new accounts start as Target");
+
+    const note = await a.post("/activities", { account_id: id, channel: "note", summary: "Looked them up" });
+    assert.equal(note.data.moved, null);
+    assert.equal(await status(), "target", "a note isn't contact");
+
+    const call = await a.post("/activities", { account_id: id, channel: "call", outcome: "no_answer" });
+    assert.equal(call.data.moved.to, "contacted");
+    assert.equal(await status(), "contacted");
+
+    const t = await a.post("/tasks", { title: "Call back", type: "call", account_id: id, due_date: "2026-11-03" });
+    const done = await a.post(`/tasks/${t.data.id}/complete`, { outcome: "meeting_booked" });
+    assert.equal(done.status, 200, JSON.stringify(done.data));
+    assert.deepEqual([done.data.moved.from, done.data.moved.to, done.data.moved.account_name], ["contacted", "in_talks", "Funnel Co"]);
+
+    await a.patch(`/accounts/${id}`, { status: "won" });
+    const later = await a.post("/activities", { account_id: id, channel: "call", outcome: "reached" });
+    assert.equal(later.data.moved, null, "won stays won");
+    assert.equal(await status(), "won");
+  });
+
   test("an account you're working with nothing planned asks for a follow-up", async () => {
-    const id = await account(a, { name: "Follow-up Co", status: "lead" });
+    const id = await account(a, { name: "Follow-up Co", status: "target" });
     let todos = (await a.get("/todos")).data;
     assert.ok(todos.no_follow_up.some((x: any) => x.id === id), "a new lead needs a first follow-up");
 
@@ -145,9 +169,9 @@ describe("accounts and follow-ups", () => {
     todos = (await a.get("/todos")).data;
     assert.ok(todos.no_follow_up.some((x: any) => x.id === id), "done with the last follow-up: ask again");
 
-    await a.patch(`/accounts/${id}`, { status: "not_a_fit" });
+    await a.patch(`/accounts/${id}`, { status: "not_now" });
     todos = (await a.get("/todos")).data;
-    assert.ok(!todos.no_follow_up.some((x: any) => x.id === id), "not a fit: nothing to chase");
+    assert.ok(!todos.no_follow_up.some((x: any) => x.id === id), "not now: nothing to chase");
     assert.ok(!(await b.get("/todos")).data.no_follow_up.some((x: any) => x.id === id), "other users never see it");
   });
 });

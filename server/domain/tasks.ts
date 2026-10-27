@@ -4,6 +4,7 @@ import type { Db } from "../db.js";
 import { f, pick, bad, notFound, insertSql, updateSql, type Spec } from "../validate.js";
 import { OUTCOMES, TASK_TYPES, channelForTaskType, type Channel } from "../../shared/model.js";
 import { resolveLinks } from "./links.js";
+import { advanceAccount } from "./funnel.js";
 
 const TYPE_KEYS = TASK_TYPES.map((t) => t.key);
 
@@ -134,5 +135,6 @@ export async function completeTask(t: Db, owner: string, id: string, input: Comp
         contact_id: next.contact_id ?? links.contact_id,
       })
     : null;
-  return { activity, next_task };
+  const moved = activity ? await advanceAccount(t, owner, links.account_id ?? null, activity.channel, activity.outcome) : null;
+  return { activity, next_task, moved };
 }

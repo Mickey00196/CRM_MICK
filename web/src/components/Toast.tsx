@@ -1,3 +1,4 @@
+import { accountStatusLabel, type StatusMove } from "@shared/model";
 import { useEffect, useState } from "react";
 
 interface ToastData {
@@ -51,4 +52,10 @@ export function Toaster() {
       )}
     </div>
   );
+}
+
+/** "Northwind moved to In talks": shown when logging contact moved an account along the funnel. */
+export function toastMove(res: unknown) {
+  const moved = (res as { moved?: StatusMove | null } | null)?.moved;
+  if (moved) toast(`${moved.account_name} moved to ${accountStatusLabel(moved.to)}`);
 }

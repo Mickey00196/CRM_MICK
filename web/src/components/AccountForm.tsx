@@ -13,7 +13,7 @@ export function AccountForm({ onDone }: { onDone: () => void }) {
   const [f, setF] = useState({
     name: "",
     website: "",
-    status: "lead",
+    status: "target",
     language: "nl",
     city: "Amsterdam",
     submarket: "",

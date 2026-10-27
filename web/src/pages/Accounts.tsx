@@ -30,10 +30,11 @@ const COLUMNS: { key: ColKey; label: string; sort: (a: AccountRow) => string | n
 const DEFAULT_COLS: ColKey[] = ["status", "location", "size", "lease_end", "next_step", "last_contact"];
 
 const VIEWS = [
-  { key: "lead", label: "Leads", match: (a: AccountRow) => a.status === "lead" },
-  { key: "prospect", label: "Prospects", match: (a: AccountRow) => a.status === "prospect" },
-  { key: "client", label: "Clients", match: (a: AccountRow) => a.status === "client" },
-  { key: "other", label: "Former / not a fit", match: (a: AccountRow) => a.status === "former_client" || a.status === "not_a_fit" },
+  { key: "target", label: "Target", match: (a: AccountRow) => a.status === "target" },
+  { key: "contacted", label: "Contacted", match: (a: AccountRow) => a.status === "contacted" },
+  { key: "in_talks", label: "In talks", match: (a: AccountRow) => a.status === "in_talks" },
+  { key: "won", label: "Mandate won", match: (a: AccountRow) => a.status === "won" },
+  { key: "other", label: "Not now", match: (a: AccountRow) => a.status === "not_now" },
   { key: "all", label: "All", match: (_a: AccountRow) => true },
 ];
 
@@ -89,7 +90,7 @@ export function Accounts() {
         <EmptyState
           icon={Building2}
           title="No accounts yet"
-          text="An account is a company you're chasing or working for, like a scale-up in Amsterdam you want as a client. Plan a follow-up date on each one and it lands in your to-dos."
+          text="An account is a company you're chasing, like a scale-up in Amsterdam you want a mandate from. Plan a follow-up date on each one and it lands in your to-dos. Logging a call or meeting moves it along the funnel."
         >
           <Button size="lg" onClick={() => ui.openCapture("account")}>
             <Plus /> New account

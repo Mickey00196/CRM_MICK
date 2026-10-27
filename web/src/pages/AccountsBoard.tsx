@@ -13,12 +13,16 @@ import { StatusDot } from "@/components/Brand";
 import { toast } from "@/components/Toast";
 
 const COLUMNS: { key: AccountStatus; label: string }[] = [
-  { key: "lead", label: "Leads" },
-  { key: "prospect", label: "Prospects" },
-  { key: "client", label: "Clients" },
+  { key: "target", label: "Target" },
+  { key: "contacted", label: "Contacted" },
+  { key: "in_talks", label: "In talks" },
+  { key: "won", label: "Mandate won" },
 ];
 
-/** The accounts you're working, by status. Drag a card to move it; each card shows its next follow-up. */
+/**
+ * The acquisition funnel. Logging contact moves a card forward on its own; drag or use the menu to
+ * move it yourself. Each card shows its next follow-up.
+ */
 export function AccountsBoard({
   data,
   setData,
@@ -31,14 +35,14 @@ export function AccountsBoard({
   const [q, setQ] = useState("");
   const [dragId, setDragId] = useState<string | null>(null);
   const [over, setOver] = useState<AccountStatus | null>(null);
-  const [mobile, setMobile] = useState<AccountStatus>("lead");
+  const [mobile, setMobile] = useState<AccountStatus>("target");
 
   const columns = useMemo(() => {
     const t = q.trim().toLowerCase();
     const list = data.filter(
       (a) => !t || [a.name, a.office_city, a.office_submarket, a.industry].some((s) => s?.toLowerCase().includes(t)),
     );
-    const by: Record<string, AccountRow[]> = { lead: [], prospect: [], client: [] };
+    const by: Record<string, AccountRow[]> = { target: [], contacted: [], in_talks: [], won: [] };
     for (const a of list) by[a.status]?.push(a);
     // No follow-up first so it gets seen, then the soonest follow-up.
     const urgency = (a: AccountRow) => (a.next_step ? a.next_step.due_date ?? "9999" : "0000");
@@ -46,7 +50,7 @@ export function AccountsBoard({
     return by;
   }, [data, q]);
 
-  const others = data.filter((a) => a.status === "former_client" || a.status === "not_a_fit").length;
+  const others = data.filter((a) => a.status === "not_now").length;
 
   async function move(id: string, status: AccountStatus) {
     const a = data.find((x) => x.id === id);
@@ -76,7 +80,7 @@ export function AccountsBoard({
         />
       </div>
 
-      <div className="grid gap-8 md:grid-cols-3 md:gap-5">
+      <div className="grid gap-8 md:grid-cols-4 md:gap-4">
         {COLUMNS.map((col) => (
           <section
             key={col.key}
@@ -133,7 +137,7 @@ export function AccountsBoard({
 
       {others > 0 && (
         <button onClick={onShowOthers} className="mt-8 text-[13px] text-muted hover:text-fg">
-          {others} former client{others === 1 ? "" : "s"} or not a fit · show in list
+          {others} parked as Not now · show in list
         </button>
       )}
     </>
@@ -214,6 +218,8 @@ function Card({
               {next.due_date ? dueLabel(next.due_date, next.due_time, today) : "No date"}
             </span>
           </p>
+        ) : a.status === "won" ? (
+          <p className="text-muted">Nothing planned</p>
         ) : (
           <p className="flex items-center justify-between gap-3">
             <span className="text-missing">No follow-up</span>

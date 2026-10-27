@@ -171,7 +171,7 @@ accounts.get("/accounts/export.csv", async (req, res) => {
  */
 accounts.post("/accounts", async (req, res) => {
   const owner = uid(req);
-  const body = { status: "lead", language: "nl", ...req.body };
+  const body = { status: "target", language: "nl", ...req.body };
   const cols = accountCols(body, false);
   const office = body.office ? pick(body.office, OFFICE_SPEC, true) : null;
   const contact = body.contact?.name ? pick(body.contact, CONTACT_SPEC, true) : null;

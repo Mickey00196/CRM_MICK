@@ -20,6 +20,7 @@ import { Chips, ErrorText, Field, Input, Select, Textarea } from "@/components/u
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/dropdown";
 import { NextStepPicker, nextFromSuggestion, nextPayload, type NextStepValue } from "./NextStepPicker";
 import { useUI } from "./ui-context";
+import { toastMove } from "./Toast";
 
 type Step = "view" | "edit" | "complete";
 
@@ -276,12 +277,13 @@ function CompleteStep({ data, onBack, onDone }: { data: TaskDetail; onBack: () =
     setBusy(true);
     setError(null);
     try {
-      await api(`/tasks/${task.id}/complete`, "POST", {
+      const res = await api(`/tasks/${task.id}/complete`, "POST", {
         outcome,
         note,
         contact_id: contactId || null,
         next: nextPayload(next),
       });
+      toastMove(res);
       onDone();
     } catch (err) {
       setError((err as Error).message);

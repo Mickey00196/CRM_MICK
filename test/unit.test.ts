@@ -86,6 +86,21 @@ test("csvCell neutralises formulas and quotes separators", () => {
   assert.equal(csvCell(850, ";"), "850");
 });
 
+// ---------- acquisition funnel ----------
+import { advanceStatus } from "../shared/model.js";
+
+test("advanceStatus moves accounts forward on real contact, never back", () => {
+  assert.equal(advanceStatus("target", "call", "no_answer"), "contacted", "an attempt counts as contacted");
+  assert.equal(advanceStatus("target", "email", "sent"), "contacted");
+  assert.equal(advanceStatus("target", "note", null), null, "notes are not contact");
+  assert.equal(advanceStatus("contacted", "call", "meeting_booked"), "in_talks");
+  assert.equal(advanceStatus("target", "meeting", "held"), "in_talks");
+  assert.equal(advanceStatus("contacted", "meeting", "no_show"), null, "a no-show isn't talks yet");
+  assert.equal(advanceStatus("in_talks", "call", "reached"), null, "never backwards");
+  assert.equal(advanceStatus("won", "meeting", "held"), null);
+  assert.equal(advanceStatus("not_now", "call", "meeting_booked"), null, "parked stays parked until you move it");
+});
+
 // ---------- readable dates and one-line capture ----------
 import { dueParts, dueText } from "../shared/dates.js";
 import { parseQuick } from "../shared/quick.js";

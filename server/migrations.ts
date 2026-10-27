@@ -308,4 +308,19 @@ alter table custom_field_definitions add constraint custom_field_definitions_ent
     id: "004_snooze_count",
     sql: `alter table tasks add column snooze_count integer not null default 0;`,
   },
+  {
+    // Accounts follow the acquisition funnel instead of lead/prospect/client.
+    id: "005_funnel_statuses",
+    sql: `
+      alter table accounts drop constraint accounts_status_check;
+      update accounts set status = case status
+        when 'lead' then 'target'
+        when 'prospect' then 'contacted'
+        when 'client' then 'won'
+        else 'not_now' end;
+      alter table accounts alter column status set default 'target';
+      alter table accounts add constraint accounts_status_check
+        check (status in ('target', 'contacted', 'in_talks', 'won', 'not_now'));
+    `,
+  },
 ];

@@ -3,6 +3,7 @@ import type { Db } from "../db.js";
 import { f, pick, bad, notFound, updateSql, type Spec } from "../validate.js";
 import { businessDaysFromNow } from "../sql.js";
 import { CHANNELS } from "../../shared/model.js";
+import { advanceAccount } from "./funnel.js";
 import { resolveLinks } from "./links.js";
 import { createTask, parseNext, validateOutcome } from "./tasks.js";
 
@@ -91,7 +92,8 @@ export async function logActivity(t: Db, owner: string, body: any) {
         contact_id: next.contact_id ?? cols.contact_id,
       })
     : null;
-  return { activity, next_task };
+  const moved = await advanceAccount(t, owner, cols.account_id as string | null, cols.channel as string, (cols.outcome as string | null) ?? null);
+  return { activity, next_task, moved };
 }
 
 export async function updateActivity(t: Db, owner: string, id: string, body: any) {

@@ -43,7 +43,7 @@ export function Review() {
         </p>
       </header>
 
-      <Group label="No follow-up planned" hint="Plan the next touch, or move the account to Not a fit.">
+      <Group label="No follow-up planned" hint="Plan the next touch, or park the account as Not now.">
         {stalled.map((a) => (
           <AccountLine key={a.id} id={a.id} name={a.name} meta={[accountStatusLabel(a.status), a.city, a.last_contact_at ? `last contact ${relative(a.last_contact_at)}` : "not contacted yet"]}>
             <ActionButton onClick={() => followUp(a)}>+ Follow-up</ActionButton>
