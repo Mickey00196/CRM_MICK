@@ -105,13 +105,13 @@ function ViewStep({
         {taskTypeLabel(task.type)}
         {task.priority === "high" && <span className="text-late"> · High priority</span>}
       </p>
-      <h2 className="display mt-2 text-[32px]">{task.title}</h2>
+      <h2 className="title mt-1 text-xl">{task.title}</h2>
       <div className="mt-1">
         <DueLine due={task.due_date} time={task.due_time} />
       </div>
 
       <div className="mt-5 flex flex-wrap gap-2">
-        <Button onClick={onComplete} className="px-5">Complete</Button>
+        <Button onClick={onComplete}>Complete</Button>
         <Menu>
           <MenuTrigger asChild>
             <Button variant="outline">
@@ -174,12 +174,12 @@ function ViewStep({
             {contact.do_not_contact && <p className="text-[13px] text-late">Do not contact</p>}
             <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-sm">
               {contact.phone && (
-                <a href={`tel:${contact.phone.replace(/\s/g, "")}`} className="inline-flex items-center gap-1.5 text-accent hover:underline">
+                <a href={`tel:${contact.phone.replace(/\s/g, "")}`} className="inline-flex items-center gap-1.5 text-muted hover:text-fg">
                   <Phone className="size-3.5" /> {contact.phone}
                 </a>
               )}
               {contact.email && (
-                <a href={`mailto:${contact.email}`} className="inline-flex items-center gap-1.5 text-accent hover:underline">
+                <a href={`mailto:${contact.email}`} className="inline-flex items-center gap-1.5 text-muted hover:text-fg">
                   <Mail className="size-3.5" /> {contact.email}
                 </a>
               )}
@@ -188,7 +188,7 @@ function ViewStep({
                   href={contact.linkedin_url.startsWith("http") ? contact.linkedin_url : `https://${contact.linkedin_url}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 text-accent hover:underline"
+                  className="inline-flex items-center gap-1.5 text-muted hover:text-fg"
                 >
                   <Link2 className="size-3.5" /> LinkedIn
                 </a>
@@ -237,11 +237,11 @@ function ViewStep({
 
         <div className="flex flex-wrap gap-x-5 gap-y-2 border-t border-line pt-4 text-sm">
           {contact?.email && !contact.do_not_contact && (
-            <a href={`mailto:${contact.email}`} className="font-medium text-accent hover:underline">
+            <a href={`mailto:${contact.email}`} className="text-muted hover:text-fg">
               Write email
             </a>
           )}
-          <button className="font-medium text-accent hover:underline" onClick={onEdit}>
+          <button className="text-muted hover:text-fg" onClick={onEdit}>
             Edit to-do
           </button>
         </div>
@@ -295,7 +295,7 @@ function CompleteStep({ data, onBack, onDone }: { data: TaskDetail; onBack: () =
     <form onSubmit={save} className="grid gap-6">
       <div>
         <p className="label">{taskTypeLabel(task.type)}</p>
-        <h2 className="display mt-2 text-[32px]">How did it go?</h2>
+        <h2 className="title mt-1 text-xl">How did it go?</h2>
         <p className="mt-1 text-sm text-muted">
           {task.title}
           {(task.project_name ?? task.account_name) && ` · ${task.project_name ?? task.account_name}`}

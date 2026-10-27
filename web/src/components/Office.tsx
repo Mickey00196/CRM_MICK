@@ -73,17 +73,7 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
 }
 
 /** Summary card with the computed lease view. */
-export function OfficeCard({
-  office,
-  onEdit,
-  compact,
-  className = "card p-5 sm:p-6",
-}: {
-  office: OfficeLocation;
-  onEdit?: () => void;
-  compact?: boolean;
-  className?: string;
-}) {
+export function OfficeCard({ office, onEdit, compact }: { office: OfficeLocation; onEdit?: () => void; compact?: boolean }) {
   const today = todayISO();
   const info = leaseInfo(office, today);
   const remaining =
@@ -91,7 +81,7 @@ export function OfficeCard({
   const noticeSoon = info.nextKeyDate?.label.toLowerCase().includes("notice") && daysBetween(today, info.nextKeyDate.date) <= 180;
 
   return (
-    <article className={className}>
+    <article className="border-t border-line pt-5">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <h3 className="font-medium">
@@ -335,12 +325,12 @@ export function OfficeForm({
 
       <div className="flex flex-wrap gap-6 text-sm">
         <label className="flex items-center gap-2">
-          <input type="checkbox" className="size-4 accent-[var(--accent)]" checked={f.is_current !== false} onChange={(e) => setF({ ...f, is_current: e.target.checked })} />
+          <input type="checkbox" className="size-4 accent-[var(--fg)]" checked={f.is_current !== false} onChange={(e) => setF({ ...f, is_current: e.target.checked })} />
           Current location
         </label>
         {!office?.is_primary && (
           <label className="flex items-center gap-2">
-            <input type="checkbox" className="size-4 accent-[var(--accent)]" checked={f.is_primary === true} onChange={(e) => setF({ ...f, is_primary: e.target.checked })} />
+            <input type="checkbox" className="size-4 accent-[var(--fg)]" checked={f.is_primary === true} onChange={(e) => setF({ ...f, is_primary: e.target.checked })} />
             Make primary
           </label>
         )}

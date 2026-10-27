@@ -36,15 +36,18 @@ export function QuickCapture({
 }) {
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()} title="Quick capture" hideTitle>
-      <div className="px-5 pt-5">
-        <div className="segmented flex max-w-full overflow-x-auto" role="tablist">
+      <div className="border-b border-line px-5 pt-4">
+        <div className="flex gap-5 overflow-x-auto" role="tablist">
           {KINDS.map((k) => (
             <button
               key={k.key}
               role="tab"
               aria-selected={kind === k.key}
               onClick={() => onKind(k.key)}
-              className="flex-1"
+              className={cn(
+                "-mb-px whitespace-nowrap border-b-2 pb-3 text-sm transition-colors",
+                kind === k.key ? "border-fg text-fg" : "border-transparent text-muted hover:text-fg",
+              )}
             >
               {k.label}
             </button>

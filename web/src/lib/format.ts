@@ -98,13 +98,11 @@ export function fromLocalInput(v: string): string {
   return new Date(guess.getTime() - offset).toISOString();
 }
 
-/** "morning", "afternoon" or "evening" in the app's time zone. */
-export function partOfDay(d = new Date()): "morning" | "afternoon" | "evening" {
-  const h = Number(new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", hour12: false }).format(d));
-  return h < 12 ? "morning" : h < 18 ? "afternoon" : "evening";
-}
-
-/** Weekday name, e.g. "Tue" or "Tuesday". */
-export function weekday(iso: string, style: "short" | "long" = "short"): string {
-  return new Date(iso + "T12:00:00Z").toLocaleDateString("en-GB", { timeZone: "UTC", weekday: style });
+export function initials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase())
+    .join("");
 }

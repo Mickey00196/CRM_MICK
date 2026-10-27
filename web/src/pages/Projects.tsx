@@ -1,17 +1,16 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, CircleDashed, Flag, Hourglass, Plus, Search, SquareKanban } from "lucide-react";
+import { Search } from "lucide-react";
 import { PROJECT_STAGES, type ProjectRow, type ProjectStage } from "@shared/model";
 import { api, useApi } from "@/lib/api";
-import { dmy, relative } from "@/lib/format";
+import { dmy, relative, todayISO } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useUI } from "@/components/ui-context";
-import { DuePill } from "@/components/TodoItem";
-import { Avatar } from "@/components/Avatar";
-import { STAGE_SHORT, StageIcon } from "@/components/Stage";
-import { PageHeader } from "@/components/Panel";
+import { dueLabel } from "@/components/TodoItem";
+
+const COLUMN_LABEL: Record<ProjectStage, string> = { todo: "To do", active: "Active", waiting: "Waiting", done: "Done" };
 
 /** Where every project is: four columns, drag a card to move it. */
 export function Projects() {
@@ -20,7 +19,6 @@ export function Projects() {
   const [q, setQ] = useState("");
   const [dragId, setDragId] = useState<string | null>(null);
   const [over, setOver] = useState<ProjectStage | null>(null);
-  const [mobileStage, setMobileStage] = useState<ProjectStage>("active");
   const ui = useUI();
 
   const columns = useMemo(() => {
@@ -42,110 +40,75 @@ export function Projects() {
     await api(`/projects/${id}`, "PATCH", { stage }).catch(() => {});
   }
 
-  const open = (data ?? []).filter((p) => p.stage !== "done");
-  const stalled = open.filter((p) => !p.next_step).length;
-
   return (
-    <div className="rise mx-auto max-w-7xl">
-      <PageHeader
-        title="Projects"
-        subtitle={
-          data && (
-            <>
-              {open.length} open
-              {columns.waiting.length > 0 && <> · {columns.waiting.length} waiting on others</>}
-              {stalled > 0 && <> · {stalled} without a next step</>}
-            </>
-          )
-        }
-        actions={
-          <>
-            <div className="relative flex-1 sm:w-56 sm:flex-none">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-faint" />
-              <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter" className="h-9 pl-8" aria-label="Filter projects" />
-            </div>
-            <Button onClick={() => ui.openCapture("project")}>
-              <Plus /> New project
-            </Button>
-          </>
-        }
-      />
+    <div className="mx-auto max-w-7xl">
+      <header className="mb-8 flex flex-wrap items-baseline justify-between gap-4">
+        <h1 className="title text-2xl">Projects</h1>
+        <div className="flex items-center gap-2">
+          <div className="relative w-56">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-faint" />
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter" className="h-8 pl-8 text-[13px]" aria-label="Filter projects" />
+          </div>
+          <Button variant="ghost" size="sm" onClick={() => ui.openCapture("project")}>
+            + New project
+          </Button>
+        </div>
+      </header>
 
-      {error && <p className="text-sm text-late-text">{error}</p>}
+      {error && <p className="text-sm text-late">{error}</p>}
       {data && data.length === 0 && (
-        <p className="serif text-[24px] italic text-muted">No projects yet. Press P to add the first.</p>
+        <p className="py-12 text-center text-muted">
+          No projects yet. Press <kbd className="rounded border border-line px-1 text-xs">P</kbd> to add your first.
+        </p>
       )}
 
       {data && data.length > 0 && (
-        <>
-          {/* Phones: one stage at a time. */}
-          <div className="mb-4 md:hidden">
-            <div className="segmented flex w-full" role="radiogroup" aria-label="Stage">
-              {PROJECT_STAGES.map(({ key }) => (
-                <button key={key} role="radio" aria-checked={mobileStage === key} onClick={() => setMobileStage(key)} className="flex-1 !px-1">
-                  {STAGE_SHORT[key]}
-                  <span className="mono text-[11px] text-faint">{columns[key].length}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-4">
-            {PROJECT_STAGES.map(({ key, label }) => (
-              <section
-                key={key}
-                onDragOver={(e) => {
-                  if (!dragId) return;
-                  e.preventDefault();
-                  setOver(key);
-                }}
-                onDragLeave={(e) => {
-                  if (!e.currentTarget.contains(e.relatedTarget as Node)) setOver(null);
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  if (dragId) move(dragId, key);
-                  setDragId(null);
-                  setOver(null);
-                }}
-                className={cn("min-w-0", mobileStage !== key && "hidden md:block")}
-              >
-                <h2 className="mb-4 hidden items-center gap-2.5 border-b border-line pb-3 md:flex">
-                  <StageIcon stage={key} />
-                  <span className="text-[14px] font-medium">{label}</span>
-                  <span className="mono text-[12.5px] text-faint">{columns[key].length}</span>
-                </h2>
-                <div
-                  className={cn(
-                    "-m-1.5 grid content-start gap-3 rounded-2xl border border-dashed border-transparent p-1.5 transition-colors duration-200 md:min-h-40 xl:min-h-[60vh]",
-                    over === key && "border-line-strong bg-subtle/60",
-                  )}
-                >
-                  {columns[key].map((p) => (
-                    <Card
-                      key={p.id}
-                      project={p}
-                      dragging={dragId === p.id}
-                      onDragStart={() => setDragId(p.id)}
-                      onDragEnd={() => {
-                        setDragId(null);
-                        setOver(null);
-                      }}
-                    />
-                  ))}
-                  {columns[key].length === 0 && (
-                    <p className="serif py-4 text-[16px] italic text-faint">{dragId ? "Drop here" : "Nothing here"}</p>
-                  )}
-                  {key === "done" && (
-                    <button onClick={() => setShowAllDone((v) => !v)} className="mt-1 text-left text-[13px] text-muted underline-offset-4 hover:text-fg hover:underline">
-                      {showAllDone ? "Show last 30 days only" : "Show all done"}
-                    </button>
-                  )}
-                </div>
-              </section>
-            ))}
-          </div>
-        </>
+        <div className="grid gap-8 md:grid-cols-4 md:gap-5">
+          {PROJECT_STAGES.map(({ key }) => (
+            <section
+              key={key}
+              onDragOver={(e) => {
+                if (!dragId) return;
+                e.preventDefault();
+                setOver(key);
+              }}
+              onDragLeave={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget as Node)) setOver(null);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                if (dragId) move(dragId, key);
+                setDragId(null);
+                setOver(null);
+              }}
+              className={cn("min-h-24 min-w-0 rounded-lg transition-colors md:min-h-[60vh]", over === key && "bg-accent-soft/60")}
+            >
+              <h2 className="label mb-3 flex items-baseline justify-between border-b border-line pb-2">
+                {COLUMN_LABEL[key]}
+                <span className="font-normal normal-case tracking-normal text-faint">{columns[key].length}</span>
+              </h2>
+              <div className="grid gap-2">
+                {columns[key].map((p) => (
+                  <Card
+                    key={p.id}
+                    project={p}
+                    dragging={dragId === p.id}
+                    onDragStart={() => setDragId(p.id)}
+                    onDragEnd={() => {
+                      setDragId(null);
+                      setOver(null);
+                    }}
+                  />
+                ))}
+                {key === "done" && (
+                  <button onClick={() => setShowAllDone((v) => !v)} className="mt-1 text-left text-[13px] text-muted hover:text-fg">
+                    {showAllDone ? "Show last 30 days only" : "Show all done"}
+                  </button>
+                )}
+              </div>
+            </section>
+          ))}
+        </div>
       )}
     </div>
   );
@@ -163,8 +126,9 @@ function Card({
   onDragEnd: () => void;
 }) {
   const navigate = useNavigate();
+  const today = todayISO();
   const next = p.next_step;
-  const done = p.stage === "done";
+  const late = next?.due_date && next.due_date < today;
 
   return (
     <article
@@ -179,44 +143,27 @@ function Card({
       onKeyDown={(e) => e.key === "Enter" && navigate(`/projects/${p.id}`)}
       tabIndex={0}
       className={cn(
-        "min-w-0 cursor-pointer rounded-xl border border-line bg-surface p-4 shadow-[var(--shadow-card)] transition-[border-color,box-shadow,transform] duration-300 hover:-translate-y-px hover:border-line-strong hover:shadow-[var(--shadow-lift)]",
+        "min-w-0 cursor-pointer rounded-lg border border-line bg-surface px-3.5 py-3 transition-colors hover:border-line-strong",
         dragging && "opacity-40",
       )}
     >
-      <div className="flex items-start gap-2">
-        <StageIcon stage={p.stage} className="mt-[3px]" />
-        <h3 className={cn("min-w-0 flex-1 text-[14.5px] font-medium leading-snug", done && "text-muted")}>{p.name}</h3>
-      </div>
-      {p.account_name && (
-        <p className="mt-1 truncate pl-[22px] text-[13px] text-muted">{p.account_name}</p>
-      )}
+      <h3 className="text-[15px] font-medium leading-snug">{p.name}</h3>
+      {p.account_name && <p className="mt-0.5 truncate text-[13px] text-muted">{p.account_name}</p>}
 
-      {done ? (
-        <p className="mono mt-3 pl-[22px] text-[12.5px] text-faint">Done {p.done_at ? dmy(p.done_at) : ""}</p>
+      {p.stage === "done" ? (
+        <p className="mt-2 text-[13px] text-faint">Done {p.done_at ? dmy(p.done_at) : ""}</p>
       ) : (
-        <div className="mt-3.5 grid grid-cols-[minmax(0,1fr)] gap-2 border-t border-line pt-3 text-[13px]">
-          {p.stage === "waiting" && p.waiting_on && (
-            <p className="flex min-w-0 items-center gap-1.5 text-muted">
-              <Hourglass className="size-3.5 shrink-0" />
-              <span className="truncate">Waiting on {p.waiting_on}</span>
-            </p>
-          )}
+        <div className="mt-2.5 border-t border-line pt-2 text-[13px]">
+          {p.stage === "waiting" && p.waiting_on && <p className="mb-1 truncate text-muted">Waiting on {p.waiting_on}</p>}
           {next ? (
-            <div className="flex min-w-0 items-center gap-1.5">
-              <ArrowRight className="size-3.5 shrink-0 text-faint" />
-              <span className="min-w-0 flex-1 truncate">{next.title}</span>
-              <DuePill due={next.due_date} time={next.due_time} />
-            </div>
+            <p className="flex items-baseline justify-between gap-3">
+              <span className="truncate">{next.title}</span>
+              <span className={cn("shrink-0", late ? "text-late" : "text-muted")}>{dueLabel(next.due_date, next.due_time, today)}</span>
+            </p>
           ) : (
-            <p className="flex items-center gap-1.5 text-muted">
-              <CircleDashed className="size-3.5" /> No next step
-            </p>
+            <p className="text-missing">No next step</p>
           )}
-          {p.target_date && (
-            <p className="flex items-center gap-1.5 text-faint">
-              <Flag className="size-3.5" /> <span className="mono">{dmy(p.target_date)}</span> · {relative(p.target_date)}
-            </p>
-          )}
+          {p.target_date && <p className="mt-1 text-faint">Target {dmy(p.target_date)} ({relative(p.target_date)})</p>}
         </div>
       )}
     </article>

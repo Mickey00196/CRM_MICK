@@ -178,7 +178,7 @@ export function LogForm({ preset, onSaved, onCancel }: { preset: LogPreset; onSa
 
       {matching && (
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" className="size-4 accent-[var(--accent)]" checked={closeTask} onChange={(e) => setCloseTask(e.target.checked)} />
+          <input type="checkbox" className="size-4 accent-[var(--fg)]" checked={closeTask} onChange={(e) => setCloseTask(e.target.checked)} />
           <span>
             Mark <span className="font-medium">{matching.title}</span> as done
           </span>

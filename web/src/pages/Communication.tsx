@@ -1,6 +1,4 @@
 import { useMemo, useState } from "react";
-import { Plus } from "lucide-react";
-import { PageHeader } from "@/components/Panel";
 import { CHANNELS, OUTCOMES, type ActivityRow, type Channel } from "@shared/model";
 import { api, useApi } from "@/lib/api";
 import { addDays, dmy, todayISO } from "@/lib/format";
@@ -54,28 +52,25 @@ export function Communication() {
   const filtered = Boolean(channel || outcome || account || from || to);
 
   return (
-    <div className="rise mx-auto max-w-4xl">
-      <PageHeader
-        title="Log"
-        subtitle="Calls, emails, meetings and notes, newest first."
-        actions={
-          <Button onClick={() => ui.openCapture("log")}>
-            <Plus /> Log something
-          </Button>
-        }
-      />
+    <div className="mx-auto max-w-4xl">
+      <header className="mb-8 flex flex-wrap items-baseline justify-between gap-4">
+        <h1 className="title text-2xl">Log</h1>
+        <Button variant="ghost" size="sm" onClick={() => ui.openCapture("log")}>
+          + Log something
+        </Button>
+      </header>
 
-      <section className="card mb-14 overflow-x-auto">
-        <table className="data min-w-[520px]">
+      <section className="mb-12 overflow-x-auto">
+        <table className="w-full min-w-[520px] text-sm">
           <thead>
-            <tr>
-              <th>Week of</th>
+            <tr className="text-left text-[13px] text-muted">
+              <th className="pb-2 pr-4 font-normal">Week of</th>
               {COUNTED.map((c) => (
-                <th key={c} className="text-right">
+                <th key={c} className="pb-2 pr-4 text-right font-normal">
                   {CHANNELS.find((x) => x.key === c)?.label}
                 </th>
               ))}
-              <th className="text-right">Total</th>
+              <th className="pb-2 text-right font-normal">Total</th>
             </tr>
           </thead>
           <tbody>
@@ -83,22 +78,14 @@ export function Communication() {
               const total = COUNTED.reduce((s, c) => s + count(w, c), 0);
               const current = i === weeks.length - 1;
               return (
-                <tr key={w} className={current ? "bg-subtle/70" : undefined}>
-                  <td className={current ? "font-medium" : "mono text-[12.5px] text-muted"}>{current ? "This week" : dmy(w)}</td>
-                  {COUNTED.map((c) => {
-                    const n = count(w, c);
-                    return (
-                      <td key={c} className="text-right">
-                        <span
-                          className={`mono inline-grid min-w-7 place-items-center rounded-md px-1.5 py-0.5 text-[12.5px] ${n ? "font-medium" : "text-faint"}`}
-                          style={n ? { background: `color-mix(in srgb, var(--fg) ${Math.min(22, 6 + n * 4)}%, transparent)` } : undefined}
-                        >
-                          {n}
-                        </span>
-                      </td>
-                    );
-                  })}
-                  <td className="mono text-right text-[12.5px] font-medium">{total}</td>
+                <tr key={w} className="border-t border-line">
+                  <td className={`py-2.5 pr-4 ${current ? "font-medium" : "text-muted"}`}>{current ? "This week" : dmy(w)}</td>
+                  {COUNTED.map((c) => (
+                    <td key={c} className={`py-2.5 pr-4 text-right ${count(w, c) ? "" : "text-faint"}`}>
+                      {count(w, c)}
+                    </td>
+                  ))}
+                  <td className={`py-2.5 text-right ${current ? "font-medium" : ""}`}>{total}</td>
                 </tr>
               );
             })}
@@ -106,7 +93,7 @@ export function Communication() {
         </table>
       </section>
 
-      <div className="mb-3 grid gap-2 sm:grid-cols-[1fr_9rem_9rem]">
+      <div className="mb-4 grid gap-2 sm:grid-cols-[1fr_9rem_9rem]">
         <AccountPicker value={account} onChange={setAccount} placeholder="All companies" />
         <Select
           value={channel}
@@ -134,9 +121,9 @@ export function Communication() {
       </div>
       <div className="mb-6 flex flex-wrap items-center gap-2 text-[13px] text-muted">
         <span>From</span>
-        <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-9 w-auto text-[13px]" aria-label="From" />
+        <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-8 w-auto text-[13px]" aria-label="From" />
         <span>to</span>
-        <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-9 w-auto text-[13px]" aria-label="To" />
+        <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-8 w-auto text-[13px]" aria-label="To" />
         {filtered && (
           <button
             className="ml-2 hover:text-fg"
@@ -154,11 +141,7 @@ export function Communication() {
       </div>
 
       {error && <p className="text-sm text-late">{error}</p>}
-      {items && (
-        <div className="open-list">
-          <Timeline items={items} showAccount showProject empty={filtered ? "Nothing matches these filters." : "Nothing logged yet."} />
-        </div>
-      )}
+      {items && <Timeline items={items} showAccount showProject empty={filtered ? "Nothing matches these filters." : "Nothing logged yet."} />}
     </div>
   );
 }

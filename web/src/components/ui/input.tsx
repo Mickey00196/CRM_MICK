@@ -2,7 +2,7 @@ import { forwardRef, type InputHTMLAttributes, type SelectHTMLAttributes, type T
 import { cn } from "@/lib/utils";
 
 const base =
-  "w-full min-w-0 rounded-lg border border-line-strong bg-surface px-3 text-[14px] text-fg shadow-[var(--shadow-card)] placeholder:text-faint transition-[border-color,box-shadow] duration-200 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand-soft disabled:opacity-50";
+  "w-full min-w-0 rounded-md border border-line-strong bg-surface px-3 text-sm text-fg placeholder:text-faint transition-colors focus:border-accent focus:outline-none focus:ring-3 focus:ring-accent-soft disabled:opacity-50";
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(({ className, ...props }, ref) => (
   <input ref={ref} className={cn(base, "h-9", className)} {...props} />
@@ -15,7 +15,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<H
 Textarea.displayName = "Textarea";
 
 const CHEVRON =
-  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238e8e93' stroke-width='1.6'/%3E%3C/svg%3E\")";
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%239a9da1' stroke-width='1.5'/%3E%3C/svg%3E\")";
 
 export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSelectElement>>(({ className, style, ...props }, ref) => (
   <select
@@ -30,7 +30,7 @@ Select.displayName = "Select";
 export function Field({ label, children, className, hint }: { label: string; children: ReactNode; className?: string; hint?: string }) {
   return (
     <label className={cn("grid min-w-0 content-start gap-1.5", className)}>
-      <span className="text-[12.5px] font-medium text-muted">{label}</span>
+      <span className="text-[13px] text-muted">{label}</span>
       {children}
       {hint && <span className="text-xs text-faint">{hint}</span>}
     </label>
@@ -60,9 +60,11 @@ export function Chips<T extends string>({
           aria-pressed={value === o.key}
           onClick={() => onChange(o.key)}
           className={cn(
-            "rounded-lg border px-2.5 font-medium transition-colors",
-            size === "sm" ? "h-7 text-[12.5px]" : "h-8 text-[13px]",
-            value === o.key ? "border-accent bg-accent text-accent-fg" : "border-line-strong bg-surface text-muted hover:border-faint hover:text-fg",
+            "rounded-full border px-3 transition-colors",
+            size === "sm" ? "h-7 text-[13px]" : "h-8 text-sm",
+            value === o.key
+              ? "border-fg bg-fg text-bg"
+              : "border-line-strong text-muted hover:border-faint hover:text-fg",
           )}
         >
           {o.label}
@@ -74,5 +76,5 @@ export function Chips<T extends string>({
 
 export function ErrorText({ children }: { children: ReactNode }) {
   if (!children) return null;
-  return <p className="text-[13px] text-late-text">{children}</p>;
+  return <p className="text-[13px] text-late">{children}</p>;
 }

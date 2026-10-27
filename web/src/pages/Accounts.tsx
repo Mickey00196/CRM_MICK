@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowDown, ArrowUp, Columns3, Download, Plus, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, Columns3, Download, Search } from "lucide-react";
 import { ACCOUNT_STATUSES, accountStatusLabel, type AccountRow } from "@shared/model";
 import { api, useApi, useStored } from "@/lib/api";
 import { dmy, m2, todayISO } from "@/lib/format";
@@ -9,8 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Menu, MenuCheckbox, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger } from "@/components/ui/dropdown";
 import { useUI } from "@/components/ui-context";
-import { Avatar } from "@/components/Avatar";
-import { PageHeader } from "@/components/Panel";
 
 type ColKey = "status" | "location" | "size" | "lease_end" | "next_step" | "last_contact" | "industry" | "source";
 
@@ -99,45 +97,46 @@ export function Accounts() {
   const allSelected = rows.length > 0 && rows.every((r) => selected.has(r.id));
 
   return (
-    <div className="rise mx-auto max-w-6xl">
-      <PageHeader
-        title="Companies"
-        subtitle="The clients and prospects behind your projects."
-        actions={
-          <Button onClick={() => ui.openCapture("account")}>
-            <Plus /> New company
-          </Button>
-        }
-      />
+    <div className="mx-auto max-w-6xl">
+      <header className="mb-8 flex flex-wrap items-baseline justify-between gap-4">
+        <h1 className="title text-2xl">Companies</h1>
+        <Button variant="ghost" size="sm" onClick={() => ui.openCapture("account")}>
+          + Add company
+        </Button>
+      </header>
 
-      <div className="mb-5 max-w-full overflow-x-auto">
-        <div className="segmented" role="radiogroup" aria-label="View">
-          {VIEWS.map((v) => (
-            <button key={v.key} role="radio" aria-checked={view === v.key} onClick={() => setView(v.key)}>
-              {v.label} <span className="text-[12px] font-medium tabular-nums text-faint">{counts[v.key]}</span>
-            </button>
-          ))}
-          {saved.map((s) => (
-            <button
-              key={s.name}
-              role="radio"
-              aria-checked={false}
-              onClick={() => {
-                setView(s.view);
-                setQ(s.q);
-                setSort(s.sort);
-              }}
-            >
-              {s.name}
-            </button>
-          ))}
-        </div>
+      <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-3 border-b border-line">
+        {VIEWS.map((v) => (
+          <button
+            key={v.key}
+            onClick={() => setView(v.key)}
+            className={cn(
+              "-mb-px border-b-2 pb-2.5 text-sm transition-colors",
+              view === v.key ? "border-fg text-fg" : "border-transparent text-muted hover:text-fg",
+            )}
+          >
+            {v.label} <span className="text-faint">{counts[v.key]}</span>
+          </button>
+        ))}
+        {saved.map((s) => (
+          <button
+            key={s.name}
+            onClick={() => {
+              setView(s.view);
+              setQ(s.q);
+              setSort(s.sort);
+            }}
+            className="-mb-px border-b-2 border-transparent pb-2.5 text-sm text-muted hover:text-fg"
+          >
+            {s.name}
+          </button>
+        ))}
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="relative min-w-48 flex-1 sm:max-w-xs">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-faint" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter by name, area, tag" className="h-9 pl-8" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter by name, area, tag…" className="h-8 pl-8 text-[13px]" />
         </div>
         {selected.size > 0 ? (
           <div className="flex items-center gap-2 text-[13px]">
@@ -210,18 +209,18 @@ export function Accounts() {
       {error && <p className="text-sm text-late">{error}</p>}
 
       {data && rows.length === 0 ? (
-        <p className="card py-12 text-center text-muted">
+        <p className="py-12 text-center text-muted">
           {data.length === 0 ? "No companies yet. Add one when a project involves a client or prospect." : "No companies match this view."}
         </p>
       ) : (
-        <div className="card overflow-x-auto">
-          <table className="data min-w-[760px]">
+        <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+          <table className="w-full min-w-[760px] text-sm">
             <thead>
-              <tr>
-                <th className="w-8 !pr-0">
+              <tr className="border-b border-line text-left text-[13px] text-muted">
+                <th className="w-8 py-2 pr-2 font-normal">
                   <input
                     type="checkbox"
-                    className="size-4 accent-[var(--accent)]"
+                    className="size-4 accent-[var(--fg)]"
                     checked={allSelected}
                     onChange={() => setSelected(allSelected ? new Set() : new Set(rows.map((r) => r.id)))}
                     aria-label="Select all"
@@ -238,12 +237,12 @@ export function Accounts() {
                 <tr
                   key={a.id}
                   onClick={() => navigate(`/accounts/${a.id}`)}
-                  className={cn("cursor-pointer", selected.has(a.id) && "bg-accent-soft/50")}
+                  className={cn("cursor-pointer border-b border-line transition-colors hover:bg-hover/60", selected.has(a.id) && "bg-hover/60")}
                 >
-                  <td className="!pr-0" onClick={(e) => e.stopPropagation()}>
+                  <td className="py-3 pr-2" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
-                      className="size-4 accent-[var(--accent)]"
+                      className="size-4 accent-[var(--fg)]"
                       checked={selected.has(a.id)}
                       onChange={() => {
                         const s = new Set(selected);
@@ -253,14 +252,9 @@ export function Accounts() {
                       aria-label={`Select ${a.name}`}
                     />
                   </td>
-                  <td>
-                    <span className="flex items-center gap-2.5">
-                      <Avatar name={a.name} size="md" />
-                      <span className="font-medium">{a.name}</span>
-                    </span>
-                  </td>
+                  <td className="py-3 pr-4 font-medium">{a.name}</td>
                   {shown.map((c) => (
-                    <td key={c.key} className={cn("text-muted", c.className)}>
+                    <td key={c.key} className={cn("py-3 pr-4 text-muted", c.className)}>
                       <Cell row={a} col={c.key} today={today} />
                     </td>
                   ))}
@@ -289,7 +283,7 @@ function SortHeader({
 }) {
   const active = sort.key === k;
   return (
-    <th className={className} aria-sort={active ? (sort.dir === 1 ? "ascending" : "descending") : undefined}>
+    <th className={cn("py-2 pr-4 font-normal", className)} aria-sort={active ? (sort.dir === 1 ? "ascending" : "descending") : undefined}>
       <button onClick={() => onSort(k)} className={cn("inline-flex items-center gap-1 hover:text-fg", active && "text-fg")}>
         {label}
         {active && (sort.dir === 1 ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />)}
@@ -301,36 +295,27 @@ function SortHeader({
 function Cell({ row: a, col, today }: { row: AccountRow; col: ColKey; today: string }) {
   switch (col) {
     case "status":
-      return (
-        <span
-          className={cn(
-            "inline-flex items-center rounded-full border px-2.5 py-px text-[12px]",
-            a.status === "client" ? "border-line-strong text-fg" : a.status === "prospect" ? "border-line text-muted" : "border-dashed border-line-strong text-faint",
-          )}
-        >
-          {accountStatusLabel(a.status)}
-        </span>
-      );
+      return <>{accountStatusLabel(a.status)}</>;
     case "location":
       return <>{[a.office_submarket, a.office_city].filter(Boolean).join(", ")}</>;
     case "size":
-      return <span className="mono text-[12.5px]">{m2(a.area_m2)}</span>;
+      return <>{m2(a.area_m2)}</>;
     case "lease_end":
-      return <span className="mono text-[12.5px]">{dmy(a.lease_end)}</span>;
+      return <>{dmy(a.lease_end)}</>;
     case "next_step": {
       if (!a.next_step) {
         return <span className="text-faint">–</span>;
       }
       const late = a.next_step.due_date && a.next_step.due_date < today;
       return (
-        <span className={cn("block max-w-56 truncate", late ? "text-late-text" : "text-fg")}>
+        <span className={cn("block max-w-56 truncate", late ? "text-late" : "text-fg")}>
           {a.next_step.title}
-          {a.next_step.due_date && <span className={cn("mono text-[12px]", !late && "text-muted")}> · {dmy(a.next_step.due_date)}</span>}
+          {a.next_step.due_date && <span className={late ? "" : "text-muted"}> · {dmy(a.next_step.due_date)}</span>}
         </span>
       );
     }
     case "last_contact":
-      return <span className="mono text-[12.5px]">{dmy(a.last_contact_at)}</span>;
+      return <>{dmy(a.last_contact_at)}</>;
     case "industry":
       return <>{a.industry}</>;
     case "source":

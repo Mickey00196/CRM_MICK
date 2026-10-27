@@ -22,15 +22,15 @@ export function Dialog({
   return (
     <D.Root open={open} onOpenChange={onOpenChange}>
       <D.Portal>
-        <D.Overlay className="fixed inset-0 z-50 bg-[#1b1a17]/25 backdrop-blur-[2px] [animation:overlay-in_.2s_ease] dark:bg-black/60" />
+        <D.Overlay className="fixed inset-0 z-50 bg-black/25 [animation:overlay-in_.15s_ease] dark:bg-black/50" />
         <D.Content
           aria-describedby={undefined}
           className={cn(
-            "fixed left-1/2 top-[12vh] z-50 max-h-[80vh] w-[min(560px,calc(100vw-24px))] -translate-x-1/2 overflow-y-auto rounded-2xl border border-line bg-elevated shadow-[var(--shadow-pop)] [animation:pop-in_.22s_cubic-bezier(.16,1,.3,1)] focus:outline-none",
+            "fixed left-1/2 top-[12vh] z-50 max-h-[80vh] w-[min(560px,calc(100vw-24px))] -translate-x-1/2 overflow-y-auto rounded-xl border border-line bg-surface shadow-2xl [animation:pop-in_.16s_ease] focus:outline-none",
             className,
           )}
         >
-          <D.Title className={hideTitle ? "sr-only" : "display px-6 pt-6 text-[26px]"}>{title}</D.Title>
+          <D.Title className={hideTitle ? "sr-only" : "px-5 pt-5 text-base font-semibold"}>{title}</D.Title>
           {children}
         </D.Content>
       </D.Portal>
@@ -55,18 +55,18 @@ export function Sheet({
   return (
     <D.Root open={open} onOpenChange={onOpenChange}>
       <D.Portal>
-        <D.Overlay className="fixed inset-0 z-40 bg-[#1b1a17]/15 [animation:overlay-in_.2s_ease] dark:bg-black/50" />
+        <D.Overlay className="fixed inset-0 z-40 bg-black/15 [animation:overlay-in_.15s_ease] dark:bg-black/40" />
         <D.Content
           aria-describedby={undefined}
-          className="fixed inset-0 z-40 flex w-full flex-col bg-elevated shadow-[var(--shadow-pop)] [animation:sheet-in_.32s_cubic-bezier(.16,1,.3,1)] focus:outline-none sm:inset-y-3 sm:left-auto sm:right-3 sm:w-[460px] sm:rounded-2xl sm:border sm:border-line"
+          className="fixed inset-y-0 right-0 z-40 flex w-full flex-col border-l border-line bg-surface shadow-xl [animation:sheet-in_.2s_ease] focus:outline-none sm:w-[460px]"
         >
-          <div className={cn("flex items-center px-7 pt-6", hideTitle ? "justify-end pb-0" : "justify-between pb-3")}>
-            <D.Title className={hideTitle ? "sr-only" : "display text-[28px]"}>{title}</D.Title>
-            <D.Close className="-mr-2 grid size-7 place-items-center rounded-md text-muted hover:bg-subtle hover:text-fg" aria-label="Close">
+          <div className={cn("flex items-center px-6 pt-5", hideTitle ? "justify-end pb-0" : "justify-between pb-2")}>
+            <D.Title className={hideTitle ? "sr-only" : "label"}>{title}</D.Title>
+            <D.Close className="-mr-2 rounded-md p-1.5 text-faint hover:bg-hover hover:text-fg" aria-label="Close">
               <X className="size-4" />
             </D.Close>
           </div>
-          <div className="flex-1 overflow-y-auto px-7 pb-8">{children}</div>
+          <div className="flex-1 overflow-y-auto px-6 pb-8">{children}</div>
         </D.Content>
       </D.Portal>
     </D.Root>
