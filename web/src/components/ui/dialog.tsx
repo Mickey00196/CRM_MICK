@@ -22,15 +22,15 @@ export function Dialog({
   return (
     <D.Root open={open} onOpenChange={onOpenChange}>
       <D.Portal>
-        <D.Overlay className="fixed inset-0 z-50 bg-black/25 backdrop-blur-[3px] [animation:overlay-in_.15s_ease] dark:bg-black/55" />
+        <D.Overlay className="fixed inset-0 z-50 bg-black/20 [animation:overlay-in_.15s_ease] dark:bg-black/60" />
         <D.Content
           aria-describedby={undefined}
           className={cn(
-            "fixed left-1/2 top-[12vh] z-50 max-h-[80vh] w-[min(560px,calc(100vw-24px))] -translate-x-1/2 overflow-y-auto rounded-[18px] bg-elevated shadow-[var(--shadow-pop)] [animation:pop-in_.18s_cubic-bezier(.2,.8,.2,1)] focus:outline-none",
+            "fixed left-1/2 top-[12vh] z-50 max-h-[80vh] w-[min(560px,calc(100vw-24px))] -translate-x-1/2 overflow-y-auto rounded-xl border border-line bg-elevated shadow-[var(--shadow-pop)] [animation:pop-in_.16s_cubic-bezier(.2,.8,.2,1)] focus:outline-none",
             className,
           )}
         >
-          <D.Title className={hideTitle ? "sr-only" : "title px-5 pt-5 text-[17px]"}>{title}</D.Title>
+          <D.Title className={hideTitle ? "sr-only" : "title px-5 pt-5 text-[15px]"}>{title}</D.Title>
           {children}
         </D.Content>
       </D.Portal>
@@ -55,15 +55,15 @@ export function Sheet({
   return (
     <D.Root open={open} onOpenChange={onOpenChange}>
       <D.Portal>
-        <D.Overlay className="fixed inset-0 z-40 bg-black/15 [animation:overlay-in_.15s_ease] dark:bg-black/45" />
+        <D.Overlay className="fixed inset-0 z-40 bg-black/10 [animation:overlay-in_.15s_ease] dark:bg-black/50" />
         <D.Content
           aria-describedby={undefined}
-          className="fixed inset-0 z-40 flex w-full flex-col bg-elevated shadow-[var(--shadow-pop)] [animation:sheet-in_.25s_cubic-bezier(.2,.8,.2,1)] focus:outline-none sm:inset-y-3 sm:left-auto sm:right-3 sm:w-[440px] sm:rounded-[18px]"
+          className="fixed inset-0 z-40 flex w-full flex-col bg-elevated shadow-[var(--shadow-pop)] [animation:sheet-in_.22s_cubic-bezier(.2,.8,.2,1)] focus:outline-none sm:inset-y-2 sm:left-auto sm:right-2 sm:w-[440px] sm:rounded-xl sm:border sm:border-line"
         >
           <div className={cn("flex items-center px-6 pt-5", hideTitle ? "justify-end pb-0" : "justify-between pb-2")}>
-            <D.Title className={hideTitle ? "sr-only" : "title text-[20px]"}>{title}</D.Title>
-            <D.Close className="-mr-2 grid size-7 place-items-center rounded-full bg-subtle text-muted hover:bg-subtle-hover hover:text-fg" aria-label="Close">
-              <X className="size-3.5" strokeWidth={2.5} />
+            <D.Title className={hideTitle ? "sr-only" : "title text-[16px]"}>{title}</D.Title>
+            <D.Close className="-mr-2 grid size-7 place-items-center rounded-md text-muted hover:bg-subtle hover:text-fg" aria-label="Close">
+              <X className="size-4" />
             </D.Close>
           </div>
           <div className="flex-1 overflow-y-auto px-6 pb-8">{children}</div>

@@ -12,7 +12,7 @@ export function MenuContent({ children, align = "start", className }: { children
         align={align}
         sideOffset={6}
         className={cn(
-          "glass z-50 min-w-48 rounded-xl bg-elevated/85 p-1 shadow-[var(--shadow-pop)] [animation:pop-in_.12s_ease]",
+          "z-50 min-w-48 rounded-lg border border-line bg-elevated p-1 shadow-[var(--shadow-pop)] [animation:pop-in_.12s_ease]",
           className,
         )}
       >
@@ -27,7 +27,7 @@ export function MenuItem({ children, onSelect, className }: { children: ReactNod
     <M.Item
       onSelect={onSelect}
       className={cn(
-        "flex cursor-pointer select-none items-center gap-2 rounded-md px-2.5 py-1.5 text-[14px] outline-none data-[highlighted]:bg-accent data-[highlighted]:text-white [&_svg]:size-4 [&_svg]:text-accent data-[highlighted]:[&_svg]:text-white data-[highlighted]:[&_kbd]:text-white/70",
+        "flex cursor-pointer select-none items-center gap-2 rounded-md px-2 py-1.5 text-[13px] outline-none data-[highlighted]:bg-subtle [&_svg]:size-[15px] [&_svg]:text-muted",
         className,
       )}
     >
@@ -41,7 +41,7 @@ export function MenuSeparator() {
 }
 
 export function MenuLabel({ children }: { children: ReactNode }) {
-  return <M.Label className="px-2.5 pb-1 pt-1.5 text-[12px] font-semibold text-muted">{children}</M.Label>;
+  return <M.Label className="label px-2 pb-1 pt-1.5 !text-[10.5px]">{children}</M.Label>;
 }
 
 export function MenuCheckbox({ checked, onChange, children }: { checked: boolean; onChange: (v: boolean) => void; children: ReactNode }) {
@@ -50,7 +50,7 @@ export function MenuCheckbox({ checked, onChange, children }: { checked: boolean
       checked={checked}
       onCheckedChange={onChange}
       onSelect={(e) => e.preventDefault()}
-      className="flex cursor-pointer select-none items-center gap-2 rounded-md px-2.5 py-1.5 text-[14px] outline-none data-[highlighted]:bg-accent data-[highlighted]:text-white"
+      className="flex cursor-pointer select-none items-center gap-2 rounded-md px-2 py-1.5 text-[13px] outline-none data-[highlighted]:bg-subtle"
     >
       <span className="grid size-4 place-items-center text-[13px] font-semibold">{checked && "✓"}</span>
       {children}

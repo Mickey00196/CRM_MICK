@@ -66,11 +66,11 @@ export function SettingsPage({ onLogout }: { onLogout: () => void }) {
           }
         >
           <Row icon={Bell} tone="bg-late" label="Daily reminder email">
-            <span className="text-[15px] text-muted">{data?.reminders ? "On" : "Off"}</span>
+            <span className="mono text-[12px] text-muted">{data?.reminders ? "ON" : "OFF"}</span>
           </Row>
           {data?.reminders && (
             <Row icon={Send} tone="bg-accent" label="Send a test now" onClick={testEmail}>
-              <span className="text-[15px] text-muted">{testResult}</span>
+              <span className="text-[13px] text-muted">{testResult}</span>
             </Row>
           )}
         </Group>
@@ -89,14 +89,14 @@ export function SettingsPage({ onLogout }: { onLogout: () => void }) {
             ["⌘K", "Quick capture"],
           ].map(([k, v]) => (
             <Row key={k} label={v}>
-              <kbd className="rounded-md bg-subtle px-2 py-0.5 font-sans text-[13px] font-semibold text-muted">{k}</kbd>
+              <kbd className="mono inline-grid h-5 min-w-5 place-items-center rounded-[4px] border border-line-strong bg-surface px-1 text-[11px] text-muted">{k}</kbd>
             </Row>
           ))}
         </Group>
 
         <Group footer="Log out on all devices if you lost a phone or laptop. Changing APP_PASSWORD on the server does the same.">
-          <Row label={<span className="text-accent">Log Out</span>} onClick={logout} />
-          <Row label={<span className="text-late-text">Log Out on All Devices</span>} onClick={logoutEverywhere} />
+          <Row label="Log out" onClick={logout} />
+          <Row label={<span className="text-late-text">Log out on all devices</span>} onClick={logoutEverywhere} />
         </Group>
       </div>
     </div>
@@ -107,9 +107,9 @@ export function SettingsPage({ onLogout }: { onLogout: () => void }) {
 function Group({ header, footer, children }: { header?: string; footer?: string; children: React.ReactNode }) {
   return (
     <section>
-      {header && <h2 className="mb-1.5 px-4 text-[13px] uppercase tracking-[0.02em] text-muted">{header}</h2>}
+      {header && <h2 className="label mb-2">{header}</h2>}
       <ul className="card overflow-hidden">{children}</ul>
-      {footer && <p className="mt-1.5 px-4 text-[13px] leading-snug text-muted">{footer}</p>}
+      {footer && <p className="mt-2 text-[12.5px] leading-snug text-muted">{footer}</p>}
     </section>
   );
 }
@@ -134,14 +134,14 @@ function Row({
   const body = (
     <>
       {Icon && (
-        <span className={`grid size-[29px] shrink-0 place-items-center rounded-[7px] text-white ${tone}`}>
-          <Icon className="size-[17px]" strokeWidth={2} />
+        <span className="grid size-7 shrink-0 place-items-center rounded-md border border-line bg-subtle text-muted" data-tone={tone}>
+          <Icon className="size-3.5" />
         </span>
       )}
-      <span className="flex min-h-11 min-w-0 flex-1 items-center justify-between gap-3 border-b border-line py-1.5 pr-4 group-last/row:border-b-0">
-        <span className="truncate text-[15px]">{label}</span>
+      <span className="flex min-h-12 min-w-0 flex-1 items-center justify-between gap-3 border-b border-line py-2 pr-4 group-last/row:border-b-0">
+        <span className="truncate text-[13.5px]">{label}</span>
         <span className="flex shrink-0 items-center gap-1.5">
-          {value && <span className="text-[15px] text-muted">{value}</span>}
+          {value && <span className="mono text-[12px] text-muted">{value}</span>}
           {children}
           {(href || (onClick && Icon)) && <ChevronRight className="size-4 text-faint" />}
         </span>

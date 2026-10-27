@@ -105,7 +105,7 @@ function ViewStep({
         {taskTypeLabel(task.type)}
         {task.priority === "high" && <span className="text-late"> · High priority</span>}
       </p>
-      <h2 className="display mt-1 text-[26px]">{task.title}</h2>
+      <h2 className="display mt-1 text-[22px]">{task.title}</h2>
       <div className="mt-1">
         <DueLine due={task.due_date} time={task.due_time} />
       </div>
@@ -238,11 +238,11 @@ function ViewStep({
         <div className="flex flex-wrap gap-x-5 gap-y-2 border-t border-line pt-4 text-sm">
           {contact?.email && !contact.do_not_contact && (
             <a href={`mailto:${contact.email}`} className="font-medium text-accent hover:underline">
-              Write Email
+              Write email
             </a>
           )}
           <button className="font-medium text-accent hover:underline" onClick={onEdit}>
-            Edit To-do
+            Edit to-do
           </button>
         </div>
       </div>
@@ -295,7 +295,7 @@ function CompleteStep({ data, onBack, onDone }: { data: TaskDetail; onBack: () =
     <form onSubmit={save} className="grid gap-6">
       <div>
         <p className="label">{taskTypeLabel(task.type)}</p>
-        <h2 className="display mt-1 text-[26px]">How did it go?</h2>
+        <h2 className="display mt-1 text-[22px]">How did it go?</h2>
         <p className="mt-1 text-sm text-muted">
           {task.title}
           {(task.project_name ?? task.account_name) && ` · ${task.project_name ?? task.account_name}`}

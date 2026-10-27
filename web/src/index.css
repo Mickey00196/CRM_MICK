@@ -3,102 +3,70 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
-  Apple-style system palette. Grey grouped background, white rounded cards,
-  one blue for actions, system colours for meaning (red late, orange attention,
-  green done). Translucent bars and sidebar. Dark mode follows iOS dark.
+  Monochrome. Near-black on white (and the reverse in dark mode), greys for
+  hierarchy, thin borders for structure. The only colour is red, and it only
+  means "late". Numbers, dates and labels are set in a monospace.
 */
 :root {
-  --bg: #f2f2f7;
+  --bg: #fafafa;
   --surface: #ffffff;
   --elevated: #ffffff;
-  --subtle: rgb(118 118 128 / 0.12);
-  --subtle-hover: rgb(118 118 128 / 0.2);
-  --hover: rgb(0 0 0 / 0.035);
+  --subtle: #f4f4f5;
+  --subtle-hover: #ebebed;
+  --hover: rgb(0 0 0 / 0.028);
   --segment: #ffffff;
-  --fg: #1d1d1f;
-  --muted: #6e6e73;
-  --faint: #a1a1a6;
-  --line: rgb(60 60 67 / 0.13);
-  --line-strong: rgb(60 60 67 / 0.24);
-  --check: #c7c7cc;
-  --accent: #007aff;
-  --accent-hover: #0068db;
-  --accent-fg: #ffffff;
-  --accent-soft: rgb(0 122 255 / 0.1);
-  --late: #ff3b30;
-  --late-text: #d70015;
-  --late-soft: rgb(255 59 48 / 0.1);
-  --orange: #ff9500;
-  --missing: #c35d00;
-  --missing-soft: rgb(255 149 0 / 0.12);
-  --green: #34c759;
-  --green-text: #248a3d;
-  --green-soft: rgb(52 199 89 / 0.13);
-  --indigo: #5856d6;
-  --purple: #af52de;
-  --teal: #30b0c7;
-  --yellow: #ffcc00;
-  --gray: #8e8e93;
-  --ring: #007aff;
+  --fg: #09090b;
+  --muted: #71717a;
+  --faint: #a1a1aa;
+  --line: #ebebed;
+  --line-strong: #d9d9de;
+  --check: #c9c9cf;
+  --accent: #09090b;
+  --accent-hover: #2a2a2e;
+  --accent-fg: #fafafa;
+  --accent-soft: rgb(9 9 11 / 0.05);
+  --late: #e5484d;
+  --late-text: #d93d42;
+  --late-soft: rgb(229 72 77 / 0.08);
+  --missing: #52525b;
+  --missing-soft: #f4f4f5;
+  --ring: #09090b;
+  --bar: rgb(250 250 250 / 0.94);
 
-  --sidebar: rgb(250 250 252 / 0.78);
-  --bar: rgb(249 249 251 / 0.92);
-
-  --stage-todo: #8e8e93;
-  --stage-active: #007aff;
-  --stage-waiting: #ff9500;
-  --stage-done: #34c759;
-
-  --shadow-card: 0 0 0 0.5px rgb(0 0 0 / 0.04), 0 1px 2px rgb(0 0 0 / 0.04), 0 2px 10px rgb(0 0 0 / 0.025);
-  --shadow-lift: 0 0 0 0.5px rgb(0 0 0 / 0.05), 0 6px 20px rgb(0 0 0 / 0.08), 0 2px 6px rgb(0 0 0 / 0.04);
-  --shadow-pop: 0 0 0 0.5px rgb(0 0 0 / 0.08), 0 18px 50px rgb(0 0 0 / 0.16), 0 4px 12px rgb(0 0 0 / 0.06);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.025);
+  --shadow-lift: 0 1px 2px rgb(0 0 0 / 0.04), 0 6px 16px rgb(0 0 0 / 0.05);
+  --shadow-pop: 0 0 0 1px rgb(0 0 0 / 0.05), 0 20px 50px rgb(0 0 0 / 0.12);
 }
 
 .dark {
-  --bg: #000000;
-  --surface: #1c1c1e;
-  --elevated: #2c2c2e;
-  --subtle: rgb(118 118 128 / 0.24);
-  --subtle-hover: rgb(118 118 128 / 0.34);
-  --hover: rgb(255 255 255 / 0.05);
-  --segment: #636366;
-  --fg: #f5f5f7;
-  --muted: #98989d;
-  --faint: #636366;
-  --line: rgb(84 84 88 / 0.5);
-  --line-strong: rgb(84 84 88 / 0.85);
-  --check: #48484a;
-  --accent: #0a84ff;
-  --accent-hover: #409cff;
-  --accent-fg: #ffffff;
-  --accent-soft: rgb(10 132 255 / 0.18);
-  --late: #ff453a;
-  --late-text: #ff6961;
-  --late-soft: rgb(255 69 58 / 0.18);
-  --orange: #ff9f0a;
-  --missing: #ffb340;
-  --missing-soft: rgb(255 159 10 / 0.16);
-  --green: #30d158;
-  --green-text: #30d158;
-  --green-soft: rgb(48 209 88 / 0.16);
-  --indigo: #5e5ce6;
-  --purple: #bf5af2;
-  --teal: #40c8e0;
-  --yellow: #ffd60a;
-  --gray: #8e8e93;
-  --ring: #0a84ff;
+  --bg: #0a0a0a;
+  --surface: #111111;
+  --elevated: #161616;
+  --subtle: #1b1b1b;
+  --subtle-hover: #242424;
+  --hover: rgb(255 255 255 / 0.03);
+  --segment: #2a2a2a;
+  --fg: #ededed;
+  --muted: #a1a1a1;
+  --faint: #6b6b6b;
+  --line: #222222;
+  --line-strong: #333333;
+  --check: #4a4a4a;
+  --accent: #ededed;
+  --accent-hover: #ffffff;
+  --accent-fg: #0a0a0a;
+  --accent-soft: rgb(255 255 255 / 0.07);
+  --late: #ff6369;
+  --late-text: #ff6369;
+  --late-soft: rgb(255 99 105 / 0.1);
+  --missing: #a1a1a1;
+  --missing-soft: #1b1b1b;
+  --ring: #ededed;
+  --bar: rgb(10 10 10 / 0.94);
 
-  --sidebar: rgb(28 28 30 / 0.78);
-  --bar: rgb(22 22 24 / 0.9);
-
-  --stage-todo: #8e8e93;
-  --stage-active: #0a84ff;
-  --stage-waiting: #ff9f0a;
-  --stage-done: #30d158;
-
-  --shadow-card: 0 0 0 0.5px rgb(255 255 255 / 0.04);
-  --shadow-lift: 0 0 0 0.5px rgb(255 255 255 / 0.06), 0 8px 24px rgb(0 0 0 / 0.5);
-  --shadow-pop: 0 0 0 0.5px rgb(255 255 255 / 0.1), 0 20px 60px rgb(0 0 0 / 0.6);
+  --shadow-card: none;
+  --shadow-lift: 0 8px 24px rgb(0 0 0 / 0.5);
+  --shadow-pop: 0 0 0 1px rgb(255 255 255 / 0.07), 0 24px 60px rgb(0 0 0 / 0.65);
   color-scheme: dark;
 }
 
@@ -123,24 +91,11 @@
   --color-late: var(--late);
   --color-late-text: var(--late-text);
   --color-late-soft: var(--late-soft);
-  --color-orange: var(--orange);
   --color-missing: var(--missing);
   --color-missing-soft: var(--missing-soft);
-  --color-green: var(--green);
-  --color-green-text: var(--green-text);
-  --color-green-soft: var(--green-soft);
-  --color-indigo: var(--indigo);
-  --color-purple: var(--purple);
-  --color-teal: var(--teal);
-  --color-yellow: var(--yellow);
-  --color-gray: var(--gray);
   --color-ring: var(--ring);
-  --color-stage-todo: var(--stage-todo);
-  --color-stage-active: var(--stage-active);
-  --color-stage-waiting: var(--stage-waiting);
-  --color-stage-done: var(--stage-done);
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter Variable", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter Variable", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 
 @layer base {
@@ -151,10 +106,9 @@
   body {
     @apply bg-bg text-fg antialiased;
     font-family: var(--font-sans);
-    font-size: 15px;
-    line-height: 1.47;
-    letter-spacing: -0.011em;
-    font-optical-sizing: auto;
+    font-size: 14px;
+    line-height: 1.5;
+    letter-spacing: -0.006em;
   }
   *,
   ::before,
@@ -162,95 +116,101 @@
     border-color: var(--line);
   }
   ::selection {
-    background: var(--accent-soft);
+    background: color-mix(in srgb, var(--fg) 14%, transparent);
   }
   :focus-visible {
-    outline: 3px solid color-mix(in srgb, var(--ring) 45%, transparent);
-    outline-offset: 1px;
+    outline: 2px solid color-mix(in srgb, var(--ring) 35%, transparent);
+    outline-offset: 2px;
   }
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
   input[type="checkbox"] {
-    accent-color: var(--accent);
+    accent-color: var(--fg);
   }
 }
 
 @layer components {
-  /* Large title, as on iOS and macOS. */
   .display {
-    font-family: var(--font-display);
-    font-weight: 700;
-    letter-spacing: -0.026em;
-    line-height: 1.08;
-  }
-  /* Headline weight. */
-  .title {
-    font-family: var(--font-display);
     font-weight: 600;
-    letter-spacing: -0.017em;
+    letter-spacing: -0.035em;
+    line-height: 1.1;
   }
-  /* Small caps-style section label. */
+  .title {
+    font-weight: 600;
+    letter-spacing: -0.015em;
+  }
+  /* Monospace caption: section labels, counts, dates. */
   .label {
-    font-size: 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
     font-weight: 500;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--muted);
   }
-  /* Rounded white group on the grey background. */
+  .mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
   .card {
     background: var(--surface);
-    border-radius: 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
     box-shadow: var(--shadow-card);
   }
-  /* Frosted glass for bars, sidebar and floating panels. */
   .glass {
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
-    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(160%) blur(16px);
+    backdrop-filter: saturate(160%) blur(16px);
   }
-  /* Segmented control. */
   .segmented {
     display: inline-flex;
     gap: 2px;
     padding: 2px;
-    border-radius: 9px;
+    border-radius: 8px;
     background: var(--subtle);
+    border: 1px solid var(--line);
   }
   .segmented > button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    height: 28px;
-    padding: 0 12px;
-    border-radius: 7px;
+    height: 26px;
+    padding: 0 10px;
+    border-radius: 6px;
     font-size: 13px;
     font-weight: 500;
     white-space: nowrap;
+    color: var(--muted);
+    transition: background-color 0.12s, color 0.12s, box-shadow 0.12s;
+  }
+  .segmented > button:hover {
     color: var(--fg);
-    transition: background-color 0.15s, box-shadow 0.15s;
   }
   .segmented > button[aria-checked="true"],
   .segmented > button[aria-selected="true"],
   .segmented > button[aria-pressed="true"],
   .segmented > button[data-state="active"] {
     background: var(--segment);
-    font-weight: 600;
-    box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.04), 0 3px 8px rgb(0 0 0 / 0.12), 0 3px 1px rgb(0 0 0 / 0.04);
+    color: var(--fg);
+    box-shadow: 0 0 0 1px var(--line), 0 1px 2px rgb(0 0 0 / 0.06);
   }
-  /* Tables inside a .card. */
   .data {
     width: 100%;
     font-size: 14px;
   }
   .data th {
     text-align: left;
-    font-size: 12px;
-    font-weight: 600;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
     color: var(--muted);
-    padding: 10px 12px 8px;
+    padding: 10px 12px;
     border-bottom: 1px solid var(--line);
     white-space: nowrap;
   }
@@ -262,36 +222,40 @@
   }
   .data th:first-child,
   .data td:first-child {
-    padding-left: 18px;
+    padding-left: 16px;
   }
   .data th:last-child,
   .data td:last-child {
-    padding-right: 18px;
+    padding-right: 16px;
   }
   .data tbody tr:last-child td {
     border-bottom: 0;
   }
   .data tbody tr {
-    transition: background-color 0.12s;
+    transition: background-color 0.1s;
   }
   .data tbody tr:hover {
     background: var(--hover);
+  }
+  /* Faint dot grid, for empty space that should still feel engineered. */
+  .dot-grid {
+    background-image: radial-gradient(color-mix(in srgb, var(--fg) 14%, transparent) 1px, transparent 1px);
+    background-size: 22px 22px;
   }
 }
 
 @keyframes fade-out {
   to {
     opacity: 0;
-    transform: translateX(6px);
+    transform: translateX(4px);
   }
 }
 .fade-out {
-  animation: fade-out 0.32s ease forwards;
+  animation: fade-out 0.3s ease forwards;
 }
-
 @keyframes sheet-in {
   from {
-    transform: translateX(24px);
+    transform: translateX(16px);
     opacity: 0;
   }
 }
@@ -303,17 +267,17 @@
 @keyframes pop-in {
   from {
     opacity: 0;
-    transform: scale(0.97);
+    transform: scale(0.98) translateY(-4px);
   }
 }
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(4px);
   }
 }
 .rise {
-  animation: rise 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: rise 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {

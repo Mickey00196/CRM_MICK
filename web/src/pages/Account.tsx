@@ -116,12 +116,12 @@ function Header({ data }: { data: AccountDetail }) {
       <div className="flex items-start justify-between gap-4">
         <Avatar name={account.name} size="lg" />
         <div className="min-w-0 flex-1">
-          <h1 className="display text-[30px] sm:text-[36px]">{account.name}</h1>
+          <h1 className="display text-[24px] sm:text-[28px]">{account.name}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-[13px] text-muted">
             <Select
               value={account.status}
               onChange={(e) => setStatus(e.target.value)}
-              className="h-8 w-auto rounded-full pl-3 pr-7 text-[13px] font-medium [field-sizing:content]"
+              className="h-7 w-auto pl-2.5 pr-7 text-[13px] font-medium [field-sizing:content]"
               aria-label="Status"
             >
               {ACCOUNT_STATUSES.map((s) => (
@@ -131,17 +131,17 @@ function Header({ data }: { data: AccountDetail }) {
               ))}
             </Select>
             {account.domain && (
-              <a href={`https://${account.domain}`} target="_blank" rel="noreferrer" className="inline-flex h-8 items-center rounded-full bg-subtle px-3 font-medium text-accent hover:bg-subtle-hover">
+              <a href={`https://${account.domain}`} target="_blank" rel="noreferrer" className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-line-strong bg-surface px-2.5 shadow-[var(--shadow-card)] text-muted hover:text-fg">
                 {account.domain}
               </a>
             )}
-            <span className="inline-flex h-8 items-center rounded-full bg-subtle px-3">{account.language.toUpperCase()}</span>
+            <span className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-line-strong bg-surface px-2.5 shadow-[var(--shadow-card)] mono text-[11.5px]">{account.language.toUpperCase()}</span>
             {data.last_contact_at && <span className="px-1">Last contact {relative(data.last_contact_at)}</span>}
           </div>
         </div>
         <Menu>
           <MenuTrigger asChild>
-            <button className="mt-1 grid size-8 shrink-0 place-items-center rounded-full bg-subtle text-accent hover:bg-subtle-hover" aria-label="More">
+            <button className="grid size-8 shrink-0 place-items-center rounded-lg text-muted hover:bg-subtle hover:text-fg" aria-label="More">
               <MoreHorizontal className="size-[18px]" />
             </button>
           </MenuTrigger>
@@ -152,23 +152,23 @@ function Header({ data }: { data: AccountDetail }) {
       </div>
 
       <div className="card mt-6 px-4 py-3">
-        <p className="mb-0.5 text-[13px] font-medium text-muted">Next step</p>
+        <p className="label mb-1">Next step</p>
         {next ? (
           <button onClick={() => ui.openTask(next.id)} className="group flex w-full items-baseline justify-between gap-4 text-left">
-            <span className="text-[17px] font-medium group-hover:text-accent">
-              {next.title} <span className="text-[14px] font-normal text-muted">· {taskTypeLabel(next.type)}</span>
+            <span className="text-[15px] font-medium group-hover:underline">
+              {next.title} <span className="text-[13px] font-normal text-muted">· {taskTypeLabel(next.type)}</span>
             </span>
-            <span className={cn("shrink-0 text-[14px]", next.due_date && next.due_date < today ? "font-medium text-late-text" : "text-muted")}>
+            <span className={cn("mono shrink-0 text-[12.5px]", next.due_date && next.due_date < today ? "text-late-text" : "text-muted")}>
               {next.due_date ? dmy(next.due_date) : "No date"}
               {next.due_time && ` ${next.due_time}`}
             </span>
           </button>
         ) : (
           <div className="flex items-baseline justify-between gap-4">
-            <span className="text-[17px] font-medium text-missing">No next step</span>
-            <button onClick={() => ui.openCapture("todo", { account: { id: account.id, name: account.name } })} className="text-[15px] font-medium text-accent">
-              Add
-            </button>
+            <span className="text-[15px] text-muted">No next step</span>
+            <Button variant="outline" size="sm" onClick={() => ui.openCapture("todo", { account: { id: account.id, name: account.name } })}>
+              <Plus /> Add
+            </Button>
           </div>
         )}
       </div>
@@ -263,25 +263,25 @@ function Overview({ data }: { data: AccountDetail }) {
                 <div className="flex min-w-0 items-center gap-3">
                   <Avatar name={c.name} size="md" shape="round" />
                   <div className="min-w-0">
-                    <Link to={`/contacts/${c.id}`} className="font-semibold hover:text-accent">
+                    <Link to={`/contacts/${c.id}`} className="font-medium hover:underline">
                       {c.name}
                     </Link>
-                    {c.do_not_contact && <span className="ml-2 rounded-full bg-late-soft px-2 py-0.5 text-[11.5px] font-semibold text-late-text">Do not contact</span>}
+                    {c.do_not_contact && <span className="ml-2 rounded-md border border-late/30 px-1.5 py-px text-[11.5px] font-medium text-late-text">Do not contact</span>}
                     <p className="truncate text-[13px] text-muted">{[c.role, buyingRoleLabel(c.buying_role)].filter(Boolean).join(" · ")}</p>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-x-4 text-sm text-muted">
                   {c.phone && (
-                    <a href={`tel:${c.phone.replace(/\s/g, "")}`} className="text-accent hover:underline">
+                    <a href={`tel:${c.phone.replace(/\s/g, "")}`} className="mono text-[12.5px] text-muted hover:text-fg">
                       {c.phone}
                     </a>
                   )}
                   {c.email && (
-                    <a href={`mailto:${c.email}`} className="text-accent hover:underline">
+                    <a href={`mailto:${c.email}`} className="text-muted hover:text-fg">
                       {c.email}
                     </a>
                   )}
-                  <button onClick={() => setContactForm(c)} className="font-medium text-accent">
+                  <button onClick={() => setContactForm(c)} className="text-muted hover:text-fg">
                     Edit
                   </button>
                 </div>
@@ -499,7 +499,7 @@ function Communication({ data }: { data: AccountDetail }) {
   return (
     <div>
       <div className="mb-4 flex flex-wrap gap-2">
-        <Select value={channel} onChange={(e) => setChannel(e.target.value)} className="h-8 w-auto rounded-full pl-3 text-[13px] font-medium" aria-label="Channel">
+        <Select value={channel} onChange={(e) => setChannel(e.target.value)} className="h-8 w-auto text-[13px]" aria-label="Channel">
           <option value="">All channels</option>
           {CHANNELS.map((c) => (
             <option key={c.key} value={c.key}>
@@ -508,7 +508,7 @@ function Communication({ data }: { data: AccountDetail }) {
           ))}
         </Select>
         {data.contacts.length > 0 && (
-          <Select value={contact} onChange={(e) => setContact(e.target.value)} className="h-8 w-auto rounded-full pl-3 text-[13px] font-medium" aria-label="Contact">
+          <Select value={contact} onChange={(e) => setContact(e.target.value)} className="h-8 w-auto text-[13px]" aria-label="Contact">
             <option value="">All contacts</option>
             {data.contacts.map((c) => (
               <option key={c.id} value={c.id}>

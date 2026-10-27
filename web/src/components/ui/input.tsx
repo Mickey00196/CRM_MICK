@@ -2,7 +2,7 @@ import { forwardRef, type InputHTMLAttributes, type SelectHTMLAttributes, type T
 import { cn } from "@/lib/utils";
 
 const base =
-  "w-full min-w-0 rounded-[10px] border border-transparent bg-subtle px-3 text-[15px] text-fg placeholder:text-faint transition-[background-color,border-color,box-shadow] focus:border-accent focus:bg-surface focus:outline-none focus:ring-4 focus:ring-accent-soft disabled:opacity-50";
+  "w-full min-w-0 rounded-lg border border-line-strong bg-surface px-3 text-[14px] text-fg shadow-[var(--shadow-card)] placeholder:text-faint transition-[border-color,box-shadow] focus:border-[color-mix(in_srgb,var(--fg)_45%,transparent)] focus:outline-none focus:ring-3 focus:ring-[color-mix(in_srgb,var(--fg)_8%,transparent)] disabled:opacity-50";
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(({ className, ...props }, ref) => (
   <input ref={ref} className={cn(base, "h-9", className)} {...props} />
@@ -30,7 +30,7 @@ Select.displayName = "Select";
 export function Field({ label, children, className, hint }: { label: string; children: ReactNode; className?: string; hint?: string }) {
   return (
     <label className={cn("grid min-w-0 content-start gap-1.5", className)}>
-      <span className="px-0.5 text-[13px] font-medium text-muted">{label}</span>
+      <span className="text-[12.5px] font-medium text-muted">{label}</span>
       {children}
       {hint && <span className="text-xs text-faint">{hint}</span>}
     </label>
@@ -60,9 +60,9 @@ export function Chips<T extends string>({
           aria-pressed={value === o.key}
           onClick={() => onChange(o.key)}
           className={cn(
-            "rounded-full px-3 font-medium transition-colors active:scale-[0.97]",
-            size === "sm" ? "h-7 text-[13px]" : "h-8 text-sm",
-            value === o.key ? "bg-accent text-accent-fg" : "bg-subtle text-fg hover:bg-subtle-hover",
+            "rounded-lg border px-2.5 font-medium transition-colors",
+            size === "sm" ? "h-7 text-[12.5px]" : "h-8 text-[13px]",
+            value === o.key ? "border-accent bg-accent text-accent-fg" : "border-line-strong bg-surface text-muted hover:text-fg",
           )}
         >
           {o.label}

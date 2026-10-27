@@ -120,7 +120,7 @@ export function NextStepPicker({
               type="button"
               onClick={() => set({ due_date: d })}
               className={cn(
-                "h-7 rounded-full border px-2.5 text-[13px] transition-colors",
+                "h-7 rounded-lg border px-2.5 text-[12.5px] font-medium transition-colors",
                 value.due_date === d ? "border-accent bg-accent text-accent-fg" : "border-line-strong text-muted hover:text-fg",
               )}
             >

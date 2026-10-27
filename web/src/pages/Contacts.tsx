@@ -28,14 +28,14 @@ export function Contacts() {
         subtitle={data ? `${data.length} people` : "\u00a0"}
         actions={
           <Button onClick={() => ui.openCapture("contact")}>
-            <Plus /> New Contact
+            <Plus /> New contact
           </Button>
         }
       />
 
       <div className="relative mb-4 sm:max-w-xs">
-        <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-faint" />
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, role, company" className="h-9 pl-8" />
+        <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-faint" />
+        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter by name, role, company" className="h-8 pl-8 text-[13px]" />
       </div>
 
       {error && <p className="text-sm text-late">{error}</p>}
@@ -61,14 +61,14 @@ export function Contacts() {
                     <span className="flex items-center gap-2.5">
                       <Avatar name={c.name} size="md" shape="round" />
                       <span className="font-medium">{c.name}</span>
-                      {c.do_not_contact && <span className="rounded-full bg-late-soft px-2 py-0.5 text-[11.5px] font-semibold text-late-text">Do not contact</span>}
+                      {c.do_not_contact && <span className="rounded-md border border-late/30 px-1.5 py-px text-[11.5px] font-medium text-late-text">Do not contact</span>}
                     </span>
                   </td>
                   <td className="text-muted">{c.account_name}</td>
                   <td className="text-muted">{[c.role, buyingRoleLabel(c.buying_role)].filter(Boolean).join(" · ")}</td>
                   <td className="text-muted">{c.email}</td>
-                  <td className="whitespace-nowrap text-muted">{c.phone}</td>
-                  <td className="whitespace-nowrap text-muted">{dmy(c.last_contacted_at)}</td>
+                  <td className="mono text-[12.5px] text-muted">{c.phone}</td>
+                  <td className="mono text-[12.5px] text-muted">{dmy(c.last_contacted_at)}</td>
                 </tr>
               ))}
             </tbody>

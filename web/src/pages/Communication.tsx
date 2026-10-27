@@ -60,7 +60,7 @@ export function Communication() {
         subtitle="Calls, emails, meetings and notes, newest first."
         actions={
           <Button onClick={() => ui.openCapture("log")}>
-            <Plus /> Log Something
+            <Plus /> Log something
           </Button>
         }
       />
@@ -83,22 +83,22 @@ export function Communication() {
               const total = COUNTED.reduce((s, c) => s + count(w, c), 0);
               const current = i === weeks.length - 1;
               return (
-                <tr key={w} className={current ? "bg-accent-soft/60" : undefined}>
-                  <td className={current ? "font-semibold text-accent" : "text-muted"}>{current ? "This week" : dmy(w)}</td>
+                <tr key={w} className={current ? "bg-subtle/70" : undefined}>
+                  <td className={current ? "font-medium" : "mono text-[12.5px] text-muted"}>{current ? "This week" : dmy(w)}</td>
                   {COUNTED.map((c) => {
                     const n = count(w, c);
                     return (
                       <td key={c} className="text-right">
                         <span
-                          className={`inline-grid min-w-7 place-items-center rounded-full px-1.5 py-0.5 tabular-nums ${n ? "font-semibold text-white" : "text-faint"}`}
-                          style={n ? { background: `color-mix(in srgb, var(--accent) ${Math.min(100, 55 + n * 15)}%, transparent)` } : undefined}
+                          className={`mono inline-grid min-w-7 place-items-center rounded-md px-1.5 py-0.5 text-[12.5px] ${n ? "font-medium" : "text-faint"}`}
+                          style={n ? { background: `color-mix(in srgb, var(--fg) ${Math.min(22, 6 + n * 4)}%, transparent)` } : undefined}
                         >
                           {n}
                         </span>
                       </td>
                     );
                   })}
-                  <td className={`text-right tabular-nums ${current ? "font-semibold" : "font-medium"}`}>{total}</td>
+                  <td className="mono text-right text-[12.5px] font-medium">{total}</td>
                 </tr>
               );
             })}

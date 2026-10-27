@@ -105,7 +105,7 @@ export function Accounts() {
         subtitle="The clients and prospects behind your projects."
         actions={
           <Button onClick={() => ui.openCapture("account")}>
-            <Plus /> New Company
+            <Plus /> New company
           </Button>
         }
       />
@@ -136,8 +136,8 @@ export function Accounts() {
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="relative min-w-48 flex-1 sm:max-w-xs">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-faint" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, area, tag" className="h-9 pl-8" />
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-faint" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter by name, area, tag" className="h-8 pl-8 text-[13px]" />
         </div>
         {selected.size > 0 ? (
           <div className="flex items-center gap-2 text-[13px]">
@@ -304,8 +304,8 @@ function Cell({ row: a, col, today }: { row: AccountRow; col: ColKey; today: str
       return (
         <span
           className={cn(
-            "inline-flex rounded-full px-2 py-0.5 text-[12px] font-semibold",
-            a.status === "client" ? "bg-green-soft text-green-text" : a.status === "prospect" ? "bg-accent-soft text-accent" : "bg-subtle text-muted",
+            "inline-flex items-center gap-1.5 rounded-md border px-1.5 py-px text-[12px] font-medium",
+            a.status === "client" ? "border-line-strong text-fg" : a.status === "prospect" ? "border-line text-muted" : "border-dashed border-line-strong text-faint",
           )}
         >
           {accountStatusLabel(a.status)}
@@ -314,9 +314,9 @@ function Cell({ row: a, col, today }: { row: AccountRow; col: ColKey; today: str
     case "location":
       return <>{[a.office_submarket, a.office_city].filter(Boolean).join(", ")}</>;
     case "size":
-      return <>{m2(a.area_m2)}</>;
+      return <span className="mono text-[12.5px]">{m2(a.area_m2)}</span>;
     case "lease_end":
-      return <>{dmy(a.lease_end)}</>;
+      return <span className="mono text-[12.5px]">{dmy(a.lease_end)}</span>;
     case "next_step": {
       if (!a.next_step) {
         return <span className="text-faint">–</span>;
@@ -325,12 +325,12 @@ function Cell({ row: a, col, today }: { row: AccountRow; col: ColKey; today: str
       return (
         <span className={cn("block max-w-56 truncate", late ? "text-late-text" : "text-fg")}>
           {a.next_step.title}
-          {a.next_step.due_date && <span className={late ? "" : "text-muted"}> · {dmy(a.next_step.due_date)}</span>}
+          {a.next_step.due_date && <span className={cn("mono text-[12px]", !late && "text-muted")}> · {dmy(a.next_step.due_date)}</span>}
         </span>
       );
     }
     case "last_contact":
-      return <>{dmy(a.last_contact_at)}</>;
+      return <span className="mono text-[12.5px]">{dmy(a.last_contact_at)}</span>;
     case "industry":
       return <>{a.industry}</>;
     case "source":

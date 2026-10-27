@@ -5,17 +5,6 @@ import { api } from "@/lib/api";
 import { daysBetween, dmy, dmyTime, relative, todayISO } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-// Filled circles in system colours, like the app icons they stand for.
-const CHANNEL_TONE: Partial<Record<Channel, string>> = {
-  call: "bg-green text-white",
-  email: "bg-accent text-white",
-  linkedin: "bg-indigo text-white",
-  meeting: "bg-orange text-white",
-  viewing: "bg-purple text-white",
-  whatsapp: "bg-teal text-white",
-  note: "bg-yellow text-[#5c4300]",
-};
-
 const CHANNEL_ICON: Partial<Record<Channel, typeof Phone>> = {
   call: Phone,
   email: Mail,
@@ -64,17 +53,17 @@ export function Timeline({
         ].filter(Boolean);
         return (
           <li key={a.id} className="group relative grid grid-cols-[28px_1fr_auto] gap-x-3 py-3">
-            {i < items.length - 1 && <span aria-hidden="true" className="absolute bottom-0 left-[13.5px] top-11 w-px bg-line" />}
+            {i < items.length - 1 && <span aria-hidden="true" className="absolute bottom-0 left-[13.5px] top-10 w-px bg-line" />}
             <span
-              className={cn("relative mt-0.5 grid size-7 place-items-center rounded-full", CHANNEL_TONE[a.channel] ?? "bg-gray text-white")}
+              className="relative grid size-7 place-items-center rounded-full border border-line bg-surface text-muted"
               title={channelLabel(a.channel)}
             >
-              <Icon className="size-3.5" strokeWidth={2.2} />
+              <Icon className="size-3.5" />
             </span>
             <div className="min-w-0 pt-0.5">
-              <p className="flex flex-wrap items-baseline gap-x-2 text-sm">
-                <span className="font-semibold">{channelLabel(a.channel)}</span>
-                <time className="text-[12.5px] text-faint" dateTime={a.occurred_at} title={dmyTime(a.occurred_at)}>
+              <p className="flex flex-wrap items-baseline gap-x-2 pt-1 text-[13.5px]">
+                <span className="font-medium">{channelLabel(a.channel)}</span>
+                <time className="mono text-[11.5px] text-faint" dateTime={a.occurred_at} title={dmyTime(a.occurred_at)}>
                   {when(a.occurred_at)}
                 </time>
               </p>
@@ -84,7 +73,7 @@ export function Timeline({
                   {showProject && a.project_id && (
                     <>
                       {meta.length > 0 && " · "}
-                      <Link to={`/projects/${a.project_id}`} className="text-accent hover:underline">
+                      <Link to={`/projects/${a.project_id}`} className="text-fg underline decoration-line-strong underline-offset-2 hover:decoration-fg">
                         {a.project_name}
                       </Link>
                     </>
@@ -92,14 +81,14 @@ export function Timeline({
                   {showAccount && a.account_id && !(showProject && a.project_id) && (
                     <>
                       {meta.length > 0 && " · "}
-                      <Link to={`/accounts/${a.account_id}`} className="text-accent hover:underline">
+                      <Link to={`/accounts/${a.account_id}`} className="text-fg underline decoration-line-strong underline-offset-2 hover:decoration-fg">
                         {a.account_name}
                       </Link>
                     </>
                   )}
                 </p>
               )}
-              {a.summary && <p className="mt-1.5 whitespace-pre-wrap break-words text-sm leading-relaxed text-fg/85">{a.summary}</p>}
+              {a.summary && <p className="mt-1 whitespace-pre-wrap break-words text-[13.5px] leading-relaxed text-fg/80">{a.summary}</p>}
             </div>
             <button
               onClick={() => remove(a)}

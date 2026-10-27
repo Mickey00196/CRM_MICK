@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Archive, Building2, CircleAlert, Flag, Mail, MoreHorizontal, Phone, Plus, StickyNote, Users } from "lucide-react";
+import { Archive, Building2, Check, CircleDashed, Flag, Mail, MoreHorizontal, Phone, Plus, StickyNote, Users } from "lucide-react";
 import { PROJECT_STAGES, type Channel, type ProjectDetail, type ProjectStage, type TaskType } from "@shared/model";
 import { api, useApi } from "@/lib/api";
 import { addDays, dmy, relative, todayISO, workday } from "@/lib/format";
@@ -66,7 +66,7 @@ export function ProjectPage() {
           </div>
           <Menu>
             <MenuTrigger asChild>
-              <button className="mt-1 grid size-8 shrink-0 place-items-center rounded-full bg-subtle text-accent hover:bg-subtle-hover" aria-label="More">
+              <button className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg text-muted hover:bg-subtle hover:text-fg" aria-label="More">
                 <MoreHorizontal className="size-[18px]" />
               </button>
             </MenuTrigger>
@@ -88,8 +88,8 @@ export function ProjectPage() {
         <div className="grid min-w-0 content-start gap-8">
           <Panel title="To-dos" count={data.tasks.length}>
             {data.tasks.length === 0 && p.stage !== "done" && (
-              <p className="flex items-center gap-2 border-b border-line px-4 py-3 text-[15px] text-missing">
-                <CircleAlert className="size-[18px] shrink-0" /> No next step yet. What moves this forward?
+              <p className="flex items-center gap-2 border-b border-dashed border-line-strong px-4 py-3 text-[13px] text-muted">
+                <CircleDashed className="size-4 shrink-0" /> No next step yet. What moves this forward?
               </p>
             )}
             <ul>
@@ -133,20 +133,20 @@ export function ProjectPage() {
               <ul>
                 {data.contacts.map((c) => (
                   <li key={c.id} className="group/row flex gap-3 pl-4">
-                    <Avatar name={c.name} size="md" shape="round" className="mt-2.5" />
+                    <Avatar name={c.name} size="md" shape="round" className="mt-3" />
                     <div className="min-w-0 flex-1 border-b border-line py-2.5 pr-4 group-last/row:border-b-0">
-                      <Link to={`/contacts/${c.id}`} className="block truncate text-[15px] font-medium hover:text-accent">
+                      <Link to={`/contacts/${c.id}`} className="block truncate text-[13.5px] font-medium hover:underline">
                         {c.name}
                       </Link>
                       {c.role && <p className="truncate text-[13px] text-muted">{c.role}</p>}
                       <div className="mt-1 flex flex-wrap gap-x-3 text-[13px]">
                         {c.phone && (
-                          <a href={`tel:${c.phone.replace(/\s/g, "")}`} className="text-accent hover:underline">
+                          <a href={`tel:${c.phone.replace(/\s/g, "")}`} className="mono text-[12px] text-muted hover:text-fg">
                             {c.phone}
                           </a>
                         )}
                         {c.email && (
-                          <a href={`mailto:${c.email}`} className="min-w-0 truncate text-accent hover:underline">
+                          <a href={`mailto:${c.email}`} className="min-w-0 truncate text-muted hover:text-fg">
                             {c.email}
                           </a>
                         )}
@@ -184,7 +184,7 @@ function EditableTitle({ value, onSave }: { value: string; onSave: (v: string) =
   useEffect(() => setV(value), [value]);
   if (!editing)
     return (
-      <h1 className="display cursor-text text-[30px] sm:text-[36px]" onClick={() => setEditing(true)} title="Click to rename">
+      <h1 className="display cursor-text text-[24px] sm:text-[28px]" onClick={() => setEditing(true)} title="Click to rename">
         {value}
       </h1>
     );
@@ -206,7 +206,7 @@ function EditableTitle({ value, onSave }: { value: string; onSave: (v: string) =
           setEditing(false);
         }
       }}
-      className="display -mx-1.5 w-full rounded-lg bg-subtle px-1.5 text-[30px] outline-none sm:text-[36px]"
+      className="display -mx-1.5 w-full rounded-lg bg-subtle px-1.5 text-[24px] outline-none sm:text-[28px]"
       aria-label="Project name"
     />
   );
@@ -228,18 +228,18 @@ function CompanyField({ project: p, onSave }: { project: ProjectDetail["project"
       </div>
     );
   return p.account_id ? (
-    <span className="inline-flex h-8 items-center gap-1.5 rounded-full bg-subtle pl-1.5 pr-1">
-      <Avatar name={p.account_name ?? ""} size="sm" className="!size-5 !rounded-full !text-[8px]" />
-      <Link to={`/accounts/${p.account_id}`} className="font-medium text-fg hover:text-accent">
+    <span className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-line-strong bg-surface pl-1.5 pr-1 shadow-[var(--shadow-card)]">
+      <Avatar name={p.account_name ?? ""} size="sm" className="!size-4 !rounded-[4px] !text-[7px]" />
+      <Link to={`/accounts/${p.account_id}`} className="font-medium text-fg hover:underline">
         {p.account_name}
       </Link>
-      <button onClick={() => setPicking(true)} className="rounded-full px-2 py-0.5 text-[12px] font-medium text-accent hover:bg-accent-soft">
+      <button onClick={() => setPicking(true)} className="rounded-md px-1.5 py-0.5 text-[12px] text-faint hover:bg-subtle hover:text-fg">
         Change
       </button>
     </span>
   ) : (
-    <button onClick={() => setPicking(true)} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-subtle px-3 font-medium text-accent hover:bg-subtle-hover">
-      <Building2 className="size-4" /> Add Company
+    <button onClick={() => setPicking(true)} className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-line-strong bg-surface px-2.5 text-muted shadow-[var(--shadow-card)] hover:text-fg">
+      <Building2 className="size-3.5" /> Add company
     </button>
   );
 }
@@ -252,7 +252,7 @@ function TargetDate({ value, onSave }: { value: string | null; onSave: (v: strin
         type="date"
         autoFocus
         defaultValue={value ?? ""}
-        className="h-8 w-auto rounded-full px-3 text-[13px]"
+        className="h-7 w-auto px-2.5 text-[13px]"
         onBlur={(e) => {
           setEditing(false);
           if ((e.target.value || null) !== value) onSave(e.target.value || null);
@@ -263,15 +263,15 @@ function TargetDate({ value, onSave }: { value: string | null; onSave: (v: strin
   return (
     <button
       onClick={() => setEditing(true)}
-      className={cn("inline-flex h-8 items-center gap-1.5 rounded-full bg-subtle px-3 hover:bg-subtle-hover", !value && "font-medium text-accent")}
+      className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-line-strong bg-surface px-2.5 text-muted shadow-[var(--shadow-card)] hover:text-fg"
     >
-      <Flag className="size-4 text-accent" />
+      <Flag className="size-3.5" />
       {value ? (
         <>
-          <span className="font-medium text-fg">Target {dmy(value)}</span> <span className="text-muted">{relative(value)}</span>
+          <span className="mono text-[12px] text-fg">{dmy(value)}</span> <span>{relative(value)}</span>
         </>
       ) : (
-        "Add Target Date"
+        "Target date"
       )}
     </button>
   );
@@ -341,15 +341,15 @@ function InlineAddTodo({ projectId }: { projectId: string }) {
   return (
     <form onSubmit={add} className="border-t border-line px-4 py-2 first:border-t-0 [ul:empty+&]:border-t-0">
       <div className="flex items-center gap-3">
-        <span className="grid size-[22px] shrink-0 place-items-center rounded-full bg-accent text-white">
-          <Plus className="size-3.5" strokeWidth={3} />
+        <span className="grid size-[18px] shrink-0 place-items-center rounded-full border-[1.5px] border-dashed border-check text-faint">
+          <Plus className="size-2.5" strokeWidth={3} />
         </span>
         <input
           ref={input}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="New To-do"
-          className="w-full bg-transparent py-1 text-[15px] outline-none placeholder:font-medium placeholder:text-accent"
+          placeholder="New to-do"
+          className="w-full bg-transparent py-1 text-[14px] outline-none placeholder:text-faint"
           aria-label="New to-do"
         />
       </div>
@@ -362,17 +362,17 @@ function InlineAddTodo({ projectId }: { projectId: string }) {
                 key={q.label}
                 type="button"
                 onClick={() => setDue(d)}
-                className={cn("h-7 rounded-full px-3 font-medium", due === d ? "bg-accent text-accent-fg" : "bg-subtle text-fg hover:bg-subtle-hover")}
+                className={cn("h-7 rounded-lg border px-2.5 font-medium", due === d ? "border-accent bg-accent text-accent-fg" : "border-line-strong bg-surface text-muted hover:text-fg")}
               >
                 {q.label}
               </button>
             );
           })}
-          <Input type="date" value={due} onChange={(e) => setDue(e.target.value)} className="h-7 w-auto rounded-full px-3 text-[13px]" aria-label="Due date" />
+          <Input type="date" value={due} onChange={(e) => setDue(e.target.value)} className="h-7 w-auto px-2.5 text-[13px]" aria-label="Due date" />
           <select
             value={type}
             onChange={(e) => setType(e.target.value as TaskType)}
-            className="h-7 rounded-full bg-subtle px-3 text-[13px]"
+            className="h-7 rounded-lg border border-line-strong bg-surface px-2 text-[13px]"
             aria-label="Type"
           >
             <option value="todo">To-do</option>
@@ -397,19 +397,19 @@ function DoneTasks({ tasks }: { tasks: ProjectDetail["done_tasks"] }) {
     <div className="border-t border-line">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between px-4 py-2.5 text-[14px] text-muted hover:bg-hover"
+        className="flex w-full items-center justify-between px-4 py-2.5 text-[12.5px] text-muted hover:bg-hover"
         aria-expanded={open}
       >
-        <span>{tasks.length} Completed</span>
-        <span className="font-medium text-accent">{open ? "Hide" : "Show"}</span>
+        <span className="mono">{tasks.length} completed</span>
+        <span className="text-[12.5px] text-faint">{open ? "Hide" : "Show"}</span>
       </button>
       {open && (
         <ul className="pb-1">
           {tasks.map((t) => (
-            <li key={t.id} className="flex items-center justify-between gap-4 px-4 py-2 text-[15px]">
+            <li key={t.id} className="flex items-center justify-between gap-4 px-4 py-2 text-[13.5px]">
               <span className="flex min-w-0 items-center gap-3">
-                <span className="grid size-[22px] shrink-0 place-items-center rounded-full border-[1.5px] border-accent">
-                  <span className="size-3 rounded-full bg-accent" />
+                <span className="grid size-[18px] shrink-0 place-items-center rounded-full bg-faint text-surface">
+                  <Check className="size-2.5" strokeWidth={3.5} />
                 </span>
                 <span className="truncate text-muted">{t.title}</span>
               </span>
@@ -442,7 +442,7 @@ function Notes({ value, onSave }: { value: string; onSave: (v: string) => void }
           setSaved(true);
         }}
         placeholder="Requirements, background, anything to remember"
-        className="card rounded-[14px] border-0 bg-surface px-4 py-3 text-[15px] focus:bg-surface"
+        className="px-4 py-3 text-[13.5px]"
       />
     </section>
   );

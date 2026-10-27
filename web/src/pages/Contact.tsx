@@ -28,57 +28,54 @@ export function ContactPage() {
   const linkedin = c.linkedin_url ? (c.linkedin_url.startsWith("http") ? c.linkedin_url : `https://${c.linkedin_url}`) : null;
 
   return (
-    <div className="rise mx-auto max-w-2xl">
-      <div className="flex items-center justify-between">
-        <BackLink to={account ? `/accounts/${account.id}` : "/contacts"}>{account ? account.name : "Contacts"}</BackLink>
-        <Button variant="ghost" size="sm" onClick={() => setEditing(true)} className="-mt-3 text-[15px]">
+    <div className="rise mx-auto max-w-3xl">
+      <BackLink to={account ? `/accounts/${account.id}` : "/contacts"}>{account ? account.name : "Contacts"}</BackLink>
+
+      <header className="flex items-start gap-4">
+        <Avatar name={c.name} size="lg" shape="round" />
+        <div className="min-w-0 flex-1">
+          <h1 className="display text-[24px] sm:text-[28px]">{c.name}</h1>
+          <p className="mt-1 text-[13.5px] text-muted">
+            {[c.role, account?.name, buyingRoleLabel(c.buying_role)].filter(Boolean).join(" · ")}
+          </p>
+          {c.do_not_contact && (
+            <p className="mt-2 inline-flex rounded-md border border-late/30 px-1.5 py-px text-[12px] font-medium text-late-text">
+              Do not contact{c.opt_out_at && ` since ${dmy(c.opt_out_at)}`}
+            </p>
+          )}
+        </div>
+        <Button variant="outline" onClick={() => setEditing(true)}>
           Edit
         </Button>
-      </div>
-
-      <header className="flex flex-col items-center text-center">
-        <Avatar name={c.name} size="xl" shape="round" />
-        <h1 className="display mt-3 text-[30px]">{c.name}</h1>
-        <p className="mt-1 text-[15px] text-muted">
-          {[c.role, account?.name].filter(Boolean).join(" · ")}
-        </p>
-        <p className="text-[13px] text-faint">
-          {[buyingRoleLabel(c.buying_role), c.language?.toUpperCase(), c.last_contacted_at && `last contact ${relative(c.last_contacted_at)}`]
-            .filter(Boolean)
-            .join(" · ")}
-        </p>
-        {c.do_not_contact && (
-          <p className="mt-2 rounded-full bg-late-soft px-3 py-1 text-[13px] font-semibold text-late-text">
-            Do not contact{c.opt_out_at && ` since ${dmy(c.opt_out_at)}`}
-          </p>
-        )}
       </header>
 
-      <ActionTiles className="mt-5 justify-center">
+      <ActionTiles className="mt-5">
         {c.phone && <ActionTile icon={Phone} label="Call" href={`tel:${c.phone.replace(/\s/g, "")}`} />}
-        {c.email && <ActionTile icon={Mail} label="Mail" href={`mailto:${c.email}`} />}
+        {c.email && <ActionTile icon={Mail} label="Email" href={`mailto:${c.email}`} />}
         {linkedin && <ActionTile icon={Link2} label="LinkedIn" href={linkedin} />}
         {account && <ActionTile icon={MessageSquarePlus} label="Log" onClick={() => ui.openLog({ account, contact_id: c.id, channel: "call" })} />}
         {account && <ActionTile icon={Plus} label="To-do" onClick={() => ui.openCapture("todo", { account })} />}
       </ActionTiles>
 
-      {(c.phone || c.email || linkedin) && (
+      {(
         <ul className="card mt-6 overflow-hidden">
-          {c.phone && <InfoRow label="phone" value={c.phone} href={`tel:${c.phone.replace(/\s/g, "")}`} />}
-          {c.email && <InfoRow label="email" value={c.email} href={`mailto:${c.email}`} />}
+          {c.phone && <InfoRow label="Phone" value={c.phone} href={`tel:${c.phone.replace(/\s/g, "")}`} />}
+          {c.email && <InfoRow label="Email" value={c.email} href={`mailto:${c.email}`} />}
           {linkedin && <InfoRow label="LinkedIn" value={linkedin.replace(/^https?:\/\/(www\.)?/, "")} href={linkedin} />}
+          <InfoRow label="Language" value={c.language?.toUpperCase() ?? "–"} />
+          <InfoRow label="Last contact" value={c.last_contacted_at ? `${dmy(c.last_contacted_at)} · ${relative(c.last_contacted_at)}` : "–"} />
         </ul>
       )}
 
       {c.notes && (
-        <div className="card mt-6 px-4 py-3">
-          <p className="text-[13px] text-muted">Notes</p>
-          <p className="mt-0.5 whitespace-pre-wrap text-[15px]">{c.notes}</p>
+        <div className="card mt-4 px-4 py-3">
+          <p className="label">Notes</p>
+          <p className="mt-1 whitespace-pre-wrap text-[13.5px]">{c.notes}</p>
         </div>
       )}
 
       {tasks.length > 0 && (
-        <Panel title="Open To-dos" count={tasks.length} className="mt-8">
+        <Panel title="Open to-dos" count={tasks.length} className="mt-9">
           <ul>
             {tasks.map((t) => (
               <li key={t.id} className="group/row pl-4 transition-colors hover:bg-hover">
@@ -86,10 +83,10 @@ export function ContactPage() {
                   onClick={() => ui.openTask(t.id)}
                   className="flex w-full items-baseline justify-between gap-4 border-b border-line py-2.5 pr-4 text-left group-last/row:border-b-0"
                 >
-                  <span className="min-w-0 truncate text-[15px]">
+                  <span className="min-w-0 truncate text-[14px]">
                     {t.title} <span className="text-[13px] text-muted">· {taskTypeLabel(t.type)}</span>
                   </span>
-                  <span className={cn("shrink-0 text-[13px]", t.due_date && t.due_date < today ? "font-medium text-late-text" : "text-muted")}>
+                  <span className={cn("mono shrink-0 text-[12px]", t.due_date && t.due_date < today ? "text-late-text" : "text-muted")}>
                     {dmy(t.due_date)}
                   </span>
                 </button>
@@ -99,7 +96,7 @@ export function ContactPage() {
         </Panel>
       )}
 
-      <Panel title="Communication" className="mt-8">
+      <Panel title="Communication" className="mt-9">
         <div className="px-4 py-1">
           <Timeline items={activities} showProject empty="Nothing logged with this contact yet." />
         </div>
@@ -112,18 +109,22 @@ export function ContactPage() {
   );
 }
 
-function InfoRow({ label, value, href }: { label: string; value: string; href: string }) {
+function InfoRow({ label, value, href }: { label: string; value: string; href?: string }) {
+  const body = (
+    <>
+      <span className="label w-28 shrink-0 !normal-case !tracking-normal !text-[12.5px] !font-sans">{label}</span>
+      <span className={cn("min-w-0 flex-1 truncate text-[13.5px]", href && "underline decoration-line-strong underline-offset-2 group-hover/row:decoration-fg")}>{value}</span>
+    </>
+  );
   return (
-    <li className="group/row pl-4">
-      <a
-        href={href}
-        target={href.startsWith("http") ? "_blank" : undefined}
-        rel="noreferrer"
-        className="block border-b border-line py-2.5 pr-4 group-last/row:border-b-0"
-      >
-        <span className="block text-[13px] text-muted">{label}</span>
-        <span className="block truncate text-[15px] text-accent">{value}</span>
-      </a>
+    <li className="group/row border-b border-line last:border-b-0">
+      {href ? (
+        <a href={href} target={href.startsWith("http") ? "_blank" : undefined} rel="noreferrer" className="flex items-center gap-3 px-4 py-2.5 hover:bg-hover">
+          {body}
+        </a>
+      ) : (
+        <div className="flex items-center gap-3 px-4 py-2.5">{body}</div>
+      )}
     </li>
   );
 }

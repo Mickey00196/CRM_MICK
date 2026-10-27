@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { ChevronLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/** Section title above a grouped list, with actions on the right (iOS style). */
+/** Section label above a card: monospace caps, a count, actions on the right. */
 export function PanelHead({
   title,
   count,
@@ -16,17 +16,17 @@ export function PanelHead({
   children?: ReactNode;
 }) {
   return (
-    <div className="mb-2 flex min-h-8 flex-wrap items-end justify-between gap-x-3 gap-y-1 px-1">
-      <h2 className={cn("title flex items-baseline gap-2 text-[20px]", tone)}>
+    <div className="mb-2 flex min-h-7 flex-wrap items-center justify-between gap-x-3 gap-y-1">
+      <h2 className={cn("label flex items-center gap-2", tone)}>
         {title}
-        {count != null && count > 0 && <span className="text-[15px] font-medium text-faint">{count}</span>}
+        {count != null && count > 0 && <span className="text-faint">{count}</span>}
       </h2>
-      {children && <div className="-mr-2 flex flex-wrap items-center">{children}</div>}
+      {children && <div className="-mr-1.5 flex flex-wrap items-center gap-0.5">{children}</div>}
     </div>
   );
 }
 
-/** A titled, rounded group. */
+/** A titled, bordered group. */
 export function Panel({
   title,
   count,
@@ -56,10 +56,10 @@ export function Panel({
 
 /** Quiet text for an empty group. */
 export function PanelEmpty({ children }: { children: ReactNode }) {
-  return <p className="px-4 py-4 text-[15px] text-muted">{children}</p>;
+  return <p className="px-4 py-4 text-[13px] text-muted">{children}</p>;
 }
 
-/** Large title with an optional line above and actions on the right. */
+/** Page title with an optional monospace line above and actions on the right. */
 export function PageHeader({
   title,
   eyebrow,
@@ -72,30 +72,29 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <header className="mb-6 flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+    <header className="mb-8 flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
       <div className="min-w-0">
-        {eyebrow && <p className="mb-1 text-[13px] font-semibold uppercase tracking-[0.02em] text-muted">{eyebrow}</p>}
-        <h1 className="display text-[32px] sm:text-[36px]">{title}</h1>
-        {subtitle && <p className="mt-1.5 text-[15px] text-muted">{subtitle}</p>}
+        {eyebrow && <p className="label mb-2">{eyebrow}</p>}
+        <h1 className="display text-[26px] sm:text-[28px]">{title}</h1>
+        {subtitle && <p className="mt-1 text-[13.5px] text-muted">{subtitle}</p>}
       </div>
       {actions && <div className="flex w-full items-center gap-2 sm:w-auto">{actions}</div>}
     </header>
   );
 }
 
-/** "‹ Projects" in the accent colour, like an iOS back button. */
 export function BackLink({ to, children }: { to: string; children: ReactNode }) {
   return (
-    <Link to={to} className="-ml-1.5 mb-3 inline-flex items-center text-[15px] text-accent hover:opacity-70">
-      <ChevronLeft className="size-[22px]" strokeWidth={2.2} />
+    <Link to={to} className="mb-5 inline-flex items-center gap-1.5 text-[13px] text-muted transition-colors hover:text-fg">
+      <ArrowLeft className="size-3.5" />
       {children}
     </Link>
   );
 }
 
-/** Row of quick actions, like the call / message / mail buttons on an iOS contact card. */
+/** A row of small bordered buttons for quick actions. */
 export function ActionTiles({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn("-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0", className)}>{children}</div>;
+  return <div className={cn("flex flex-wrap gap-1.5", className)}>{children}</div>;
 }
 
 export function ActionTile({
@@ -104,19 +103,19 @@ export function ActionTile({
   onClick,
   href,
 }: {
-  icon: typeof ChevronLeft;
+  icon: typeof ArrowLeft;
   label: string;
   onClick?: () => void;
   href?: string;
 }) {
+  const cls =
+    "inline-flex h-8 items-center gap-1.5 rounded-lg border border-line-strong bg-surface px-2.5 text-[13px] font-medium shadow-[var(--shadow-card)] transition-colors hover:bg-subtle [&_svg]:text-muted";
   const inner = (
     <>
-      <Icon className="size-[20px]" strokeWidth={2} />
-      <span className="text-[11px] font-medium">{label}</span>
+      <Icon className="size-[15px]" />
+      {label}
     </>
   );
-  const cls =
-    "card flex min-w-[72px] flex-1 flex-col items-center gap-1 px-2 pb-2 pt-2.5 text-accent transition-transform hover:bg-[color-mix(in_srgb,var(--surface)_94%,var(--accent))] active:scale-[0.97] sm:max-w-[96px]";
   return href ? (
     <a href={href} className={cls} target={href.startsWith("http") ? "_blank" : undefined} rel="noreferrer">
       {inner}
