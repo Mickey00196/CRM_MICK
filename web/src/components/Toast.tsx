@@ -35,7 +35,7 @@ export function Toaster() {
   return (
     <div
       role="status"
-      className="fixed inset-x-0 bottom-24 z-50 mx-auto flex w-fit max-w-[calc(100vw-32px)] items-center gap-4 rounded-lg bg-fg py-2 pl-4 pr-3 text-[13px] text-bg shadow-[var(--shadow-pop)] [animation:pop-in_.16s_cubic-bezier(.2,.8,.2,1)] md:bottom-6"
+      className="fixed inset-x-0 bottom-24 z-50 mx-auto flex w-fit max-w-[calc(100vw-32px)] items-center gap-5 rounded-full bg-fg py-2.5 pl-5 pr-4 text-[13.5px] text-bg shadow-[var(--shadow-pop)] [animation:pop-in_.22s_cubic-bezier(.16,1,.3,1)] md:bottom-8"
     >
       <span className="truncate">{current.message}</span>
       {current.action && (

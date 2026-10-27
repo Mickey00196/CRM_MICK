@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { api, clearCache, setUnauthorizedHandler } from "@/lib/api";
 import { setTimezone } from "@/lib/format";
+import { setUserName } from "@/lib/session";
 import { Shell } from "@/components/Shell";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Login } from "@/pages/Login";
@@ -23,16 +24,27 @@ export default function App() {
       clearCache();
       setAuthed(false);
     });
-    api<{ user: unknown; timezone: string }>("/me")
+    api<{ user: { name?: string } | null; timezone: string }>("/me")
       .then((r) => {
         setTimezone(r.timezone);
+        setUserName(r.user?.name);
         setAuthed(Boolean(r.user));
       })
       .catch(() => setAuthed(false));
   }, []);
 
   if (authed === null) return null;
-  if (!authed) return <Login onLogin={() => setAuthed(true)} />;
+  if (!authed)
+    return (
+      <Login
+        onLogin={() =>
+          api<{ user: { name?: string } | null }>("/me")
+            .then((r) => setUserName(r.user?.name))
+            .catch(() => {})
+            .finally(() => setAuthed(true))
+        }
+      />
+    );
 
   return (
     <Shell>

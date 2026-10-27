@@ -74,7 +74,7 @@ export function DuePill({ due, time, timeOnly, className }: { due: string | null
   return (
     <span
       title={dmy(due) + (time ? ` ${time}` : "")}
-      className={cn("mono shrink-0 whitespace-nowrap text-[12px]", late ? "text-late-text" : due === today ? "text-fg" : "text-muted", className)}
+      className={cn("mono shrink-0 whitespace-nowrap text-[12.5px]", late ? "text-late-text" : due === today ? "text-fg" : "text-muted", className)}
     >
       {late ? lateLabel(due, today) : timeOnly ? time : dueLabel(due, time, today)}
     </span>
@@ -101,11 +101,11 @@ export function TodoItem({
   const Icon = TYPE_ICON[todo.type];
 
   return (
-    <li className={cn("group/row flex items-center gap-3 pl-4 transition-colors hover:bg-hover", fading && "fade-out")}>
+    <li className={cn("group/row flex items-center gap-3.5 pl-[var(--row-x,1rem)] transition-colors hover:bg-hover", fading && "fade-out")}>
       <button
         onClick={() => complete(todo)}
         className={cn(
-          "group grid size-[18px] shrink-0 place-items-center rounded-full border-[1.5px] transition-colors",
+          "group grid size-[18px] shrink-0 place-items-center rounded-full border transition-colors duration-200",
           fading ? "border-fg bg-fg text-bg" : "border-check text-transparent hover:border-fg hover:text-muted",
         )}
         aria-label={comm ? `Complete and log: ${todo.title}` : `Complete: ${todo.title}`}
@@ -115,18 +115,18 @@ export function TodoItem({
       </button>
       <button
         onClick={() => ui.openTask(todo.id)}
-        className="flex min-w-0 flex-1 items-center gap-3 border-b border-line py-2.5 pr-4 text-left group-last/row:border-b-0"
+        className="flex min-w-0 flex-1 items-center gap-4 border-b border-line py-3 pr-[var(--row-x,1rem)] text-left group-last/row:border-b-0"
       >
         <span className="min-w-0 flex-1">
-          <span className={cn("block truncate text-[14px]", fading && "text-muted line-through")}>{todo.title}</span>
-          {context && <span className="block truncate text-[12.5px] text-muted">{context}</span>}
+          <span className={cn("block truncate text-[14.5px]", fading && "text-muted line-through")}>{todo.title}</span>
+          {context && <span className="mt-0.5 block truncate text-[12.5px] text-muted">{context}</span>}
         </span>
         {Icon && (
-          <span title={taskTypeLabel(todo.type)} className="shrink-0 text-faint">
+          <span title={taskTypeLabel(todo.type)} className="shrink-0 text-faint opacity-0 transition-opacity duration-200 group-hover/row:opacity-100">
             <Icon className="size-3.5" />
           </span>
         )}
-        <DuePill due={todo.due_date} time={todo.due_time} timeOnly={timeOnly} className="min-w-14 text-right" />
+        <DuePill due={todo.due_date} time={todo.due_time} timeOnly={timeOnly} className="min-w-16 text-right" />
       </button>
     </li>
   );

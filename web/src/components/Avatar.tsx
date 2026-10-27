@@ -5,7 +5,7 @@ export function initials(name: string): string {
   return ((words[0]?.[0] ?? "") + (words[1]?.[0] ?? "")).toUpperCase() || "·";
 }
 
-/** Initials in a quiet bordered tile. People are round; companies are square. */
+/** Serif monogram on a warm tile. People are round; companies are square. */
 export function Avatar({
   name,
   size = "md",
@@ -21,12 +21,12 @@ export function Avatar({
     <span
       aria-hidden="true"
       className={cn(
-        "inline-grid shrink-0 select-none place-items-center border border-line bg-subtle font-mono font-medium text-muted",
-        size === "sm" && "size-5 text-[8.5px]",
-        size === "md" && "size-7 text-[10.5px]",
-        size === "lg" && "size-11 text-[14px]",
-        size === "xl" && "size-14 text-[17px]",
-        shape === "round" ? "rounded-full" : size === "sm" ? "rounded-[5px]" : size === "md" ? "rounded-[7px]" : "rounded-[10px]",
+        "serif inline-grid shrink-0 select-none place-items-center border border-line bg-subtle leading-none text-fg/75",
+        size === "sm" && "size-5 text-[10px]",
+        size === "md" && "size-8 text-[14px]",
+        size === "lg" && "size-14 text-[22px]",
+        size === "xl" && "size-16 text-[26px]",
+        shape === "round" ? "rounded-full" : size === "sm" ? "rounded-[5px]" : size === "md" ? "rounded-[8px]" : "rounded-[12px]",
         className,
       )}
     >

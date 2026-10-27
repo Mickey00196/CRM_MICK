@@ -40,7 +40,7 @@ const NAV = [
 
 function Kbd({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <kbd className={cn("inline-grid h-[18px] min-w-[18px] place-items-center rounded-[4px] border border-line-strong bg-surface px-1 font-mono text-[10.5px] text-muted", className)}>
+    <kbd className={cn("inline-grid h-[19px] min-w-[19px] place-items-center rounded-[5px] border border-line bg-surface px-1 font-sans text-[11px] text-muted shadow-[var(--shadow-card)]", className)}>
       {children}
     </kbd>
   );
@@ -119,10 +119,10 @@ export function Shell({ children }: { children: ReactNode }) {
 
   return (
     <UIContext.Provider value={ui}>
-      <div className={cn("min-h-dvh md:grid", collapsed ? "md:grid-cols-[60px_1fr]" : "md:grid-cols-[232px_1fr]")}>
+      <div className={cn("min-h-dvh md:grid", collapsed ? "md:grid-cols-[64px_1fr]" : "md:grid-cols-[248px_1fr]")}>
         {/* Sidebar (desktop) */}
-        <aside className="sticky top-0 z-10 hidden h-dvh flex-col border-r border-line bg-bg px-2.5 pb-3 pt-3.5 md:flex">
-          <div className={cn("mb-4 flex items-center", collapsed ? "flex-col gap-3" : "justify-between pl-1.5")}>
+        <aside className="sticky top-0 z-10 hidden h-dvh flex-col border-r border-line bg-bg px-3 pb-4 pt-5 md:flex">
+          <div className={cn("mb-7 flex items-center", collapsed ? "flex-col gap-3" : "justify-between pl-2")}>
             <NavLink to="/" aria-label="Mick CRM, to-dos" className="rounded-md">
               <Wordmark collapsed={collapsed} />
             </NavLink>
@@ -135,12 +135,12 @@ export function Shell({ children }: { children: ReactNode }) {
             </button>
           </div>
 
-          <div className={cn("mb-3 flex gap-1.5", collapsed && "flex-col items-center")}>
+          <div className={cn("mb-6 flex gap-2", collapsed && "flex-col items-center")}>
             <button
               onClick={() => setSearching(true)}
               className={cn(
-                "flex h-8 items-center gap-2 rounded-lg border border-line-strong bg-surface text-[13px] text-muted shadow-[var(--shadow-card)] transition-colors hover:text-fg",
-                collapsed ? "w-8 justify-center" : "flex-1 px-2.5",
+                "flex h-9 items-center gap-2 rounded-lg border border-line bg-surface text-[13.5px] text-muted shadow-[var(--shadow-card)] transition-colors duration-200 hover:border-line-strong hover:text-fg",
+                collapsed ? "w-9 justify-center" : "flex-1 px-3",
               )}
               aria-label="Search"
             >
@@ -155,7 +155,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <Menu>
               <MenuTrigger asChild>
                 <button
-                  className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent text-accent-fg shadow-[0_1px_2px_rgb(0_0_0/0.15)] transition-colors hover:bg-accent-hover"
+                  className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent text-accent-fg shadow-[inset_0_1px_0_rgb(255_255_255/0.1),0_1px_2px_rgb(0_0_0/0.18)] transition-colors hover:bg-accent-hover"
                   aria-label="New"
                   title="New"
                 >
@@ -173,7 +173,7 @@ export function Shell({ children }: { children: ReactNode }) {
             </Menu>
           </div>
 
-          <nav className="grid gap-px">
+          <nav className="grid gap-1">
             {NAV.map((n) => (
               <NavLink
                 key={n.to}
@@ -182,20 +182,22 @@ export function Shell({ children }: { children: ReactNode }) {
                 title={collapsed ? n.label : undefined}
                 className={({ isActive }) =>
                   cn(
-                    "group flex h-8 items-center gap-2.5 rounded-lg text-[13.5px] transition-colors",
-                    collapsed ? "justify-center" : "px-2.5",
-                    isActive ? "bg-subtle font-medium text-fg" : "text-muted hover:bg-subtle/60 hover:text-fg",
+                    "group flex h-9 items-center gap-3 rounded-lg text-[14px] transition-colors duration-200",
+                    collapsed ? "justify-center" : "px-3",
+                    isActive
+                      ? "bg-surface text-fg shadow-[0_0_0_1px_var(--line),var(--shadow-card)] [&_svg]:text-brand"
+                      : "text-muted hover:text-fg",
                   )
                 }
               >
-                <n.icon className="size-4 shrink-0" strokeWidth={1.75} />
+                <n.icon className="size-[17px] shrink-0" strokeWidth={1.5} />
                 {!collapsed && n.label}
               </NavLink>
             ))}
           </nav>
 
           {!collapsed && (
-            <div className="mt-auto grid gap-1.5 px-2.5 text-[12px] text-faint">
+            <div className="mt-auto grid gap-2 px-3 text-[12.5px] text-faint">
               <span className="flex items-center justify-between">
                 New to-do <Kbd>N</Kbd>
               </span>
@@ -210,7 +212,7 @@ export function Shell({ children }: { children: ReactNode }) {
         </aside>
 
         {/* Top bar (mobile) */}
-        <header className="glass sticky top-0 z-20 flex h-12 items-center justify-between border-b border-line bg-[var(--bar)] px-4 md:hidden">
+        <header className="glass sticky top-0 z-20 flex h-14 items-center justify-between border-b border-line bg-[var(--bar)] px-4 md:hidden">
           <Wordmark />
           <div className="-mr-2 flex items-center">
             <button onClick={() => setSearching(true)} className="grid size-9 place-items-center rounded-md text-muted" aria-label="Search">
@@ -223,7 +225,7 @@ export function Shell({ children }: { children: ReactNode }) {
         </header>
 
         {/* Page */}
-        <main className="min-w-0 px-4 pb-28 pt-6 sm:px-8 md:pb-16 md:pt-12 lg:px-12 xl:px-16">{children}</main>
+        <main className="min-w-0 px-5 pb-32 pt-8 sm:px-10 md:pb-24 md:pt-16 lg:px-16 xl:px-20">{children}</main>
 
         {/* Bottom bar (mobile) */}
         <nav className="glass fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-line bg-[var(--bar)] pb-[env(safe-area-inset-bottom)] md:hidden">
@@ -234,15 +236,15 @@ export function Shell({ children }: { children: ReactNode }) {
                 to={n.to}
                 end={n.end}
                 className={({ isActive }) =>
-                  cn("flex flex-col items-center gap-1 pb-1.5 pt-2 text-[10.5px] font-medium", isActive ? "text-fg" : "text-faint")
+                  cn("flex flex-col items-center gap-1 pb-2 pt-2.5 text-[10.5px] font-medium", isActive ? "text-fg [&_svg]:text-brand" : "text-faint")
                 }
               >
-                <n.icon className="size-5" strokeWidth={1.75} />
+                <n.icon className="size-5" strokeWidth={1.5} />
                 {n.short}
               </NavLink>
             ) : (
               <button key={i} onClick={() => ui.openCapture("todo")} className="flex items-center justify-center" aria-label="New">
-                <span className="grid size-10 place-items-center rounded-xl bg-accent text-accent-fg shadow-[0_2px_8px_rgb(0_0_0/0.18)]">
+                <span className="grid size-11 place-items-center rounded-full bg-accent text-accent-fg shadow-[0_4px_14px_rgb(0_0_0/0.22)]">
                   <Plus className="size-5" strokeWidth={2.25} />
                 </span>
               </button>

@@ -60,6 +60,7 @@ The tests wipe and rebuild the schema in the test database, so never point `TEST
 4. On the service, set these variables:
    - `DATABASE_URL` = `${{Postgres.DATABASE_URL}}`
    - `APP_EMAIL` and `APP_PASSWORD` (at least 16 characters)
+   - optionally `APP_NAME` (your first name, used in the greeting)
    - `TIMEZONE` = `Europe/Amsterdam`
    - optionally the reminder-email variables from `.env.example`
 5. Generate a domain and set `APP_URL` to it.

@@ -110,7 +110,7 @@ export function Accounts() {
         }
       />
 
-      <div className="mb-4 max-w-full overflow-x-auto">
+      <div className="mb-5 max-w-full overflow-x-auto">
         <div className="segmented" role="radiogroup" aria-label="View">
           {VIEWS.map((v) => (
             <button key={v.key} role="radio" aria-checked={view === v.key} onClick={() => setView(v.key)}>
@@ -136,8 +136,8 @@ export function Accounts() {
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="relative min-w-48 flex-1 sm:max-w-xs">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-faint" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter by name, area, tag" className="h-8 pl-8 text-[13px]" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-faint" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter by name, area, tag" className="h-9 pl-8" />
         </div>
         {selected.size > 0 ? (
           <div className="flex items-center gap-2 text-[13px]">
@@ -304,7 +304,7 @@ function Cell({ row: a, col, today }: { row: AccountRow; col: ColKey; today: str
       return (
         <span
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-md border px-1.5 py-px text-[12px] font-medium",
+            "inline-flex items-center rounded-full border px-2.5 py-px text-[12px]",
             a.status === "client" ? "border-line-strong text-fg" : a.status === "prospect" ? "border-line text-muted" : "border-dashed border-line-strong text-faint",
           )}
         >

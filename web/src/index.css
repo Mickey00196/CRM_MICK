@@ -3,70 +3,74 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
-  Monochrome. Near-black on white (and the reverse in dark mode), greys for
-  hierarchy, thin borders for structure. The only colour is red, and it only
-  means "late". Numbers, dates and labels are set in a monospace.
+  Paper and ink. Warm off-white, near-black text, hairline rules instead of
+  boxes. Titles and numbers in a serif. One accent, deep navy, used only for
+  selection and focus. Red means late, nothing else.
 */
 :root {
-  --bg: #fafafa;
-  --surface: #ffffff;
-  --elevated: #ffffff;
-  --subtle: #f4f4f5;
-  --subtle-hover: #ebebed;
-  --hover: rgb(0 0 0 / 0.028);
-  --segment: #ffffff;
-  --fg: #09090b;
-  --muted: #71717a;
-  --faint: #a1a1aa;
-  --line: #ebebed;
-  --line-strong: #d9d9de;
-  --check: #c9c9cf;
-  --accent: #09090b;
-  --accent-hover: #2a2a2e;
-  --accent-fg: #fafafa;
-  --accent-soft: rgb(9 9 11 / 0.05);
-  --late: #e5484d;
-  --late-text: #d93d42;
-  --late-soft: rgb(229 72 77 / 0.08);
-  --missing: #52525b;
-  --missing-soft: #f4f4f5;
-  --ring: #09090b;
-  --bar: rgb(250 250 250 / 0.94);
+  --bg: #f7f6f2;
+  --surface: #fffefb;
+  --elevated: #fffefb;
+  --subtle: #efede7;
+  --subtle-hover: #e7e4dc;
+  --hover: rgb(60 45 20 / 0.035);
+  --segment: #fffefb;
+  --fg: #1b1a17;
+  --muted: #6e6a61;
+  --faint: #a6a196;
+  --line: #e6e2d9;
+  --line-strong: #d5d0c4;
+  --check: #c5bfb2;
+  --accent: #1b1a17;
+  --accent-hover: #34322d;
+  --accent-fg: #f7f6f2;
+  --accent-soft: rgb(27 26 23 / 0.05);
+  --brand: #22365c;
+  --brand-soft: rgb(34 54 92 / 0.07);
+  --late: #b3261e;
+  --late-text: #b3261e;
+  --late-soft: rgb(179 38 30 / 0.07);
+  --missing: #6e6a61;
+  --missing-soft: #efede7;
+  --ring: #22365c;
+  --bar: rgb(247 246 242 / 0.97);
 
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.025);
-  --shadow-lift: 0 1px 2px rgb(0 0 0 / 0.04), 0 6px 16px rgb(0 0 0 / 0.05);
-  --shadow-pop: 0 0 0 1px rgb(0 0 0 / 0.05), 0 20px 50px rgb(0 0 0 / 0.12);
+  --shadow-card: 0 1px 2px rgb(60 45 20 / 0.035);
+  --shadow-lift: 0 1px 2px rgb(60 45 20 / 0.05), 0 10px 28px rgb(60 45 20 / 0.08);
+  --shadow-pop: 0 0 0 1px rgb(60 45 20 / 0.06), 0 24px 64px rgb(40 30 10 / 0.16);
 }
 
 .dark {
-  --bg: #0a0a0a;
-  --surface: #111111;
-  --elevated: #161616;
-  --subtle: #1b1b1b;
-  --subtle-hover: #242424;
-  --hover: rgb(255 255 255 / 0.03);
-  --segment: #2a2a2a;
-  --fg: #ededed;
-  --muted: #a1a1a1;
-  --faint: #6b6b6b;
-  --line: #222222;
-  --line-strong: #333333;
-  --check: #4a4a4a;
-  --accent: #ededed;
+  --bg: #121110;
+  --surface: #191816;
+  --elevated: #1f1e1b;
+  --subtle: #23221f;
+  --subtle-hover: #2c2b27;
+  --hover: rgb(255 248 235 / 0.035);
+  --segment: #302f2b;
+  --fg: #ede9e1;
+  --muted: #a29d93;
+  --faint: #6f6b63;
+  --line: #2a2926;
+  --line-strong: #3b3935;
+  --check: #4e4b45;
+  --accent: #ede9e1;
   --accent-hover: #ffffff;
-  --accent-fg: #0a0a0a;
-  --accent-soft: rgb(255 255 255 / 0.07);
-  --late: #ff6369;
-  --late-text: #ff6369;
-  --late-soft: rgb(255 99 105 / 0.1);
-  --missing: #a1a1a1;
-  --missing-soft: #1b1b1b;
-  --ring: #ededed;
-  --bar: rgb(10 10 10 / 0.94);
+  --accent-fg: #121110;
+  --accent-soft: rgb(255 248 235 / 0.07);
+  --brand: #a9bbdf;
+  --brand-soft: rgb(169 187 223 / 0.1);
+  --late: #ef7a72;
+  --late-text: #ef7a72;
+  --late-soft: rgb(239 122 114 / 0.1);
+  --missing: #a29d93;
+  --missing-soft: #23221f;
+  --ring: #a9bbdf;
+  --bar: rgb(18 17 16 / 0.97);
 
   --shadow-card: none;
-  --shadow-lift: 0 8px 24px rgb(0 0 0 / 0.5);
-  --shadow-pop: 0 0 0 1px rgb(255 255 255 / 0.07), 0 24px 60px rgb(0 0 0 / 0.65);
+  --shadow-lift: 0 10px 28px rgb(0 0 0 / 0.45);
+  --shadow-pop: 0 0 0 1px rgb(255 248 235 / 0.07), 0 24px 64px rgb(0 0 0 / 0.6);
   color-scheme: dark;
 }
 
@@ -88,6 +92,8 @@
   --color-accent-hover: var(--accent-hover);
   --color-accent-fg: var(--accent-fg);
   --color-accent-soft: var(--accent-soft);
+  --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-soft);
   --color-late: var(--late);
   --color-late-text: var(--late-text);
   --color-late-soft: var(--late-soft);
@@ -95,7 +101,8 @@
   --color-missing-soft: var(--missing-soft);
   --color-ring: var(--ring);
   --font-sans: "Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "Geist Mono Variable", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-serif: "Instrument Serif", "Iowan Old Style", Georgia, serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 
 @layer base {
@@ -107,8 +114,8 @@
     @apply bg-bg text-fg antialiased;
     font-family: var(--font-sans);
     font-size: 14px;
-    line-height: 1.5;
-    letter-spacing: -0.006em;
+    line-height: 1.55;
+    letter-spacing: -0.005em;
   }
   *,
   ::before,
@@ -116,10 +123,10 @@
     border-color: var(--line);
   }
   ::selection {
-    background: color-mix(in srgb, var(--fg) 14%, transparent);
+    background: color-mix(in srgb, var(--brand) 18%, transparent);
   }
   :focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--ring) 35%, transparent);
+    outline: 2px solid color-mix(in srgb, var(--ring) 40%, transparent);
     outline-offset: 2px;
   }
   button:not(:disabled),
@@ -127,65 +134,92 @@
     cursor: pointer;
   }
   input[type="checkbox"] {
-    accent-color: var(--fg);
+    accent-color: var(--brand);
   }
 }
 
 @layer components {
+  /* Serif for titles and big numbers. */
   .display {
-    font-weight: 600;
-    letter-spacing: -0.035em;
-    line-height: 1.1;
+    font-family: var(--font-serif);
+    font-weight: 400;
+    letter-spacing: -0.012em;
+    line-height: 1.04;
+  }
+  .serif {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    letter-spacing: -0.005em;
   }
   .title {
     font-weight: 600;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.012em;
   }
-  /* Monospace caption: section labels, counts, dates. */
   .label {
-    font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: 12.5px;
     font-weight: 500;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
     color: var(--muted);
   }
+  /* Numbers and dates that line up. */
   .mono {
-    font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
-    letter-spacing: -0.01em;
   }
   .card {
     background: var(--surface);
     border: 1px solid var(--line);
-    border-radius: 10px;
+    border-radius: 12px;
     box-shadow: var(--shadow-card);
   }
   .glass {
-    -webkit-backdrop-filter: saturate(160%) blur(16px);
-    backdrop-filter: saturate(160%) blur(16px);
+    -webkit-backdrop-filter: saturate(150%) blur(16px);
+    backdrop-filter: saturate(150%) blur(16px);
   }
+
+  /*
+    Open list: hairlines above and below, rows run to the edges, and the hover
+    highlight extends a little beyond the text.
+  */
+  .open-list {
+    --row-x: 0px;
+    isolation: isolate;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .open-list li {
+    position: relative;
+  }
+  .open-list li:hover {
+    background-color: transparent !important;
+  }
+  .open-list li:hover::before {
+    content: "";
+    position: absolute;
+    inset: 0 -12px;
+    z-index: -1;
+    border-radius: 8px;
+    background: var(--hover);
+  }
+
   .segmented {
     display: inline-flex;
     gap: 2px;
-    padding: 2px;
-    border-radius: 8px;
+    padding: 3px;
+    border-radius: 10px;
     background: var(--subtle);
-    border: 1px solid var(--line);
   }
   .segmented > button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    height: 26px;
-    padding: 0 10px;
-    border-radius: 6px;
+    gap: 7px;
+    height: 28px;
+    padding: 0 12px;
+    border-radius: 7px;
     font-size: 13px;
     font-weight: 500;
     white-space: nowrap;
     color: var(--muted);
-    transition: background-color 0.12s, color 0.12s, box-shadow 0.12s;
+    transition: background-color 0.2s, color 0.2s, box-shadow 0.2s;
   }
   .segmented > button:hover {
     color: var(--fg);
@@ -196,66 +230,80 @@
   .segmented > button[data-state="active"] {
     background: var(--segment);
     color: var(--fg);
-    box-shadow: 0 0 0 1px var(--line), 0 1px 2px rgb(0 0 0 / 0.06);
+    box-shadow: 0 0 0 1px var(--line), 0 1px 3px rgb(60 45 20 / 0.08);
   }
+
   .data {
     width: 100%;
     font-size: 14px;
   }
   .data th {
     text-align: left;
-    font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 500;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
     color: var(--muted);
-    padding: 10px 12px;
+    padding: 12px 14px;
     border-bottom: 1px solid var(--line);
     white-space: nowrap;
   }
   .data td {
-    padding: 10px 12px;
+    padding: 12px 14px;
     border-bottom: 1px solid var(--line);
     vertical-align: middle;
     white-space: nowrap;
   }
   .data th:first-child,
   .data td:first-child {
-    padding-left: 16px;
+    padding-left: 18px;
   }
   .data th:last-child,
   .data td:last-child {
-    padding-right: 16px;
+    padding-right: 18px;
   }
   .data tbody tr:last-child td {
     border-bottom: 0;
   }
   .data tbody tr {
-    transition: background-color 0.1s;
+    transition: background-color 0.15s;
   }
   .data tbody tr:hover {
     background: var(--hover);
   }
-  /* Faint dot grid, for empty space that should still feel engineered. */
-  .dot-grid {
-    background-image: radial-gradient(color-mix(in srgb, var(--fg) 14%, transparent) 1px, transparent 1px);
-    background-size: 22px 22px;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
   }
 }
+.rise {
+  animation: rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+/* Rows arrive one after another. */
+.stagger > * {
+  animation: rise 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.stagger > :nth-child(2) { animation-delay: 30ms; }
+.stagger > :nth-child(3) { animation-delay: 60ms; }
+.stagger > :nth-child(4) { animation-delay: 90ms; }
+.stagger > :nth-child(5) { animation-delay: 120ms; }
+.stagger > :nth-child(6) { animation-delay: 150ms; }
+.stagger > :nth-child(7) { animation-delay: 180ms; }
+.stagger > :nth-child(n + 8) { animation-delay: 210ms; }
 
 @keyframes fade-out {
   to {
     opacity: 0;
-    transform: translateX(4px);
+    transform: translateX(6px);
   }
 }
 .fade-out {
-  animation: fade-out 0.3s ease forwards;
+  animation: fade-out 0.35s ease forwards !important;
 }
 @keyframes sheet-in {
   from {
-    transform: translateX(16px);
+    transform: translateX(20px);
     opacity: 0;
   }
 }
@@ -267,17 +315,8 @@
 @keyframes pop-in {
   from {
     opacity: 0;
-    transform: scale(0.98) translateY(-4px);
+    transform: scale(0.985) translateY(-4px);
   }
-}
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-}
-.rise {
-  animation: rise 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -285,6 +324,7 @@
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
   }
 }

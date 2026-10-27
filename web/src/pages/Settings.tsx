@@ -45,7 +45,7 @@ export function SettingsPage({ onLogout }: { onLogout: () => void }) {
     <div className="rise mx-auto max-w-2xl">
       <PageHeader title="Settings" />
 
-      <div className="grid gap-8">
+      <div className="grid gap-12">
         <Group>
           <Row icon={SunMoon} tone="bg-indigo" label="Appearance">
             <div className="segmented" role="radiogroup" aria-label="Appearance">
@@ -66,7 +66,7 @@ export function SettingsPage({ onLogout }: { onLogout: () => void }) {
           }
         >
           <Row icon={Bell} tone="bg-late" label="Daily reminder email">
-            <span className="mono text-[12px] text-muted">{data?.reminders ? "ON" : "OFF"}</span>
+            <span className="text-[13px] text-muted">{data?.reminders ? "On" : "Off"}</span>
           </Row>
           {data?.reminders && (
             <Row icon={Send} tone="bg-accent" label="Send a test now" onClick={testEmail}>
@@ -107,7 +107,7 @@ export function SettingsPage({ onLogout }: { onLogout: () => void }) {
 function Group({ header, footer, children }: { header?: string; footer?: string; children: React.ReactNode }) {
   return (
     <section>
-      {header && <h2 className="label mb-2">{header}</h2>}
+      {header && <h2 className="display mb-3 text-[22px]">{header}</h2>}
       <ul className="card overflow-hidden">{children}</ul>
       {footer && <p className="mt-2 text-[12.5px] leading-snug text-muted">{footer}</p>}
     </section>
@@ -139,7 +139,7 @@ function Row({
         </span>
       )}
       <span className="flex min-h-12 min-w-0 flex-1 items-center justify-between gap-3 border-b border-line py-2 pr-4 group-last/row:border-b-0">
-        <span className="truncate text-[13.5px]">{label}</span>
+        <span className="truncate text-[14px]">{label}</span>
         <span className="flex shrink-0 items-center gap-1.5">
           {value && <span className="mono text-[12px] text-muted">{value}</span>}
           {children}

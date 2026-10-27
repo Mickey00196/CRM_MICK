@@ -97,7 +97,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
               i === active && "bg-subtle",
             )}
           >
-            <span className="label w-16 shrink-0 !text-[10px] text-faint">{KIND[h.kind]}</span>
+            <span className="w-16 shrink-0 text-[12px] text-faint">{KIND[h.kind]}</span>
             <span className="min-w-0 flex-1 truncate text-[13.5px]">
               {h.title}
               {h.subtitle && <span className="text-muted"> · {h.subtitle}</span>}

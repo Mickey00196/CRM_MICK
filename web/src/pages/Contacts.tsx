@@ -33,9 +33,9 @@ export function Contacts() {
         }
       />
 
-      <div className="relative mb-4 sm:max-w-xs">
-        <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-faint" />
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter by name, role, company" className="h-8 pl-8 text-[13px]" />
+      <div className="relative mb-5 sm:max-w-xs">
+        <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-faint" />
+        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter by name, role, company" className="h-9 pl-8" />
       </div>
 
       {error && <p className="text-sm text-late">{error}</p>}

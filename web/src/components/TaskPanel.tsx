@@ -105,7 +105,7 @@ function ViewStep({
         {taskTypeLabel(task.type)}
         {task.priority === "high" && <span className="text-late"> · High priority</span>}
       </p>
-      <h2 className="display mt-1 text-[22px]">{task.title}</h2>
+      <h2 className="display mt-2 text-[32px]">{task.title}</h2>
       <div className="mt-1">
         <DueLine due={task.due_date} time={task.due_time} />
       </div>
@@ -295,7 +295,7 @@ function CompleteStep({ data, onBack, onDone }: { data: TaskDetail; onBack: () =
     <form onSubmit={save} className="grid gap-6">
       <div>
         <p className="label">{taskTypeLabel(task.type)}</p>
-        <h2 className="display mt-1 text-[22px]">How did it go?</h2>
+        <h2 className="display mt-2 text-[32px]">How did it go?</h2>
         <p className="mt-1 text-sm text-muted">
           {task.title}
           {(task.project_name ?? task.account_name) && ` · ${task.project_name ?? task.account_name}`}

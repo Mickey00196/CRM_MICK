@@ -2,7 +2,7 @@ import { forwardRef, type InputHTMLAttributes, type SelectHTMLAttributes, type T
 import { cn } from "@/lib/utils";
 
 const base =
-  "w-full min-w-0 rounded-lg border border-line-strong bg-surface px-3 text-[14px] text-fg shadow-[var(--shadow-card)] placeholder:text-faint transition-[border-color,box-shadow] focus:border-[color-mix(in_srgb,var(--fg)_45%,transparent)] focus:outline-none focus:ring-3 focus:ring-[color-mix(in_srgb,var(--fg)_8%,transparent)] disabled:opacity-50";
+  "w-full min-w-0 rounded-lg border border-line-strong bg-surface px-3 text-[14px] text-fg shadow-[var(--shadow-card)] placeholder:text-faint transition-[border-color,box-shadow] duration-200 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand-soft disabled:opacity-50";
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(({ className, ...props }, ref) => (
   <input ref={ref} className={cn(base, "h-9", className)} {...props} />
@@ -62,7 +62,7 @@ export function Chips<T extends string>({
           className={cn(
             "rounded-lg border px-2.5 font-medium transition-colors",
             size === "sm" ? "h-7 text-[12.5px]" : "h-8 text-[13px]",
-            value === o.key ? "border-accent bg-accent text-accent-fg" : "border-line-strong bg-surface text-muted hover:text-fg",
+            value === o.key ? "border-accent bg-accent text-accent-fg" : "border-line-strong bg-surface text-muted hover:border-faint hover:text-fg",
           )}
         >
           {o.label}

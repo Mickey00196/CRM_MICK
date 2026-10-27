@@ -66,7 +66,7 @@ export function AccountPage() {
 
       <Header data={data} />
 
-      <ActionTiles className="mt-4">
+      <ActionTiles className="mt-8">
         <ActionTile icon={Phone} label="Call" onClick={() => log("call")} />
         <ActionTile icon={Mail} label="Email" onClick={() => log("email")} />
         <ActionTile icon={Link2} label="LinkedIn" onClick={() => log("linkedin")} />
@@ -76,7 +76,7 @@ export function AccountPage() {
         <ActionTile icon={FolderPlus} label="Project" onClick={() => ui.openCapture("project", { account: picked })} />
       </ActionTiles>
 
-      <Tabs value={tab} onValueChange={(v) => setParams(v === "overview" ? {} : { tab: v }, { replace: true })} className="mt-8">
+      <Tabs value={tab} onValueChange={(v) => setParams(v === "overview" ? {} : { tab: v }, { replace: true })} className="mt-14">
         <TabList tabs={TABS} />
         <TabPanelBody value="overview">
           <Overview data={data} />
@@ -114,14 +114,14 @@ function Header({ data }: { data: AccountDetail }) {
   return (
     <header>
       <div className="flex items-start justify-between gap-4">
-        <Avatar name={account.name} size="lg" />
+        <Avatar name={account.name} size="lg" className="mt-1.5" />
         <div className="min-w-0 flex-1">
-          <h1 className="display text-[24px] sm:text-[28px]">{account.name}</h1>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-[13px] text-muted">
+          <h1 className="display text-[38px] sm:text-[48px]">{account.name}</h1>
+          <div className="mt-4 flex flex-wrap items-center gap-2 text-[13px] text-muted">
             <Select
               value={account.status}
               onChange={(e) => setStatus(e.target.value)}
-              className="h-7 w-auto pl-2.5 pr-7 text-[13px] font-medium [field-sizing:content]"
+              className="h-8 w-auto rounded-full pl-3.5 pr-8 text-[13px] [field-sizing:content]"
               aria-label="Status"
             >
               {ACCOUNT_STATUSES.map((s) => (
@@ -131,11 +131,11 @@ function Header({ data }: { data: AccountDetail }) {
               ))}
             </Select>
             {account.domain && (
-              <a href={`https://${account.domain}`} target="_blank" rel="noreferrer" className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-line-strong bg-surface px-2.5 shadow-[var(--shadow-card)] text-muted hover:text-fg">
+              <a href={`https://${account.domain}`} target="_blank" rel="noreferrer" className="inline-flex h-8 items-center gap-1.5 rounded-full border border-line bg-surface px-3.5 shadow-[var(--shadow-card)] text-muted hover:text-fg">
                 {account.domain}
               </a>
             )}
-            <span className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-line-strong bg-surface px-2.5 shadow-[var(--shadow-card)] mono text-[11.5px]">{account.language.toUpperCase()}</span>
+            <span className="inline-flex h-8 items-center gap-1.5 rounded-full border border-line bg-surface px-3.5 shadow-[var(--shadow-card)] mono text-[11.5px]">{account.language.toUpperCase()}</span>
             {data.last_contact_at && <span className="px-1">Last contact {relative(data.last_contact_at)}</span>}
           </div>
         </div>
@@ -151,7 +151,7 @@ function Header({ data }: { data: AccountDetail }) {
         </Menu>
       </div>
 
-      <div className="card mt-6 px-4 py-3">
+      <div className="mt-8 border-y border-line py-4">
         <p className="label mb-1">Next step</p>
         {next ? (
           <button onClick={() => ui.openTask(next.id)} className="group flex w-full items-baseline justify-between gap-4 text-left">
@@ -187,7 +187,7 @@ function Overview({ data }: { data: AccountDetail }) {
   const today = todayISO();
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-14">
       <Panel
         title="Projects"
         count={data.projects.length}
@@ -203,7 +203,7 @@ function Overview({ data }: { data: AccountDetail }) {
           <ul>
             {data.projects.map((p) => (
               <li key={p.id} className="border-b border-line last:border-b-0">
-                <Link to={`/projects/${p.id}`} className="flex items-center justify-between gap-4 px-4 py-3 transition-colors hover:bg-hover/50 sm:px-5">
+                <Link to={`/projects/${p.id}`} className="flex items-center justify-between gap-4 px-[var(--row-x,1rem)] py-3">
                   <span className="flex min-w-0 items-center gap-2.5">
                     <StageDot stage={p.stage} />
                     <span className={cn("truncate font-medium", p.stage === "done" && "text-muted")}>{p.name}</span>
@@ -226,7 +226,7 @@ function Overview({ data }: { data: AccountDetail }) {
           </Button>
         }
       >
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-4 px-4 py-4 sm:grid-cols-4 sm:px-5">
+        <dl className="grid grid-cols-2 gap-x-8 gap-y-5 px-[var(--row-x,1rem)] py-5 sm:grid-cols-4">
           <Info label="Industry" value={account.industry} />
           <Info label="Size" value={SIZE_BANDS.find((s) => s.key === account.size_band)?.label} />
           <Info label="ICP fit" value={ICP_FIT.find((s) => s.key === account.icp_fit)?.label} />
@@ -234,12 +234,12 @@ function Overview({ data }: { data: AccountDetail }) {
           <Info label="Website" value={account.website} />
           <Info label="Tags" value={account.tags.join(", ")} />
         </dl>
-        {account.notes && <p className="whitespace-pre-wrap border-t border-line px-4 py-4 text-sm text-muted sm:px-5">{account.notes}</p>}
+        {account.notes && <p className="whitespace-pre-wrap border-t border-line px-[var(--row-x,1rem)] py-4 text-[14px] text-muted">{account.notes}</p>}
       </Panel>
 
       <Panel title="Office">
         {primary ? (
-          <OfficeCard office={primary} compact className="px-4 py-4 sm:px-5" />
+          <OfficeCard office={primary} compact className="px-[var(--row-x,1rem)] py-5" />
         ) : (
           <PanelEmpty>No office details yet. Add them on the Office & lease tab.</PanelEmpty>
         )}
@@ -259,7 +259,7 @@ function Overview({ data }: { data: AccountDetail }) {
         ) : (
           <ul>
             {contacts.map((c) => (
-              <li key={c.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-line px-4 py-3 last:border-b-0 sm:px-5">
+              <li key={c.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-line px-[var(--row-x,1rem)] py-3 last:border-b-0">
                 <div className="flex min-w-0 items-center gap-3">
                   <Avatar name={c.name} size="md" shape="round" />
                   <div className="min-w-0">
@@ -308,7 +308,7 @@ function Overview({ data }: { data: AccountDetail }) {
               <li key={t.id} className="border-b border-line last:border-b-0">
                 <button
                   onClick={() => ui.openTask(t.id)}
-                  className="flex w-full items-baseline justify-between gap-4 px-4 py-3 text-left transition-colors hover:bg-hover/50 sm:px-5"
+                  className="flex w-full items-baseline justify-between gap-4 px-[var(--row-x,1rem)] py-3 text-left"
                 >
                   <span className="min-w-0 truncate">
                     {t.title}{" "}
@@ -519,7 +519,7 @@ function Communication({ data }: { data: AccountDetail }) {
         )}
       </div>
       {items && (
-        <div className="card px-4 py-1">
+        <div className="open-list">
           <Timeline items={items} showProject empty={channel || contact ? "Nothing logged that matches." : "Nothing logged yet. Use the buttons above to log a call, email or note."} />
         </div>
       )}

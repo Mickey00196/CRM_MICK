@@ -32,10 +32,10 @@ export function ContactPage() {
       <BackLink to={account ? `/accounts/${account.id}` : "/contacts"}>{account ? account.name : "Contacts"}</BackLink>
 
       <header className="flex items-start gap-4">
-        <Avatar name={c.name} size="lg" shape="round" />
+        <Avatar name={c.name} size="lg" shape="round" className="mt-1.5" />
         <div className="min-w-0 flex-1">
-          <h1 className="display text-[24px] sm:text-[28px]">{c.name}</h1>
-          <p className="mt-1 text-[13.5px] text-muted">
+          <h1 className="display text-[38px] sm:text-[48px]">{c.name}</h1>
+          <p className="mt-2 text-[14px] text-muted">
             {[c.role, account?.name, buyingRoleLabel(c.buying_role)].filter(Boolean).join(" · ")}
           </p>
           {c.do_not_contact && (
@@ -49,7 +49,7 @@ export function ContactPage() {
         </Button>
       </header>
 
-      <ActionTiles className="mt-5">
+      <ActionTiles className="mt-8">
         {c.phone && <ActionTile icon={Phone} label="Call" href={`tel:${c.phone.replace(/\s/g, "")}`} />}
         {c.email && <ActionTile icon={Mail} label="Email" href={`mailto:${c.email}`} />}
         {linkedin && <ActionTile icon={Link2} label="LinkedIn" href={linkedin} />}
@@ -58,7 +58,7 @@ export function ContactPage() {
       </ActionTiles>
 
       {(
-        <ul className="card mt-6 overflow-hidden">
+        <ul className="open-list mt-12">
           {c.phone && <InfoRow label="Phone" value={c.phone} href={`tel:${c.phone.replace(/\s/g, "")}`} />}
           {c.email && <InfoRow label="Email" value={c.email} href={`mailto:${c.email}`} />}
           {linkedin && <InfoRow label="LinkedIn" value={linkedin.replace(/^https?:\/\/(www\.)?/, "")} href={linkedin} />}
@@ -68,20 +68,20 @@ export function ContactPage() {
       )}
 
       {c.notes && (
-        <div className="card mt-4 px-4 py-3">
+        <div className="mt-10 border-y border-line py-4">
           <p className="label">Notes</p>
           <p className="mt-1 whitespace-pre-wrap text-[13.5px]">{c.notes}</p>
         </div>
       )}
 
       {tasks.length > 0 && (
-        <Panel title="Open to-dos" count={tasks.length} className="mt-9">
+        <Panel title="Open to-dos" count={tasks.length} className="mt-14">
           <ul>
             {tasks.map((t) => (
-              <li key={t.id} className="group/row pl-4 transition-colors hover:bg-hover">
+              <li key={t.id} className="group/row pl-[var(--row-x,1rem)]">
                 <button
                   onClick={() => ui.openTask(t.id)}
-                  className="flex w-full items-baseline justify-between gap-4 border-b border-line py-2.5 pr-4 text-left group-last/row:border-b-0"
+                  className="flex w-full items-baseline justify-between gap-4 border-b border-line py-3 pr-[var(--row-x,1rem)] text-left group-last/row:border-b-0"
                 >
                   <span className="min-w-0 truncate text-[14px]">
                     {t.title} <span className="text-[13px] text-muted">· {taskTypeLabel(t.type)}</span>
@@ -96,8 +96,8 @@ export function ContactPage() {
         </Panel>
       )}
 
-      <Panel title="Communication" className="mt-9">
-        <div className="px-4 py-1">
+      <Panel title="Communication" className="mt-14">
+        <div className="px-[var(--row-x,1rem)]">
           <Timeline items={activities} showProject empty="Nothing logged with this contact yet." />
         </div>
       </Panel>
@@ -112,18 +112,18 @@ export function ContactPage() {
 function InfoRow({ label, value, href }: { label: string; value: string; href?: string }) {
   const body = (
     <>
-      <span className="label w-28 shrink-0 !normal-case !tracking-normal !text-[12.5px] !font-sans">{label}</span>
-      <span className={cn("min-w-0 flex-1 truncate text-[13.5px]", href && "underline decoration-line-strong underline-offset-2 group-hover/row:decoration-fg")}>{value}</span>
+      <span className="w-32 shrink-0 text-[13px] text-muted">{label}</span>
+      <span className={cn("min-w-0 flex-1 truncate text-[14px]", href && "underline decoration-line-strong underline-offset-4 group-hover/row:decoration-fg")}>{value}</span>
     </>
   );
   return (
     <li className="group/row border-b border-line last:border-b-0">
       {href ? (
-        <a href={href} target={href.startsWith("http") ? "_blank" : undefined} rel="noreferrer" className="flex items-center gap-3 px-4 py-2.5 hover:bg-hover">
+        <a href={href} target={href.startsWith("http") ? "_blank" : undefined} rel="noreferrer" className="flex items-center gap-3 px-[var(--row-x,1rem)] py-3">
           {body}
         </a>
       ) : (
-        <div className="flex items-center gap-3 px-4 py-2.5">{body}</div>
+        <div className="flex items-center gap-3 px-[var(--row-x,1rem)] py-3">{body}</div>
       )}
     </li>
   );

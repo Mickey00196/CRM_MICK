@@ -35,7 +35,7 @@ export function Timeline({
   showProject?: boolean;
   empty?: string;
 }) {
-  if (!items.length) return <p className="py-6 text-center text-sm text-muted">{empty}</p>;
+  if (!items.length) return <p className="serif py-5 text-[18px] italic text-muted">{empty}</p>;
 
   async function remove(a: ActivityRow) {
     if (!confirm("Delete this entry?")) return;
@@ -52,8 +52,8 @@ export function Timeline({
           a.contact_name,
         ].filter(Boolean);
         return (
-          <li key={a.id} className="group relative grid grid-cols-[28px_1fr_auto] gap-x-3 py-3">
-            {i < items.length - 1 && <span aria-hidden="true" className="absolute bottom-0 left-[13.5px] top-10 w-px bg-line" />}
+          <li key={a.id} className="group relative grid grid-cols-[28px_1fr_auto] gap-x-4 py-4">
+            {i < items.length - 1 && <span aria-hidden="true" className="absolute bottom-0 left-[13.5px] top-11 w-px bg-line" />}
             <span
               className="relative grid size-7 place-items-center rounded-full border border-line bg-surface text-muted"
               title={channelLabel(a.channel)}
@@ -63,7 +63,7 @@ export function Timeline({
             <div className="min-w-0 pt-0.5">
               <p className="flex flex-wrap items-baseline gap-x-2 pt-1 text-[13.5px]">
                 <span className="font-medium">{channelLabel(a.channel)}</span>
-                <time className="mono text-[11.5px] text-faint" dateTime={a.occurred_at} title={dmyTime(a.occurred_at)}>
+                <time className="mono text-[12px] text-faint" dateTime={a.occurred_at} title={dmyTime(a.occurred_at)}>
                   {when(a.occurred_at)}
                 </time>
               </p>

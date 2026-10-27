@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Check, Plus } from "lucide-react";
+import { ArrowRight, Plus } from "lucide-react";
 import { projectStageLabel, type TodoList, type TodoRow } from "@shared/model";
 import { api, DATA_CHANGED } from "@/lib/api";
-import { addDays, longDate, relative, weekday } from "@/lib/format";
+import { addDays, longDate, partOfDay, relative, weekday } from "@/lib/format";
+import { firstName } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import { TASK_DONE, useUI } from "@/components/ui-context";
 import { TodoItem } from "@/components/TodoItem";
@@ -64,38 +65,32 @@ export function Todos() {
   const groups = groupUpcoming(data.upcoming, data.today);
   const jump = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 
+  const name = firstName();
+
   return (
     <div className="rise mx-auto max-w-3xl">
       <PageHeader
         eyebrow={longDate(data.today)}
-        title="To-dos"
+        title={`Good ${partOfDay()}${name ? `, ${name}` : ""}.`}
         actions={
           <Button onClick={() => ui.openCapture("todo")} className="hidden md:inline-flex">
-            <Plus /> New to-do <kbd className="mono ml-1 text-[11px] opacity-60">N</kbd>
+            <Plus /> New to-do
           </Button>
         }
       />
 
-      <div className="card mb-10 grid grid-cols-2 sm:grid-cols-4">
+      <div className="mb-14 grid grid-cols-2 border-y border-line sm:grid-cols-4">
         <Stat label="Overdue" value={data.overdue.length} late onClick={() => jump("overdue")} />
-        <Stat label="Today" value={data.due_today.length} onClick={() => jump("today")} />
+        <Stat label="Due today" value={data.due_today.length} onClick={() => jump("today")} />
         <Stat label="Coming up" value={data.upcoming.length} onClick={() => jump("upcoming")} />
         <Stat label="No next step" value={data.no_next_step.length} onClick={() => jump("stalled")} />
       </div>
 
-      {empty && (
-        <div className="card dot-grid flex flex-col items-center px-6 py-16 text-center">
-          <span className="grid size-10 place-items-center rounded-full border border-line bg-surface">
-            <Check className="size-4" />
-          </span>
-          <p className="title mt-4 text-[15px]">Nothing due</p>
-          <p className="mt-1 text-[13px] text-muted">Press N to add a to-do or P to start a project.</p>
-        </div>
-      )}
+      {empty && <p className="serif mb-14 text-[24px] italic text-muted">Nothing due. A clear day.</p>}
 
-      <div className="grid gap-9">
+      <div className="grid gap-14">
         {data.overdue.length > 0 && (
-          <Panel id="overdue" title="Overdue" tone="!text-late-text" count={data.overdue.length}>
+          <Panel id="overdue" title="Overdue" tone="text-late-text" count={data.overdue.length}>
             <Rows rows={data.overdue} fading={fading} />
           </Panel>
         )}
@@ -108,11 +103,11 @@ export function Todos() {
 
         {groups.length > 0 && (
           <Panel id="upcoming" title="Coming up" count={data.upcoming.length}>
-            {groups.map((g) => (
+            {groups.map((g, i) => (
               <div key={g.key}>
-                <h3 className="flex items-baseline justify-between border-b border-line bg-subtle/60 px-4 py-1.5 [div:not(:first-child)>&]:border-t">
-                  <span className="text-[12.5px] font-medium">{g.label}</span>
-                  {g.sub && <span className="mono text-[11.5px] text-faint">{g.sub}</span>}
+                <h3 className={cn("flex items-baseline gap-2 pb-1 text-[12.5px]", i === 0 ? "pt-4" : "border-t border-line pt-5")}>
+                  <span className="font-medium text-fg">{g.label}</span>
+                  {g.sub && <span className="text-faint">{g.sub}</span>}
                 </h3>
                 <Rows rows={g.rows} fading={fading} timeOnly={g.byDay} />
               </div>
@@ -122,19 +117,19 @@ export function Todos() {
 
         {data.no_next_step.length > 0 && (
           <Panel id="stalled" title="No next step" count={data.no_next_step.length}>
-            <ul>
+            <ul className="stagger">
               {data.no_next_step.map((p) => (
-                <li key={p.id} className="group/row pl-4 transition-colors hover:bg-hover">
-                  <Link to={`/projects/${p.id}`} className="flex items-center gap-3 border-b border-line py-2.5 pr-4 group-last/row:border-b-0">
+                <li key={p.id} className="group/row">
+                  <Link to={`/projects/${p.id}`} className="flex items-center gap-3.5 border-b border-line py-3 group-last/row:border-b-0">
                     <StageIcon stage={p.stage} />
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[14px]">{p.name}</span>
-                      <span className="block truncate text-[12.5px] text-muted">
+                      <span className="block truncate text-[14.5px]">{p.name}</span>
+                      <span className="mt-0.5 block truncate text-[12.5px] text-muted">
                         {[p.account_name, projectStageLabel(p.stage)].filter(Boolean).join(" · ")}
                       </span>
                     </span>
-                    {p.last_activity_at && <span className="mono shrink-0 text-[12px] text-faint">{relative(p.last_activity_at)}</span>}
-                    <ArrowRight className="size-3.5 shrink-0 text-faint" />
+                    {p.last_activity_at && <span className="mono shrink-0 text-[12.5px] text-faint">{relative(p.last_activity_at)}</span>}
+                    <ArrowRight className="size-3.5 shrink-0 text-faint transition-transform duration-200 group-hover/row:translate-x-0.5" />
                   </Link>
                 </li>
               ))}
@@ -146,25 +141,23 @@ export function Todos() {
   );
 }
 
-/** One number in the summary strip. */
+/** One figure in the summary row: a serif number over a quiet label. */
 function Stat({ label, value, late, onClick }: { label: string; value: number; late?: boolean; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
       disabled={!value}
-      className="flex flex-col gap-1 border-line px-4 py-3.5 text-left transition-colors enabled:hover:bg-hover disabled:cursor-default [&:nth-child(n+3)]:border-t sm:border-l sm:first:border-l-0 sm:[&:nth-child(n+3)]:border-t-0 [&:nth-child(even)]:border-l"
+      className="group flex flex-col gap-1.5 border-line py-5 text-left disabled:cursor-default sm:px-6 sm:first:pl-0 [&:nth-child(even)]:border-l [&:nth-child(even)]:pl-6 [&:nth-child(n+3)]:border-t sm:[&:nth-child(n+2)]:border-l sm:[&:nth-child(n+3)]:border-t-0 sm:[&:nth-child(3)]:pl-6"
     >
-      <span className="label">{label}</span>
-      <span className={cn("mono text-[24px] font-medium leading-none tracking-tight", value ? (late ? "text-late-text" : "text-fg") : "text-faint")}>
-        {String(value).padStart(2, "0")}
-      </span>
+      <span className={cn("display text-[44px] leading-none", value ? (late ? "text-late-text" : "text-fg") : "text-faint")}>{value}</span>
+      <span className="text-[13px] text-muted transition-colors group-enabled:group-hover:text-fg">{label}</span>
     </button>
   );
 }
 
 function Rows({ rows, fading, timeOnly }: { rows: TodoRow[]; fading: Set<string>; timeOnly?: boolean }) {
   return (
-    <ul>
+    <ul className="stagger">
       {rows.map((r) => (
         <TodoItem
           key={r.id}
@@ -203,7 +196,7 @@ function groupUpcoming(rows: TodoRow[], today: string): Group[] {
     .map(([d, rs]) => ({
       key: d,
       label: d === addDays(today, 1) ? "Tomorrow" : weekday(d, "long"),
-      sub: shortDate(d).toUpperCase(),
+      sub: shortDate(d),
       byDay: true,
       rows: rs,
     }));

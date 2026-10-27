@@ -48,10 +48,15 @@ export async function setupAuth(): Promise<void> {
     return;
   }
   if (password.length < 10) console.warn("APP_PASSWORD is shorter than 10 characters. Use a longer one.");
-  const existing = await one<{ id: string; password_hash: string }>(
-    "select id, password_hash from users where lower(email) = $1",
+  const existing = await one<{ id: string; name: string; password_hash: string }>(
+    "select id, name, password_hash from users where lower(email) = $1",
     [email],
   );
+  // APP_NAME is optional; when set, keep the stored name in step with it.
+  const name = process.env.APP_NAME?.trim();
+  if (existing && name && name !== existing.name) {
+    await q("update users set name = $2 where id = $1", [existing.id, name]);
+  }
   if (!existing) {
     await q("insert into users (email, name, password_hash) values ($1, $2, $3)", [
       email,

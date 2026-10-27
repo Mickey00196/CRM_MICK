@@ -65,7 +65,7 @@ export function Communication() {
         }
       />
 
-      <section className="card mb-8 overflow-x-auto">
+      <section className="card mb-14 overflow-x-auto">
         <table className="data min-w-[520px]">
           <thead>
             <tr>
@@ -155,7 +155,7 @@ export function Communication() {
 
       {error && <p className="text-sm text-late">{error}</p>}
       {items && (
-        <div className="card px-4 py-1">
+        <div className="open-list">
           <Timeline items={items} showAccount showProject empty={filtered ? "Nothing matches these filters." : "Nothing logged yet."} />
         </div>
       )}
