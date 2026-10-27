@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search } from "lucide-react";
+import { Plus, Search, Users } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { buyingRoleLabel, type Contact } from "@shared/model";
 import { api, useApi } from "@/lib/api";
 import { dmy } from "@/lib/format";
@@ -23,8 +24,8 @@ export function Contacts() {
     <div className="mx-auto max-w-6xl">
       <header className="mb-8 flex flex-wrap items-baseline justify-between gap-4">
         <h1 className="title text-2xl">Contacts</h1>
-        <Button variant="ghost" size="sm" onClick={() => ui.openCapture("contact")}>
-          + Add contact
+        <Button size="sm" onClick={() => ui.openCapture("contact")}>
+          <Plus /> New contact
         </Button>
       </header>
 
@@ -34,8 +35,14 @@ export function Contacts() {
       </div>
 
       {error && <p className="text-sm text-late">{error}</p>}
-      {data && rows.length === 0 ? (
-        <p className="py-12 text-center text-muted">{data.length ? "No contacts match." : "No contacts yet."}</p>
+      {data && data.length === 0 ? (
+        <EmptyState icon={Users} title="No contacts yet" text="The people you deal with, linked to their company so calls and emails land in the right place.">
+          <Button size="lg" onClick={() => ui.openCapture("contact")}>
+            <Plus /> New contact
+          </Button>
+        </EmptyState>
+      ) : data && rows.length === 0 ? (
+        <p className="py-12 text-center text-muted">No contacts match.</p>
       ) : (
         <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
           <table className="w-full min-w-[680px] text-sm">

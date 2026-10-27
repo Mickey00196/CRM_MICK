@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MoreHorizontal, Search } from "lucide-react";
+import { FolderKanban, MoreHorizontal, Plus, Search } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { PROJECT_STAGES, type ProjectRow, type ProjectStage } from "@shared/model";
 import { api, useApi } from "@/lib/api";
 import { daysBetween, dmy, relative, todayISO } from "@/lib/format";
@@ -57,8 +58,8 @@ export function Projects() {
             <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-faint" />
             <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter" className="h-8 pl-8 text-[13px]" aria-label="Filter projects" />
           </div>
-          <Button variant="ghost" size="sm" onClick={() => ui.openCapture("project")} title="New project (P)">
-            + New project
+          <Button size="sm" onClick={() => ui.openCapture("project")} title="New project (P)">
+            <Plus /> New project
           </Button>
         </div>
       </header>
@@ -66,9 +67,15 @@ export function Projects() {
       {error && <p className="text-sm text-late">{error}</p>}
       {!data && !error && <Skeleton title={false} rows={5} className="max-w-none" />}
       {data && data.length === 0 && (
-        <p className="py-12 text-center text-muted">
-          No projects yet. Press <kbd className="keycap">P</kbd> to add your first.
-        </p>
+        <EmptyState
+          icon={FolderKanban}
+          title="No projects yet"
+          text="A project is anything with more than one step: a client's office search, a lease renewal, a side project. Each gets its own to-dos and log."
+        >
+          <Button size="lg" onClick={() => ui.openCapture("project")}>
+            <Plus /> New project
+          </Button>
+        </EmptyState>
       )}
 
       {data && data.length > 0 && (

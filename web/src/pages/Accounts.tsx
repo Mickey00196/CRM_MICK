@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowDown, ArrowUp, Columns3, Download, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, Building2, Columns3, Download, Plus, Search } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { ACCOUNT_STATUSES, accountStatusLabel, type AccountRow } from "@shared/model";
 import { api, useApi, useStored } from "@/lib/api";
 import { dmy, m2, todayISO } from "@/lib/format";
@@ -101,8 +102,8 @@ export function Accounts() {
     <div className="mx-auto max-w-6xl">
       <header className="mb-8 flex flex-wrap items-baseline justify-between gap-4">
         <h1 className="title text-2xl">Companies</h1>
-        <Button variant="ghost" size="sm" onClick={() => ui.openCapture("account")}>
-          + Add company
+        <Button size="sm" onClick={() => ui.openCapture("account")}>
+          <Plus /> New company
         </Button>
       </header>
 
@@ -209,10 +210,14 @@ export function Accounts() {
 
       {error && <p className="text-sm text-late">{error}</p>}
 
-      {data && rows.length === 0 ? (
-        <p className="py-12 text-center text-muted">
-          {data.length === 0 ? "No companies yet. Add one when a project involves a client or prospect." : "No companies match this view."}
-        </p>
+      {data && data.length === 0 ? (
+        <EmptyState icon={Building2} title="No companies yet" text="Add a company when a project involves a client or prospect. Their offices, people and history live here.">
+          <Button size="lg" onClick={() => ui.openCapture("account")}>
+            <Plus /> New company
+          </Button>
+        </EmptyState>
+      ) : data && rows.length === 0 ? (
+        <p className="py-12 text-center text-muted">No companies match this view.</p>
       ) : (
         <>
         {/* Phones: a simple list instead of a wide table. */}

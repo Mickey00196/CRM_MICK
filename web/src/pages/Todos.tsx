@@ -7,6 +7,9 @@ import { TASK_DONE, useUI } from "@/components/ui-context";
 import { TodoItem } from "@/components/TodoItem";
 import { Skeleton } from "@/components/Skeleton";
 import { cn } from "@/lib/utils";
+import { FolderPlus, ListTodo, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/EmptyState";
 
 // Last list, so coming back to this page is instant.
 let lastList: TodoList | null = null;
@@ -68,16 +71,18 @@ export function Todos() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <header className="mb-8 flex items-baseline justify-between gap-4">
+      <header className="mb-8 flex items-center justify-between gap-4">
         <h1 className="title text-2xl">{longDate(data.today)}</h1>
-        <div className="hidden items-baseline gap-4 text-sm sm:flex">
-          <Link to="/review" className="text-muted transition-colors hover:text-fg">
-            Weekly review
-          </Link>
-          <button onClick={() => ui.openCapture("todo")} className="flex items-center gap-1.5 text-muted transition-colors hover:text-fg" title="New to-do (N)">
-            + Add <kbd className="keycap">N</kbd>
-          </button>
-        </div>
+        {!empty && (
+          <div className="hidden items-center gap-4 text-sm sm:flex">
+            <Link to="/review" className="text-muted transition-colors hover:text-fg">
+              Weekly review
+            </Link>
+            <Button onClick={() => ui.openCapture("todo")} title="New to-do (N)">
+              <Plus /> New to-do
+            </Button>
+          </div>
+        )}
       </header>
 
       {stalled.length > 0 && (
@@ -118,10 +123,18 @@ export function Todos() {
       )}
 
       {empty && (
-        <p className="dot-grid rounded-xl border border-line px-6 py-14 text-center text-muted">
-          Nothing to do. Press <kbd className="keycap">N</kbd> to add a to-do or{" "}
-          <kbd className="keycap">P</kbd> to start a project.
-        </p>
+        <EmptyState
+          icon={ListTodo}
+          title="Nothing on your list"
+          text={<>Add what you need to do next. Type it the way you'd say it, like “Call Sanne tomorrow 10:00”, and the date and time fill themselves in.</>}
+        >
+          <Button size="lg" onClick={() => ui.openCapture("todo")}>
+            <Plus /> New to-do
+          </Button>
+          <Button size="lg" variant="outline" onClick={() => ui.openCapture("project")}>
+            <FolderPlus /> New project
+          </Button>
+        </EmptyState>
       )}
 
       <Section label="Overdue" rows={data.overdue} fading={fading} />
