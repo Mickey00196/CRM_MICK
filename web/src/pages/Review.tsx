@@ -39,7 +39,7 @@ export function Review() {
     });
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-3xl">
       <header className="mb-10">
         <h1 className="title text-2xl">Weekly review</h1>
         <p className="mt-1 text-sm text-muted">

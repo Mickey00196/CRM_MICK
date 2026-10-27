@@ -1,6 +1,6 @@
 import { Clock, Eye, Link2, Mail, Phone, Users } from "lucide-react";
 import { channelForTaskType, taskTypeLabel, type TaskType } from "@shared/model";
-import { dueText, shortDate } from "@shared/dates";
+import { dueParts, dueText, shortDate } from "@shared/dates";
 import { api } from "@/lib/api";
 import { addDays, dmy, todayISO, workday } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -60,20 +60,21 @@ export function dueLabel(due: string | null, time: string | null, today = todayI
   return dueText(due, time, today);
 }
 
-/** One calm row: circle, title (+ what it's for), when, and quick ways to push it back. */
+/**
+ * One row, in columns so every row lines up: when, circle, title, and (on wide screens)
+ * what it's for. Quick ways to push it back appear on hover.
+ */
 export function TodoItem({
   todo,
   context,
   fading,
   showType,
-  hideToday,
 }: {
   todo: TodoLike;
+  /** Pass it (even as null) to get the "what it's for" column; leave it out where that's obvious. */
   context?: string | null;
   fading?: boolean;
   showType?: boolean;
-  /** In a "Today" section the word Today is noise; show only a time, if any. */
-  hideToday?: boolean;
 }) {
   const ui = useUI();
   const complete = useComplete();
@@ -83,84 +84,89 @@ export function TodoItem({
   const Icon = showType !== false ? TYPE_ICON[todo.type] : undefined;
   const tomorrow = workday(addDays(today, 1));
   const pushedBack = (todo.snooze_count ?? 0) >= 3;
-  const dueStr = hideToday && todo.due_date === today ? todo.due_time ?? "" : dueLabel(todo.due_date, todo.due_time, today);
+  const { day, time } = dueParts(todo.due_date, todo.due_time, today);
+  const withContext = context !== undefined;
 
   return (
-    <li className={cn("group/row border-b border-line", fading && "fade-out")}>
-      <div className="flex items-center gap-4 py-3">
+    <li className={cn("group/row relative border-b border-line", fading && "fade-out")}>
+      <div className="flex items-start gap-3 py-3 sm:gap-4">
+        {/* When. Same width on every row, so the titles line up. */}
+        <span
+          title={todo.due_date ? dmy(todo.due_date) : undefined}
+          className={cn(
+            "num w-[4.75rem] shrink-0 pt-[3px] leading-tight sm:w-[7.5rem] sm:truncate sm:leading-[22.5px] sm:pt-0",
+            late ? "text-late" : "text-muted",
+          )}
+        >
+          {day}
+          {time && <span className="block text-faint sm:ml-2 sm:inline">{time}</span>}
+        </span>
+
         <button
           onClick={() => complete(todo)}
-          className="group relative grid size-5 shrink-0 place-items-center rounded-full border-[1.5px] border-line-strong transition-colors before:absolute before:-inset-3 before:content-[''] hover:border-accent"
+          className="group relative mt-px grid size-5 shrink-0 place-items-center rounded-full border-[1.5px] border-line-strong transition-colors before:absolute before:-inset-3 before:content-[''] hover:border-accent"
           aria-label={comm ? `Complete and log: ${todo.title}` : `Complete: ${todo.title}`}
           title={comm ? "Complete and log how it went" : "Mark done"}
         >
           <span className="size-2 rounded-full bg-accent opacity-0 transition-opacity group-hover:opacity-50" />
         </button>
 
-        <button onClick={() => ui.openTask(todo.id)} className="flex min-w-0 flex-1 items-baseline gap-2 text-left">
-          {Icon && (
-            <Icon className="relative top-[2px] size-3.5 shrink-0 text-muted" aria-label={taskTypeLabel(todo.type)} />
-          )}
-          {/* Wide screens: one line. */}
-          <span className="hidden min-w-0 truncate sm:block">
-            {todo.title}
-            {context && <span className="text-sm text-muted"> · {context}</span>}
-            {pushedBack && <span className="text-sm text-missing"> · pushed back {todo.snooze_count}×</span>}
+        <button onClick={() => ui.openTask(todo.id)} className="flex min-w-0 flex-1 items-start gap-2.5 text-left">
+          {/* Type icon in a fixed slot, empty for plain to-dos, so titles still line up. */}
+          <span className="flex h-[22.5px] w-3.5 shrink-0 items-center">
+            {Icon && <Icon className="size-3.5 text-muted" aria-label={taskTypeLabel(todo.type)} />}
           </span>
-          {/* Phones: title, then when and what it's for, so the title gets the full width. */}
-          <span className="min-w-0 sm:hidden">
-            <span className="block truncate">{todo.title}</span>
-            {(dueStr || context || pushedBack) && (
-              <span className="block truncate text-[13px] text-muted">
-                {dueStr && <span className={cn("num", late && "text-late")}>{dueStr}</span>}
-                {dueStr && context && " · "}
-                {context}
-                {pushedBack && <span className="text-missing"> · pushed back {todo.snooze_count}×</span>}
-              </span>
-            )}
+          <span className="min-w-0 flex-1">
+            <span className="block truncate">
+              {todo.title}
+              {pushedBack && <span className="text-sm text-missing"> · pushed back {todo.snooze_count}×</span>}
+            </span>
+            {/* Phones: what it's for goes under the title. */}
+            {context && <span className="block truncate text-[13px] text-muted sm:hidden">{context}</span>}
           </span>
+          {withContext && <span className="hidden w-48 shrink-0 truncate text-sm leading-[22.5px] text-muted sm:block">{context}</span>}
         </button>
 
-        <div className="flex shrink-0 items-center gap-1">
-          <div className="flex items-center gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover/row:opacity-100 [@media(hover:none)]:opacity-100">
-            <button
-              onClick={() => snoozeTodo(todo, tomorrow)}
-              className="hidden h-7 rounded-md px-2 text-[13px] text-muted hover:bg-hover hover:text-fg sm:inline-flex sm:items-center"
-              title={`Move to ${shortDate(tomorrow, today)}`}
-            >
-              Tomorrow
-            </button>
-            <Menu>
-              <MenuTrigger asChild>
-                <button className="grid size-8 place-items-center rounded-md text-muted hover:bg-hover hover:text-fg [@media(hover:none)]:size-10" aria-label="Move to another day" title="Move to another day">
-                  <Clock className="size-4" />
-                </button>
-              </MenuTrigger>
-              <MenuContent align="end">
-                <MenuLabel>Move to</MenuLabel>
-                {[
-                  ["Tomorrow", 1],
-                  ["In 2 days", 2],
-                  ["Next week", 7],
-                  ["In 2 weeks", 14],
-                ].map(([label, days]) => {
-                  const d = workday(addDays(today, days as number));
-                  return (
-                    <MenuItem key={label} onSelect={() => snoozeTodo(todo, d)}>
-                      {label}
-                      <span className="ml-auto pl-4 text-xs text-faint">{shortDate(d, today)}</span>
-                    </MenuItem>
-                  );
-                })}
-              </MenuContent>
-            </Menu>
-          </div>
-          <span
-            title={todo.due_date ? dmy(todo.due_date) : undefined}
-            className={cn("num hidden min-w-14 text-right text-sm sm:block", late ? "text-late" : "text-muted")}
+        {/* Push back: over the right edge on hover; always there on touch screens. */}
+        <div
+          className={cn(
+            "flex shrink-0 items-center gap-0.5 transition-opacity",
+            "sm:pointer-events-none sm:absolute sm:inset-y-0 sm:right-0 sm:bg-linear-to-l sm:from-bg sm:from-75% sm:to-transparent sm:pl-12 sm:opacity-0",
+            "sm:focus-within:pointer-events-auto sm:focus-within:opacity-100 sm:group-hover/row:pointer-events-auto sm:group-hover/row:opacity-100",
+            "[@media(hover:none)]:pointer-events-auto [@media(hover:none)]:static [@media(hover:none)]:bg-none [@media(hover:none)]:pl-0 [@media(hover:none)]:opacity-100",
+          )}
+        >
+          <button
+            onClick={() => snoozeTodo(todo, tomorrow)}
+            className="hidden h-7 rounded-md px-2 text-[13px] text-muted hover:bg-hover hover:text-fg sm:inline-flex sm:items-center"
+            title={`Move to ${shortDate(tomorrow, today)}`}
           >
-            {dueStr}
-          </span>
+            Tomorrow
+          </button>
+          <Menu>
+            <MenuTrigger asChild>
+              <button className="-my-1 grid size-8 place-items-center rounded-md text-muted hover:bg-hover hover:text-fg [@media(hover:none)]:size-10" aria-label="Move to another day" title="Move to another day">
+                <Clock className="size-4" />
+              </button>
+            </MenuTrigger>
+            <MenuContent align="end">
+              <MenuLabel>Move to</MenuLabel>
+              {[
+                ["Tomorrow", 1],
+                ["In 2 days", 2],
+                ["Next week", 7],
+                ["In 2 weeks", 14],
+              ].map(([label, days]) => {
+                const d = workday(addDays(today, days as number));
+                return (
+                  <MenuItem key={label} onSelect={() => snoozeTodo(todo, d)}>
+                    {label}
+                    <span className="ml-auto pl-4 text-xs text-faint">{shortDate(d, today)}</span>
+                  </MenuItem>
+                );
+              })}
+            </MenuContent>
+          </Menu>
         </div>
       </div>
     </li>

@@ -41,3 +41,10 @@ export function dueText(due: string | null, time: string | null, today: string):
   if (late < 60) return `${Math.round(late / 7)} weeks late`;
   return `${Math.round(late / 30.44)} months late`;
 }
+
+/** The same, split for a date column: the day ("Today", "Thu", "2 days late") and the time apart. */
+export function dueParts(due: string | null, time: string | null, today: string): { day: string; time: string | null } {
+  if (!due) return { day: "", time: null };
+  const d = isoDiff(today, due);
+  return { day: d === 0 ? "Today" : dueText(due, null, today), time: d >= 0 ? time : null };
+}

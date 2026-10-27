@@ -87,7 +87,7 @@ test("csvCell neutralises formulas and quotes separators", () => {
 });
 
 // ---------- readable dates and one-line capture ----------
-import { dueText } from "../shared/dates.js";
+import { dueParts, dueText } from "../shared/dates.js";
 import { parseQuick } from "../shared/quick.js";
 
 test("dueText says when, the way you'd say it", () => {
@@ -103,6 +103,10 @@ test("dueText says when, the way you'd say it", () => {
   assert.equal(dueText("2026-10-24", null, today), "3 days late");
   assert.equal(dueText("2026-10-06", null, today), "3 weeks late");
   assert.equal(dueText(null, null, today), "");
+  assert.deepEqual(dueParts("2026-10-27", "14:00", today), { day: "Today", time: "14:00" });
+  assert.deepEqual(dueParts("2026-10-28", "09:30", today), { day: "Tomorrow", time: "09:30" });
+  assert.deepEqual(dueParts("2026-10-24", "09:30", today), { day: "3 days late", time: null });
+  assert.deepEqual(dueParts(null, null, today), { day: "", time: null });
 });
 
 test("parseQuick reads type, date and time from one line (EN and NL)", () => {

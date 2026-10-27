@@ -67,7 +67,7 @@ export function Todos() {
   const shownStalled = showStalled ? stalled : stalled.slice(0, 3);
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-3xl">
       <header className="mb-8 flex items-baseline justify-between gap-4">
         <h1 className="title text-2xl">{longDate(data.today)}</h1>
         <div className="hidden items-baseline gap-4 text-sm sm:flex">
@@ -143,7 +143,7 @@ function Section({ label, rows, fading, highlight }: { label: string; rows: Todo
       </h2>
       <ul>
         {rows.map((r) => (
-          <TodoItem key={r.id} todo={r} context={r.project_name ?? r.account_name} fading={fading.has(r.id)} showType hideToday />
+          <TodoItem key={r.id} todo={r} context={r.project_name ?? r.account_name} fading={fading.has(r.id)} showType />
         ))}
       </ul>
     </section>
