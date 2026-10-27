@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowDown, ArrowUp, Columns3, Download, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, Columns3, Download, Plus, Search } from "lucide-react";
 import { ACCOUNT_STATUSES, accountStatusLabel, type AccountRow } from "@shared/model";
 import { api, useApi, useStored } from "@/lib/api";
 import { dmy, m2, todayISO } from "@/lib/format";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Menu, MenuCheckbox, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger } from "@/components/ui/dropdown";
 import { useUI } from "@/components/ui-context";
+import { Avatar } from "@/components/Avatar";
 
 type ColKey = "status" | "location" | "size" | "lease_end" | "next_step" | "last_contact" | "industry" | "source";
 
@@ -97,25 +98,28 @@ export function Accounts() {
   const allSelected = rows.length > 0 && rows.every((r) => selected.has(r.id));
 
   return (
-    <div className="mx-auto max-w-6xl">
-      <header className="mb-8 flex flex-wrap items-baseline justify-between gap-4">
-        <h1 className="title text-2xl">Companies</h1>
-        <Button variant="ghost" size="sm" onClick={() => ui.openCapture("account")}>
-          + Add company
+    <div className="rise mx-auto max-w-6xl">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="display text-[28px] sm:text-[34px]">Companies</h1>
+          <p className="mt-1.5 text-sm text-muted">The clients and prospects behind your projects.</p>
+        </div>
+        <Button variant="accent" onClick={() => ui.openCapture("account")}>
+          <Plus /> Add company
         </Button>
       </header>
 
-      <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-3 border-b border-line">
+      <div className="mb-4 flex max-w-full flex-wrap items-center gap-1 rounded-xl bg-subtle p-1 sm:w-fit">
         {VIEWS.map((v) => (
           <button
             key={v.key}
             onClick={() => setView(v.key)}
             className={cn(
-              "-mb-px border-b-2 pb-2.5 text-sm transition-colors",
-              view === v.key ? "border-fg text-fg" : "border-transparent text-muted hover:text-fg",
+              "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-all",
+              view === v.key ? "bg-surface font-semibold text-fg shadow-[var(--shadow-card)]" : "text-muted hover:text-fg",
             )}
           >
-            {v.label} <span className="text-faint">{counts[v.key]}</span>
+            {v.label} <span className={cn("text-[12px] tabular-nums", view === v.key ? "text-accent" : "text-faint")}>{counts[v.key]}</span>
           </button>
         ))}
         {saved.map((s) => (
@@ -126,7 +130,7 @@ export function Accounts() {
               setQ(s.q);
               setSort(s.sort);
             }}
-            className="-mb-px border-b-2 border-transparent pb-2.5 text-sm text-muted hover:text-fg"
+            className="rounded-lg px-3 py-1.5 text-sm text-muted hover:text-fg"
           >
             {s.name}
           </button>
@@ -136,7 +140,7 @@ export function Accounts() {
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="relative min-w-48 flex-1 sm:max-w-xs">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-faint" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter by name, area, tag…" className="h-8 pl-8 text-[13px]" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter by name, area, tag…" className="h-9 pl-8 text-[13px]" />
         </div>
         {selected.size > 0 ? (
           <div className="flex items-center gap-2 text-[13px]">
@@ -209,18 +213,18 @@ export function Accounts() {
       {error && <p className="text-sm text-late">{error}</p>}
 
       {data && rows.length === 0 ? (
-        <p className="py-12 text-center text-muted">
+        <p className="card py-12 text-center text-muted">
           {data.length === 0 ? "No companies yet. Add one when a project involves a client or prospect." : "No companies match this view."}
         </p>
       ) : (
-        <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-          <table className="w-full min-w-[760px] text-sm">
+        <div className="card overflow-x-auto">
+          <table className="data min-w-[760px]">
             <thead>
-              <tr className="border-b border-line text-left text-[13px] text-muted">
-                <th className="w-8 py-2 pr-2 font-normal">
+              <tr>
+                <th className="w-8 !pr-0">
                   <input
                     type="checkbox"
-                    className="size-4 accent-[var(--fg)]"
+                    className="size-4 accent-[var(--accent)]"
                     checked={allSelected}
                     onChange={() => setSelected(allSelected ? new Set() : new Set(rows.map((r) => r.id)))}
                     aria-label="Select all"
@@ -237,12 +241,12 @@ export function Accounts() {
                 <tr
                   key={a.id}
                   onClick={() => navigate(`/accounts/${a.id}`)}
-                  className={cn("cursor-pointer border-b border-line transition-colors hover:bg-hover/60", selected.has(a.id) && "bg-hover/60")}
+                  className={cn("cursor-pointer", selected.has(a.id) && "bg-accent-soft/50")}
                 >
-                  <td className="py-3 pr-2" onClick={(e) => e.stopPropagation()}>
+                  <td className="!pr-0" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
-                      className="size-4 accent-[var(--fg)]"
+                      className="size-4 accent-[var(--accent)]"
                       checked={selected.has(a.id)}
                       onChange={() => {
                         const s = new Set(selected);
@@ -252,9 +256,14 @@ export function Accounts() {
                       aria-label={`Select ${a.name}`}
                     />
                   </td>
-                  <td className="py-3 pr-4 font-medium">{a.name}</td>
+                  <td>
+                    <span className="flex items-center gap-2.5">
+                      <Avatar name={a.name} size="sm" />
+                      <span className="font-semibold">{a.name}</span>
+                    </span>
+                  </td>
                   {shown.map((c) => (
-                    <td key={c.key} className={cn("py-3 pr-4 text-muted", c.className)}>
+                    <td key={c.key} className={cn("text-muted", c.className)}>
                       <Cell row={a} col={c.key} today={today} />
                     </td>
                   ))}
@@ -283,7 +292,7 @@ function SortHeader({
 }) {
   const active = sort.key === k;
   return (
-    <th className={cn("py-2 pr-4 font-normal", className)} aria-sort={active ? (sort.dir === 1 ? "ascending" : "descending") : undefined}>
+    <th className={className} aria-sort={active ? (sort.dir === 1 ? "ascending" : "descending") : undefined}>
       <button onClick={() => onSort(k)} className={cn("inline-flex items-center gap-1 hover:text-fg", active && "text-fg")}>
         {label}
         {active && (sort.dir === 1 ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />)}
@@ -295,7 +304,16 @@ function SortHeader({
 function Cell({ row: a, col, today }: { row: AccountRow; col: ColKey; today: string }) {
   switch (col) {
     case "status":
-      return <>{accountStatusLabel(a.status)}</>;
+      return (
+        <span
+          className={cn(
+            "inline-flex rounded-full px-2 py-0.5 text-[12px] font-semibold",
+            a.status === "client" ? "bg-accent-soft text-accent" : a.status === "prospect" ? "bg-brass-soft text-fg" : "bg-subtle text-muted",
+          )}
+        >
+          {accountStatusLabel(a.status)}
+        </span>
+      );
     case "location":
       return <>{[a.office_submarket, a.office_city].filter(Boolean).join(", ")}</>;
     case "size":

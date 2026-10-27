@@ -2,7 +2,7 @@ import { forwardRef, type InputHTMLAttributes, type SelectHTMLAttributes, type T
 import { cn } from "@/lib/utils";
 
 const base =
-  "w-full min-w-0 rounded-md border border-line-strong bg-surface px-3 text-sm text-fg placeholder:text-faint transition-colors focus:border-accent focus:outline-none focus:ring-3 focus:ring-accent-soft disabled:opacity-50";
+  "w-full min-w-0 rounded-lg border border-line-strong bg-surface px-3 text-sm text-fg placeholder:text-faint transition-colors focus:border-accent focus:outline-none focus:ring-3 focus:ring-accent-soft disabled:opacity-50";
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(({ className, ...props }, ref) => (
   <input ref={ref} className={cn(base, "h-9", className)} {...props} />
@@ -63,7 +63,7 @@ export function Chips<T extends string>({
             "rounded-full border px-3 transition-colors",
             size === "sm" ? "h-7 text-[13px]" : "h-8 text-sm",
             value === o.key
-              ? "border-fg bg-fg text-bg"
+              ? "border-accent bg-accent text-accent-fg"
               : "border-line-strong text-muted hover:border-faint hover:text-fg",
           )}
         >

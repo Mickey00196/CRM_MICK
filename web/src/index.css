@@ -3,43 +3,86 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
-  Calm and neutral: near-white paper, soft ink, hairline dividers, one accent.
-  Muted red only for overdue, amber only for a missing next step.
+  Canal green and brass. Deep green for structure (sidebar, primary actions),
+  brass for "now" (today, the New button), soft sage paper behind white cards.
+  Each project stage has its own colour; red only means overdue.
 */
 :root {
-  --bg: #fbfbfa;
+  --bg: #f2f4f1;
   --surface: #ffffff;
-  --subtle: #f3f3f1;
-  --hover: #f0f0ed;
-  --fg: #1c1d1f;
-  --muted: #6c6f73;
-  --faint: #9a9da1;
-  --line: #e8e8e5;
-  --line-strong: #d9d9d5;
-  --accent: #2f4fd0;
+  --subtle: #eaeee9;
+  --hover: #e6ebe5;
+  --fg: #14201b;
+  --muted: #5b6862;
+  --faint: #8c9792;
+  --line: #e0e5df;
+  --line-strong: #ccd5ce;
+  --accent: #1d5a48;
+  --accent-hover: #174a3b;
   --accent-fg: #ffffff;
-  --accent-soft: #eaeefc;
-  --late: #b4443a;
-  --missing: #a8701a;
-  --ring: #2f4fd0;
+  --accent-soft: #dfece6;
+  --brass: #c08a26;
+  --brass-soft: #f6ead0;
+  --brass-fg: #1b2a22;
+  --late: #c0412c;
+  --late-soft: #fbe6e1;
+  --missing: #b06d12;
+  --missing-soft: #fbedd6;
+  --ring: #1d5a48;
+
+  --side-bg: #163a30;
+  --side-fg: #e9f1ec;
+  --side-muted: #9fb8ad;
+  --side-hover: rgb(255 255 255 / 0.07);
+  --side-active: rgb(255 255 255 / 0.12);
+  --side-line: rgb(255 255 255 / 0.1);
+
+  --stage-todo: #6b7a92;
+  --stage-active: #1f7a5c;
+  --stage-waiting: #c08a26;
+  --stage-done: #8a958f;
+
+  --shadow-card: 0 1px 2px rgb(20 32 27 / 0.05), 0 1px 3px rgb(20 32 27 / 0.04);
+  --shadow-lift: 0 4px 14px rgb(20 32 27 / 0.08), 0 1px 3px rgb(20 32 27 / 0.06);
 }
 
 .dark {
-  --bg: #141517;
-  --surface: #1a1b1e;
-  --subtle: #1f2023;
-  --hover: #232428;
-  --fg: #e8e8e6;
-  --muted: #9a9da1;
-  --faint: #6c6f73;
-  --line: #2a2b2f;
-  --line-strong: #36383c;
-  --accent: #8da0ff;
-  --accent-fg: #0f1222;
-  --accent-soft: #222a4a;
-  --late: #e2796f;
-  --missing: #d9a24a;
-  --ring: #8da0ff;
+  --bg: #0e1412;
+  --surface: #151d1a;
+  --subtle: #1a2420;
+  --hover: #1f2a26;
+  --fg: #e5ece8;
+  --muted: #9aa7a0;
+  --faint: #6b7973;
+  --line: #222e29;
+  --line-strong: #2e3c36;
+  --accent: #5cbd97;
+  --accent-hover: #74cba8;
+  --accent-fg: #0a1511;
+  --accent-soft: #17332a;
+  --brass: #dfb053;
+  --brass-soft: #3a2f17;
+  --brass-fg: #1b1607;
+  --late: #ec7a64;
+  --late-soft: #3b1d18;
+  --missing: #e3a548;
+  --missing-soft: #3a2a14;
+  --ring: #5cbd97;
+
+  --side-bg: #0b1915;
+  --side-fg: #e3ece7;
+  --side-muted: #8aa398;
+  --side-hover: rgb(255 255 255 / 0.05);
+  --side-active: rgb(255 255 255 / 0.09);
+  --side-line: rgb(255 255 255 / 0.07);
+
+  --stage-todo: #8d9bb3;
+  --stage-active: #5cbd97;
+  --stage-waiting: #dfb053;
+  --stage-done: #6f7c76;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-lift: 0 6px 18px rgb(0 0 0 / 0.35);
   color-scheme: dark;
 }
 
@@ -54,11 +97,27 @@
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
   --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
   --color-accent-fg: var(--accent-fg);
   --color-accent-soft: var(--accent-soft);
+  --color-brass: var(--brass);
+  --color-brass-soft: var(--brass-soft);
+  --color-brass-fg: var(--brass-fg);
   --color-late: var(--late);
+  --color-late-soft: var(--late-soft);
   --color-missing: var(--missing);
+  --color-missing-soft: var(--missing-soft);
   --color-ring: var(--ring);
+  --color-side: var(--side-bg);
+  --color-side-fg: var(--side-fg);
+  --color-side-muted: var(--side-muted);
+  --color-side-hover: var(--side-hover);
+  --color-side-active: var(--side-active);
+  --color-side-line: var(--side-line);
+  --color-stage-todo: var(--stage-todo);
+  --color-stage-active: var(--stage-active);
+  --color-stage-waiting: var(--stage-waiting);
+  --color-stage-done: var(--stage-done);
   --font-sans: "Archivo Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
@@ -86,27 +145,76 @@
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
-  input[type="date"],
-  input[type="time"],
-  input[type="datetime-local"] {
-    font-variant-numeric: tabular-nums;
-  }
 }
 
 @layer components {
-  /* Page titles: a touch wider than body text, never loud. */
+  /* Headings: Archivo stretched wide, tight and confident. */
   .title {
-    font-stretch: 108%;
-    font-weight: 600;
-    letter-spacing: -0.01em;
+    font-stretch: 116%;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+  }
+  .display {
+    font-stretch: 125%;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
   }
   /* Quiet section labels. */
   .label {
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.04em;
+    font-size: 11.5px;
+    font-weight: 600;
+    font-stretch: 112%;
+    letter-spacing: 0.07em;
     text-transform: uppercase;
     color: var(--muted);
+  }
+  /* White panel on the sage paper. */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow-card);
+  }
+  /* Tables that sit inside a .card. */
+  .data {
+    width: 100%;
+    font-size: 14px;
+  }
+  .data th {
+    text-align: left;
+    font-size: 11.5px;
+    font-weight: 600;
+    font-stretch: 110%;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: color-mix(in srgb, var(--subtle) 60%, var(--surface));
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  .data td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: middle;
+  }
+  .data th:first-child,
+  .data td:first-child {
+    padding-left: 20px;
+  }
+  .data th:last-child,
+  .data td:last-child {
+    padding-right: 20px;
+  }
+  .data tbody tr:last-child td {
+    border-bottom: 0;
+  }
+  .data tbody tr {
+    transition: background-color 0.15s;
+  }
+  .data tbody tr:hover {
+    background: color-mix(in srgb, var(--hover) 55%, transparent);
   }
 }
 
@@ -136,6 +244,15 @@
     opacity: 0;
     transform: translateY(-4px) scale(0.99);
   }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.rise {
+  animation: rise 0.35s ease both;
 }
 
 @media (prefers-reduced-motion: reduce) {

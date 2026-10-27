@@ -229,6 +229,7 @@ export interface TodoRow {
   account_name: string | null;
   project_id: string | null;
   project_name: string | null;
+  project_stage?: ProjectStage | null;
 }
 
 export interface StalledProject {

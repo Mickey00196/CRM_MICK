@@ -42,8 +42,9 @@ export function SettingsPage({ onLogout }: { onLogout: () => void }) {
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <h1 className="title mb-10 text-2xl">Settings</h1>
+    <div className="rise mx-auto max-w-2xl">
+      <h1 className="display mb-6 text-[28px] sm:text-[34px]">Settings</h1>
+      <div className="card px-5 sm:px-6">
 
       <Row label="Appearance">
         <Chips
@@ -90,7 +91,7 @@ export function SettingsPage({ onLogout }: { onLogout: () => void }) {
       </Row>
 
       <Row label="Keyboard">
-        <dl className="grid grid-cols-[5rem_1fr] gap-y-1.5 text-sm">
+        <dl className="grid grid-cols-[6.5rem_1fr] items-baseline gap-y-2 text-sm">
           {[
             ["N", "New to-do"],
             ["P", "New project"],
@@ -99,7 +100,9 @@ export function SettingsPage({ onLogout }: { onLogout: () => void }) {
             ["⌘K / Ctrl K", "Quick capture, from anywhere"],
           ].map(([k, v]) => (
             <div key={k} className="contents">
-              <dt className="text-muted">{k}</dt>
+              <dt>
+                <kbd className="rounded-md border border-line-strong bg-subtle px-1.5 py-0.5 text-[12px] font-semibold">{k}</kbd>
+              </dt>
               <dd>{v}</dd>
             </div>
           ))}
@@ -117,14 +120,15 @@ export function SettingsPage({ onLogout }: { onLogout: () => void }) {
         </div>
         <p className="mt-2 text-[13px] text-muted">Use this if you lost a phone or laptop. Changing APP_PASSWORD on the server does the same.</p>
       </Row>
+      </div>
     </div>
   );
 }
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <section className="grid gap-3 border-t border-line py-6 sm:grid-cols-[12rem_1fr]">
-      <h2 className="text-sm font-medium">{label}</h2>
+    <section className="grid gap-3 border-t border-line py-5 first:border-t-0 sm:grid-cols-[11rem_1fr]">
+      <h2 className="title text-[14px]">{label}</h2>
       <div>{children}</div>
     </section>
   );

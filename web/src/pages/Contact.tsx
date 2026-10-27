@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/dialog";
 import { Timeline } from "@/components/Timeline";
+import { Avatar } from "@/components/Avatar";
 import { usePageContext, useUI } from "@/components/ui-context";
 import { ContactForm } from "@/components/ContactForm";
 
@@ -25,47 +26,48 @@ export function ContactPage() {
   const account = c.account_id ? { id: c.account_id, name: c.account_name ?? "" } : null;
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className="rise mx-auto max-w-4xl">
       <Link to={account ? `/accounts/${account.id}` : "/contacts"} className="mb-6 inline-flex items-center gap-1 text-[13px] text-muted hover:text-fg">
         <ArrowLeft className="size-3.5" /> {account ? account.name : "Contacts"}
       </Link>
 
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="title text-3xl">{c.name}</h1>
+      <header className="card flex items-start gap-4 p-5 sm:p-6">
+        <Avatar name={c.name} size="lg" className="rounded-full" />
+        <div className="min-w-0 flex-1">
+          <h1 className="display text-[26px] sm:text-[30px]">{c.name}</h1>
           <p className="mt-2 text-sm text-muted">
             {[c.role, buyingRoleLabel(c.buying_role), c.language?.toUpperCase()].filter(Boolean).join(" · ")}
             {c.last_contacted_at && ` · Last contact ${relative(c.last_contacted_at)}`}
           </p>
           {c.do_not_contact && <p className="mt-1 text-sm text-late">Do not contact{c.opt_out_at && ` since ${dmy(c.opt_out_at)}`}</p>}
+          <div className="mt-4 flex flex-wrap gap-2 text-sm">
+            {c.phone && (
+              <a href={`tel:${c.phone.replace(/\s/g, "")}`} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-subtle px-3 text-fg hover:text-accent">
+                <Phone className="size-3.5" /> {c.phone}
+              </a>
+            )}
+            {c.email && (
+              <a href={`mailto:${c.email}`} className="inline-flex h-8 min-w-0 items-center gap-1.5 rounded-full bg-subtle px-3 text-fg hover:text-accent">
+                <Mail className="size-3.5 shrink-0" /> <span className="truncate">{c.email}</span>
+              </a>
+            )}
+            {c.linkedin_url && (
+              <a
+                href={c.linkedin_url.startsWith("http") ? c.linkedin_url : `https://${c.linkedin_url}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex h-8 items-center gap-1.5 rounded-full bg-subtle px-3 text-fg hover:text-accent"
+              >
+                <Link2 className="size-3.5" /> LinkedIn
+              </a>
+            )}
+          </div>
         </div>
         <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>
           Edit
         </Button>
       </header>
 
-      <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm">
-        {c.phone && (
-          <a href={`tel:${c.phone.replace(/\s/g, "")}`} className="inline-flex items-center gap-1.5 text-muted hover:text-fg">
-            <Phone className="size-3.5" /> {c.phone}
-          </a>
-        )}
-        {c.email && (
-          <a href={`mailto:${c.email}`} className="inline-flex items-center gap-1.5 text-muted hover:text-fg">
-            <Mail className="size-3.5" /> {c.email}
-          </a>
-        )}
-        {c.linkedin_url && (
-          <a
-            href={c.linkedin_url.startsWith("http") ? c.linkedin_url : `https://${c.linkedin_url}`}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1.5 text-muted hover:text-fg"
-          >
-            <Link2 className="size-3.5" /> LinkedIn
-          </a>
-        )}
-      </div>
 
       {account && (
         <div className="mt-6 flex flex-wrap gap-1.5">
@@ -78,15 +80,15 @@ export function ContactPage() {
         </div>
       )}
 
-      {c.notes && <p className="mt-8 whitespace-pre-wrap text-sm text-muted">{c.notes}</p>}
+      {c.notes && <p className="card mt-6 whitespace-pre-wrap px-5 py-4 text-sm text-muted">{c.notes}</p>}
 
       {tasks.length > 0 && (
-        <section className="mt-12">
-          <h2 className="label mb-3">Open to-dos</h2>
-          <ul>
+        <section className="mt-8">
+          <h2 className="label mb-2.5 px-1">Open to-dos</h2>
+          <ul className="card overflow-hidden">
             {tasks.map((t) => (
-              <li key={t.id} className="border-t border-line">
-                <button onClick={() => ui.openTask(t.id)} className="flex w-full items-baseline justify-between gap-4 py-3.5 text-left hover:text-accent">
+              <li key={t.id} className="border-b border-line last:border-b-0">
+                <button onClick={() => ui.openTask(t.id)} className="flex w-full items-baseline justify-between gap-4 px-5 py-3.5 text-left transition-colors hover:bg-hover/50 hover:text-accent">
                   <span>
                     {t.title} <span className="text-sm text-muted">· {taskTypeLabel(t.type)}</span>
                   </span>
@@ -98,9 +100,11 @@ export function ContactPage() {
         </section>
       )}
 
-      <section className="mt-12">
-        <h2 className="label mb-3">Communication</h2>
-        <Timeline items={activities} showProject empty="Nothing logged with this contact yet." />
+      <section className="mt-8">
+        <h2 className="label mb-2.5 px-1">Communication</h2>
+        <div className="card px-4 py-1 sm:px-5">
+          <Timeline items={activities} showProject empty="Nothing logged with this contact yet." />
+        </div>
       </section>
 
       <Sheet open={editing} onOpenChange={setEditing} title="Edit contact">

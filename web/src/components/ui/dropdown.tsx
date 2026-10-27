@@ -12,7 +12,7 @@ export function MenuContent({ children, align = "start", className }: { children
         align={align}
         sideOffset={6}
         className={cn(
-          "z-50 min-w-44 rounded-lg border border-line bg-surface p-1 shadow-lg [animation:pop-in_.12s_ease]",
+          "z-50 min-w-44 rounded-xl border border-line bg-surface p-1 shadow-[var(--shadow-lift)] [animation:pop-in_.12s_ease]",
           className,
         )}
       >
@@ -52,7 +52,7 @@ export function MenuCheckbox({ checked, onChange, children }: { checked: boolean
       onSelect={(e) => e.preventDefault()}
       className="flex cursor-pointer select-none items-center gap-2 rounded-md px-2.5 py-1.5 text-sm outline-none data-[highlighted]:bg-hover"
     >
-      <span className={cn("grid size-4 place-items-center rounded border", checked ? "border-fg bg-fg text-bg" : "border-line-strong")}>
+      <span className={cn("grid size-4 place-items-center rounded border", checked ? "border-accent bg-accent text-accent-fg" : "border-line-strong")}>
         {checked && "✓"}
       </span>
       {children}

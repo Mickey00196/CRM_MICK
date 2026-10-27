@@ -11,7 +11,7 @@ export function TabList({ tabs }: { tabs: { value: string; label: string }[] }) 
         <T.Trigger
           key={t.value}
           value={t.value}
-          className="-mb-px whitespace-nowrap border-b-2 border-transparent pb-2.5 text-sm text-muted transition-colors hover:text-fg data-[state=active]:border-fg data-[state=active]:text-fg"
+          className="-mb-px whitespace-nowrap border-b-2 border-transparent pb-2.5 text-sm font-medium text-muted transition-colors hover:text-fg data-[state=active]:border-accent data-[state=active]:font-semibold data-[state=active]:text-fg"
         >
           {t.label}
         </T.Trigger>

@@ -25,6 +25,9 @@ import { Tabs, TabList, TabPanelBody } from "@/components/ui/tabs";
 import { Sheet } from "@/components/ui/dialog";
 import { usePageContext, useUI } from "@/components/ui-context";
 import { Timeline } from "@/components/Timeline";
+import { Avatar } from "@/components/Avatar";
+import { StageDot } from "@/components/Stage";
+import { Panel, PanelEmpty } from "@/components/Panel";
 import { OfficeCard, OfficeForm } from "@/components/Office";
 import { ContactForm } from "@/components/ContactForm";
 
@@ -58,8 +61,8 @@ export function AccountPage() {
   const log = (channel: Channel) => ui.openLog({ account: picked, channel });
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <Link to="/accounts" className="mb-6 inline-flex items-center gap-1 text-[13px] text-muted hover:text-fg">
+    <div className="rise mx-auto max-w-4xl">
+      <Link to="/accounts" className="mb-5 inline-flex items-center gap-1 text-[13px] text-muted hover:text-fg">
         <ArrowLeft className="size-3.5" /> Companies
       </Link>
 
@@ -125,10 +128,11 @@ function Header({ data }: { data: AccountDetail }) {
   }
 
   return (
-    <header>
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <h1 className="title text-3xl">{account.name}</h1>
+    <header className="card overflow-hidden">
+      <div className="flex items-start justify-between gap-4 p-5 sm:p-6">
+        <Avatar name={account.name} size="lg" className="hidden sm:inline-grid" />
+        <div className="min-w-0 flex-1">
+          <h1 className="display text-[26px] sm:text-[30px]">{account.name}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
             <Select
               value={account.status}
@@ -163,8 +167,8 @@ function Header({ data }: { data: AccountDetail }) {
         </Menu>
       </div>
 
-      <div className="mt-8 border-y border-line py-4">
-        <p className="mb-1 text-[13px] text-muted">Next step</p>
+      <div className={cn("border-t border-line px-5 py-4 sm:px-6", next ? "bg-subtle/50" : "bg-missing-soft")}>
+        <p className="label mb-1">Next step</p>
         {next ? (
           <button onClick={() => ui.openTask(next.id)} className="group flex w-full items-baseline justify-between gap-4 text-left">
             <span className="text-lg group-hover:text-accent">
@@ -199,23 +203,28 @@ function Overview({ data }: { data: AccountDetail }) {
   const today = todayISO();
 
   return (
-    <div className="grid gap-12">
-      <section>
-        <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="label">Projects</h2>
+    <div className="grid gap-6">
+      <Panel
+        title="Projects"
+        count={data.projects.length}
+        actions={
           <Button variant="ghost" size="xs" onClick={() => ui.openCapture("project", { account: { id: account.id, name: account.name } })}>
-            + New
+            <Plus /> New
           </Button>
-        </div>
+        }
+      >
         {data.projects.length === 0 ? (
-          <p className="border-t border-line pt-5 text-sm text-muted">No projects with this company yet.</p>
+          <PanelEmpty>No projects with this company yet.</PanelEmpty>
         ) : (
           <ul>
             {data.projects.map((p) => (
-              <li key={p.id} className="border-t border-line">
-                <Link to={`/projects/${p.id}`} className="flex items-baseline justify-between gap-4 py-3.5 hover:text-accent">
-                  <span className={cn("min-w-0 truncate", p.stage === "done" && "text-muted")}>{p.name}</span>
-                  <span className="shrink-0 text-sm text-muted">
+              <li key={p.id} className="border-b border-line last:border-b-0">
+                <Link to={`/projects/${p.id}`} className="flex items-center justify-between gap-4 px-4 py-3 transition-colors hover:bg-hover/50 sm:px-5">
+                  <span className="flex min-w-0 items-center gap-2.5">
+                    <StageDot stage={p.stage} />
+                    <span className={cn("truncate font-medium", p.stage === "done" && "text-muted")}>{p.name}</span>
+                  </span>
+                  <span className="shrink-0 text-[13px] text-muted">
                     {p.stage === "waiting" && p.waiting_on ? `Waiting on ${p.waiting_on}` : projectStageLabel(p.stage)}
                   </span>
                 </Link>
@@ -223,16 +232,17 @@ function Overview({ data }: { data: AccountDetail }) {
             ))}
           </ul>
         )}
-      </section>
+      </Panel>
 
-      <section>
-        <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="label">Company</h2>
+      <Panel
+        title="Company"
+        actions={
           <Button variant="ghost" size="xs" onClick={() => setEditing(true)}>
             Edit
           </Button>
-        </div>
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-4 border-t border-line pt-5 sm:grid-cols-4">
+        }
+      >
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-4 px-4 py-4 sm:grid-cols-4 sm:px-5">
           <Info label="Industry" value={account.industry} />
           <Info label="Size" value={SIZE_BANDS.find((s) => s.key === account.size_band)?.label} />
           <Info label="ICP fit" value={ICP_FIT.find((s) => s.key === account.icp_fit)?.label} />
@@ -240,39 +250,41 @@ function Overview({ data }: { data: AccountDetail }) {
           <Info label="Website" value={account.website} />
           <Info label="Tags" value={account.tags.join(", ")} />
         </dl>
-        {account.notes && <p className="mt-5 whitespace-pre-wrap text-sm text-muted">{account.notes}</p>}
-      </section>
+        {account.notes && <p className="whitespace-pre-wrap border-t border-line px-4 py-4 text-sm text-muted sm:px-5">{account.notes}</p>}
+      </Panel>
 
-      <section>
-        <h2 className="label mb-3">Office</h2>
+      <Panel title="Office">
         {primary ? (
-          <OfficeCard office={primary} compact />
+          <OfficeCard office={primary} compact className="px-4 py-4 sm:px-5" />
         ) : (
-          <p className="border-t border-line pt-5 text-sm text-muted">No office details yet. Add them on the Office & lease tab.</p>
+          <PanelEmpty>No office details yet. Add them on the Office & lease tab.</PanelEmpty>
         )}
-      </section>
+      </Panel>
 
-      <section>
-        <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="label">Contacts</h2>
+      <Panel
+        title="Contacts"
+        count={contacts.length}
+        actions={
           <Button variant="ghost" size="xs" onClick={() => setContactForm("new")}>
-            + Add
+            <Plus /> Add
           </Button>
-        </div>
+        }
+      >
         {contacts.length === 0 ? (
-          <p className="border-t border-line pt-5 text-sm text-muted">No contacts yet.</p>
+          <PanelEmpty>No contacts yet.</PanelEmpty>
         ) : (
           <ul>
             {contacts.map((c) => (
-              <li key={c.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t border-line py-3.5">
-                <div className="min-w-0">
-                  <Link to={`/contacts/${c.id}`} className="font-medium hover:text-accent">
-                    {c.name}
-                  </Link>
-                  <span className="text-sm text-muted">
-                    {[c.role, buyingRoleLabel(c.buying_role)].filter(Boolean).map((s) => ` · ${s}`)}
-                  </span>
-                  {c.do_not_contact && <span className="text-[13px] text-late"> · Do not contact</span>}
+              <li key={c.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-line px-4 py-3 last:border-b-0 sm:px-5">
+                <div className="flex min-w-0 items-center gap-3">
+                  <Avatar name={c.name} size="md" className="rounded-full" />
+                  <div className="min-w-0">
+                    <Link to={`/contacts/${c.id}`} className="font-semibold hover:text-accent">
+                      {c.name}
+                    </Link>
+                    {c.do_not_contact && <span className="ml-2 rounded-full bg-late-soft px-2 py-0.5 text-[11.5px] font-semibold text-late">Do not contact</span>}
+                    <p className="truncate text-[13px] text-muted">{[c.role, buyingRoleLabel(c.buying_role)].filter(Boolean).join(" · ")}</p>
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-x-4 text-sm text-muted">
                   {c.phone && (
@@ -293,22 +305,27 @@ function Overview({ data }: { data: AccountDetail }) {
             ))}
           </ul>
         )}
-      </section>
+      </Panel>
 
-      <section>
-        <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="label">Open to-dos</h2>
+      <Panel
+        title="Open to-dos"
+        count={tasks.length}
+        actions={
           <Button variant="ghost" size="xs" onClick={() => ui.openCapture("todo", { account: { id: account.id, name: account.name } })}>
-            + Add
+            <Plus /> Add
           </Button>
-        </div>
+        }
+      >
         {tasks.length === 0 ? (
-          <p className="border-t border-line pt-5 text-sm text-muted">Nothing open.</p>
+          <PanelEmpty>Nothing open.</PanelEmpty>
         ) : (
           <ul>
             {tasks.map((t) => (
-              <li key={t.id} className="border-t border-line">
-                <button onClick={() => ui.openTask(t.id)} className="flex w-full items-baseline justify-between gap-4 py-3.5 text-left hover:text-accent">
+              <li key={t.id} className="border-b border-line last:border-b-0">
+                <button
+                  onClick={() => ui.openTask(t.id)}
+                  className="flex w-full items-baseline justify-between gap-4 px-4 py-3 text-left transition-colors hover:bg-hover/50 sm:px-5"
+                >
                   <span className="min-w-0 truncate">
                     {t.title}{" "}
                     <span className="text-sm text-muted">
@@ -322,7 +339,7 @@ function Overview({ data }: { data: AccountDetail }) {
             ))}
           </ul>
         )}
-      </section>
+      </Panel>
 
       <Sheet open={editing} onOpenChange={setEditing} title="Edit company">
         {editing && <AccountEdit data={data} onDone={() => setEditing(false)} />}
@@ -456,7 +473,7 @@ function Offices({ data }: { data: AccountDetail }) {
   }
 
   return (
-    <div className="grid gap-12">
+    <div className="grid gap-6">
       {current.length === 0 && (
         <p className="text-sm text-muted">No office details yet. Add what you know now; you can complete the rest later.</p>
       )}
@@ -471,7 +488,7 @@ function Offices({ data }: { data: AccountDetail }) {
       {previous.length > 0 && (
         <section>
           <h2 className="label mb-3">Previous locations</h2>
-          <div className="grid gap-10">
+          <div className="grid gap-4">
             {previous.map((o) => (
               <OfficeCard key={o.id} office={o} onEdit={() => setEditing(o.id)} compact />
             ))}
@@ -517,7 +534,11 @@ function Communication({ data }: { data: AccountDetail }) {
           </Select>
         )}
       </div>
-      {items && <Timeline items={items} showProject empty={channel || contact ? "Nothing logged that matches." : "Nothing logged yet. Use the buttons above to log a call, email or note."} />}
+      {items && (
+        <div className="card px-4 py-1 sm:px-5">
+          <Timeline items={items} showProject empty={channel || contact ? "Nothing logged that matches." : "Nothing logged yet. Use the buttons above to log a call, email or note."} />
+        </div>
+      )}
     </div>
   );
 }

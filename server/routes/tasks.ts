@@ -13,7 +13,7 @@ tasks.get("/todos", async (req, res) => {
   const today = todayISO();
   const rows = await db.q<TodoRow>(
     `select t.id, t.title, t.type, t.due_date, t.due_time, t.priority,
-            t.account_id, a.name as account_name, t.project_id, p.name as project_name
+            t.account_id, a.name as account_name, t.project_id, p.name as project_name, p.stage as project_stage
      from tasks t
      left join accounts a on a.id = t.account_id
      left join projects p on p.id = t.project_id

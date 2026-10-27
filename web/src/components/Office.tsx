@@ -73,7 +73,17 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
 }
 
 /** Summary card with the computed lease view. */
-export function OfficeCard({ office, onEdit, compact }: { office: OfficeLocation; onEdit?: () => void; compact?: boolean }) {
+export function OfficeCard({
+  office,
+  onEdit,
+  compact,
+  className = "card p-5 sm:p-6",
+}: {
+  office: OfficeLocation;
+  onEdit?: () => void;
+  compact?: boolean;
+  className?: string;
+}) {
   const today = todayISO();
   const info = leaseInfo(office, today);
   const remaining =
@@ -81,7 +91,7 @@ export function OfficeCard({ office, onEdit, compact }: { office: OfficeLocation
   const noticeSoon = info.nextKeyDate?.label.toLowerCase().includes("notice") && daysBetween(today, info.nextKeyDate.date) <= 180;
 
   return (
-    <article className="border-t border-line pt-5">
+    <article className={className}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <h3 className="font-medium">
