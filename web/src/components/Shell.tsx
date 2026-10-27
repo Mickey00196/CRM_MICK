@@ -30,6 +30,7 @@ import { SearchDialog } from "./Search";
 import { LogForm } from "./LogForm";
 import { TaskPanel } from "./TaskPanel";
 import { Toaster } from "./Toast";
+import { Brand } from "./Brand";
 
 interface NavItem {
   to: string;
@@ -128,7 +129,7 @@ export function Shell({ children }: { children: ReactNode }) {
         {/* Left menu (desktop) */}
         <aside className="sticky top-0 hidden h-dvh flex-col border-r border-line px-3 py-4 md:flex">
           <div className={cn("mb-5 flex items-center", collapsed ? "justify-center" : "justify-between pl-2")}>
-            {!collapsed && <span className="title text-[15px]">Mick CRM</span>}
+            {!collapsed && <Brand />}
             <button
               onClick={() => setCollapsed(!collapsed)}
               className="rounded-md p-1.5 text-faint hover:bg-hover hover:text-fg"
@@ -143,7 +144,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <button
               onClick={() => ui.openCapture("todo")}
               className={cn(
-                "flex h-9 flex-1 items-center gap-2 bg-fg text-sm font-medium text-bg transition-colors hover:bg-accent hover:text-accent-fg",
+                "flex h-9 flex-1 items-center gap-2 bg-accent text-sm font-medium text-accent-fg shadow-[inset_0_1px_0_rgb(255_255_255/0.14)] transition-colors hover:bg-accent-hover",
                 collapsed ? "justify-center rounded-md" : "rounded-l-md px-3",
               )}
               aria-label="New to-do"
@@ -156,8 +157,8 @@ export function Shell({ children }: { children: ReactNode }) {
               <MenuTrigger asChild>
                 <button
                   className={cn(
-                    "grid h-9 place-items-center bg-fg text-bg transition-colors hover:bg-accent hover:text-accent-fg",
-                    collapsed ? "rounded-md" : "w-8 rounded-r-md border-l border-bg/20",
+                    "grid h-9 place-items-center bg-accent text-accent-fg shadow-[inset_0_1px_0_rgb(255_255_255/0.14)] transition-colors hover:bg-accent-hover",
+                    collapsed ? "rounded-md" : "w-8 rounded-r-md border-l border-white/20",
                   )}
                   aria-label="New something else"
                   title="New project, log, company or contact"
@@ -169,7 +170,7 @@ export function Shell({ children }: { children: ReactNode }) {
                 {newItems.map((i) => (
                   <MenuItem key={i.kind} onSelect={() => ui.openCapture(i.kind)}>
                     <i.icon /> {i.label}
-                    {i.key && <kbd className="ml-auto pl-4 font-sans text-xs text-faint">{i.key}</kbd>}
+                    {i.key && <kbd className="keycap ml-auto">{i.key}</kbd>}
                   </MenuItem>
                 ))}
               </MenuContent>
@@ -188,7 +189,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <Search className="size-4" />
             {!collapsed && (
               <>
-                Search or jump to <kbd className="ml-auto rounded border border-line px-1.5 text-[11px] text-faint">⌘K</kbd>
+                Search or jump to <kbd className="keycap ml-auto">⌘K</kbd>
               </>
             )}
           </button>
@@ -201,15 +202,15 @@ export function Shell({ children }: { children: ReactNode }) {
           </div>
 
           {!collapsed && (
-            <p className="mt-3 px-3 text-xs leading-relaxed text-faint">
-              <kbd className="font-sans">N</kbd> to-do · <kbd className="font-sans">P</kbd> project · <kbd className="font-sans">L</kbd> log
+            <p className="mt-3 flex items-center gap-1 whitespace-nowrap px-3 text-xs text-faint">
+              <kbd className="keycap">N</kbd> to-do <kbd className="keycap ml-1.5">P</kbd> project <kbd className="keycap ml-1.5">L</kbd> log
             </p>
           )}
         </aside>
 
         {/* Top bar (mobile) */}
         <header className="sticky top-0 z-20 flex h-12 items-center justify-between border-b border-line bg-bg/95 px-4 backdrop-blur md:hidden">
-          <span className="title text-[15px]">Mick CRM</span>
+          <Brand />
           <div className="flex items-center gap-1">
             <button onClick={() => setSearching(true)} className="rounded-md p-2 text-muted hover:text-fg" aria-label="Search">
               <Search className="size-[18px]" />
@@ -228,7 +229,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <TabLink item={MAIN[0]} />
           <TabLink item={MAIN[1]} />
           <button onClick={() => ui.openCapture("todo")} className="flex flex-col items-center justify-center" aria-label="New to-do">
-            <span className="grid size-11 place-items-center rounded-full bg-fg text-bg">
+            <span className="grid size-11 place-items-center rounded-full bg-accent text-accent-fg shadow-[0_6px_16px_-4px_var(--accent-glow)]">
               <Plus className="size-5" />
             </span>
           </button>
@@ -238,7 +239,7 @@ export function Shell({ children }: { children: ReactNode }) {
               <button
                 className={cn(
                   "flex flex-col items-center gap-0.5 py-2 text-[11px]",
-                  [...ADDRESS_BOOK.slice(1), MAIN[2], SETTINGS].some((n) => location.pathname.startsWith(n.to)) ? "text-fg" : "text-faint",
+                  [...ADDRESS_BOOK.slice(1), MAIN[2], SETTINGS].some((n) => location.pathname.startsWith(n.to)) ? "text-accent-text" : "text-faint",
                 )}
               >
                 <MoreHorizontal className="size-5" />
@@ -302,7 +303,7 @@ function SideNav({ items, collapsed }: { items: NavItem[]; collapsed: boolean })
             cn(
               "flex h-9 items-center gap-2.5 rounded-md text-sm transition-colors",
               collapsed ? "justify-center" : "px-3",
-              isActive ? "bg-hover font-medium text-fg" : "text-muted hover:bg-hover hover:text-fg",
+              isActive ? "bg-accent-soft font-medium text-accent-text" : "text-muted hover:bg-hover hover:text-fg",
             )
           }
         >
@@ -319,7 +320,7 @@ function TabLink({ item }: { item: NavItem }) {
     <NavLink
       to={item.to}
       end={item.end}
-      className={({ isActive }) => cn("flex flex-col items-center gap-0.5 py-2 text-[11px]", isActive ? "text-fg" : "text-faint")}
+      className={({ isActive }) => cn("flex flex-col items-center gap-0.5 py-2 text-[11px]", isActive ? "font-medium text-accent-text" : "text-faint")}
     >
       <item.icon className="size-5" />
       {item.label}

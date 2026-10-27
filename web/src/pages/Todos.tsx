@@ -6,6 +6,7 @@ import { addDays, longDate, relative } from "@/lib/format";
 import { TASK_DONE, useUI } from "@/components/ui-context";
 import { TodoItem } from "@/components/TodoItem";
 import { Skeleton } from "@/components/Skeleton";
+import { cn } from "@/lib/utils";
 
 // Last list, so coming back to this page is instant.
 let lastList: TodoList | null = null;
@@ -73,8 +74,8 @@ export function Todos() {
           <Link to="/review" className="text-muted transition-colors hover:text-fg">
             Weekly review
           </Link>
-          <button onClick={() => ui.openCapture("todo")} className="text-muted transition-colors hover:text-fg" title="New to-do (N)">
-            + Add
+          <button onClick={() => ui.openCapture("todo")} className="flex items-center gap-1.5 text-muted transition-colors hover:text-fg" title="New to-do (N)">
+            + Add <kbd className="keycap">N</kbd>
           </button>
         </div>
       </header>
@@ -117,14 +118,14 @@ export function Todos() {
       )}
 
       {empty && (
-        <p className="py-10 text-muted">
-          Nothing to do. Press <kbd className="rounded border border-line px-1 text-xs">N</kbd> to add a to-do or{" "}
-          <kbd className="rounded border border-line px-1 text-xs">P</kbd> to start a project.
+        <p className="dot-grid rounded-xl border border-line px-6 py-14 text-center text-muted">
+          Nothing to do. Press <kbd className="keycap">N</kbd> to add a to-do or{" "}
+          <kbd className="keycap">P</kbd> to start a project.
         </p>
       )}
 
       <Section label="Overdue" rows={data.overdue} fading={fading} />
-      <Section label="Today" rows={data.due_today} fading={fading} />
+      <Section label="Today" rows={data.due_today} fading={fading} highlight />
       <Section label="Next 7 days" rows={nextWeek} fading={fading} />
       <Section label="Later" rows={later} fading={fading} />
       <Section label="No date" rows={undated} fading={fading} />
@@ -132,12 +133,13 @@ export function Todos() {
   );
 }
 
-function Section({ label, rows, fading }: { label: string; rows: TodoRow[]; fading: Set<string> }) {
+function Section({ label, rows, fading, highlight }: { label: string; rows: TodoRow[]; fading: Set<string>; highlight?: boolean }) {
   if (!rows.length) return null;
   return (
     <section className="mb-10">
-      <h2 className="label mb-1">
-        {label} <span className="ml-1 font-normal text-faint">{rows.length}</span>
+      <h2 className={cn("label mb-1 flex items-center gap-2", highlight && "text-accent-text")}>
+        {highlight && <span className="size-1.5 rounded-full bg-accent shadow-[0_0_0_3px_var(--accent-soft)]" aria-hidden="true" />}
+        {label} <span className="font-normal text-faint">{rows.length}</span>
       </h2>
       <ul>
         {rows.map((r) => (

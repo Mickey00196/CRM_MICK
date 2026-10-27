@@ -113,7 +113,7 @@ export function Accounts() {
             onClick={() => setView(v.key)}
             className={cn(
               "-mb-px border-b-2 pb-2.5 text-sm transition-colors",
-              view === v.key ? "border-fg text-fg" : "border-transparent text-muted hover:text-fg",
+              view === v.key ? "border-accent text-fg" : "border-transparent text-muted hover:text-fg",
             )}
           >
             {v.label} <span className="text-faint">{counts[v.key]}</span>
@@ -241,7 +241,7 @@ export function Accounts() {
                 <th className="w-8 py-2 pr-2 font-normal">
                   <input
                     type="checkbox"
-                    className="size-4 accent-[var(--fg)]"
+                    className="size-4 accent-[var(--accent)]"
                     checked={allSelected}
                     onChange={() => setSelected(allSelected ? new Set() : new Set(rows.map((r) => r.id)))}
                     aria-label="Select all"
@@ -263,7 +263,7 @@ export function Accounts() {
                   <td className="py-3 pr-2" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
-                      className="size-4 accent-[var(--fg)]"
+                      className="size-4 accent-[var(--accent)]"
                       checked={selected.has(a.id)}
                       onChange={() => {
                         const s = new Set(selected);

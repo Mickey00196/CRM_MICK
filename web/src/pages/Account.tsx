@@ -169,7 +169,7 @@ function Header({ data }: { data: AccountDetail }) {
         <p className="mb-1 text-[13px] text-muted">Next step</p>
         {next ? (
           <button onClick={() => ui.openTask(next.id)} className="group flex w-full items-baseline justify-between gap-4 text-left">
-            <span className="text-lg group-hover:text-accent">
+            <span className="text-lg group-hover:text-accent-text">
               {next.title} <span className="text-sm text-muted">· {taskTypeLabel(next.type)}</span>
             </span>
             <span className={cn("shrink-0 text-sm", next.due_date && next.due_date < today ? "text-late" : "text-muted")}>
@@ -180,7 +180,7 @@ function Header({ data }: { data: AccountDetail }) {
         ) : (
           <div className="flex items-baseline justify-between gap-4">
             <span className="text-lg text-muted">No next step</span>
-            <button onClick={() => ui.openCapture("todo", { account: { id: account.id, name: account.name } })} className="text-sm text-accent hover:underline">
+            <button onClick={() => ui.openCapture("todo", { account: { id: account.id, name: account.name } })} className="text-sm text-accent-text hover:underline">
               Set next step
             </button>
           </div>
@@ -215,7 +215,7 @@ function Overview({ data }: { data: AccountDetail }) {
           <ul>
             {data.projects.map((p) => (
               <li key={p.id} className="border-t border-line">
-                <Link to={`/projects/${p.id}`} className="flex items-baseline justify-between gap-4 py-3.5 hover:text-accent">
+                <Link to={`/projects/${p.id}`} className="flex items-baseline justify-between gap-4 py-3.5 hover:text-accent-text">
                   <span className={cn("min-w-0 truncate", p.stage === "done" && "text-muted")}>{p.name}</span>
                   <span className="shrink-0 text-sm text-muted">
                     {p.stage === "waiting" && p.waiting_on ? `Waiting on ${p.waiting_on}` : projectStageLabel(p.stage)}
@@ -268,7 +268,7 @@ function Overview({ data }: { data: AccountDetail }) {
             {contacts.map((c) => (
               <li key={c.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t border-line py-3.5">
                 <div className="min-w-0">
-                  <Link to={`/contacts/${c.id}`} className="font-medium hover:text-accent">
+                  <Link to={`/contacts/${c.id}`} className="font-medium hover:text-accent-text">
                     {c.name}
                   </Link>
                   <span className="text-sm text-muted">
@@ -310,7 +310,7 @@ function Overview({ data }: { data: AccountDetail }) {
           <ul>
             {tasks.map((t) => (
               <li key={t.id} className="border-t border-line">
-                <button onClick={() => ui.openTask(t.id)} className="flex w-full items-baseline justify-between gap-4 py-3.5 text-left hover:text-accent">
+                <button onClick={() => ui.openTask(t.id)} className="flex w-full items-baseline justify-between gap-4 py-3.5 text-left hover:text-accent-text">
                   <span className="min-w-0 truncate">
                     {t.title}{" "}
                     <span className="text-sm text-muted">
@@ -318,7 +318,7 @@ function Overview({ data }: { data: AccountDetail }) {
                       {t.project_name && ` · ${t.project_name}`}
                     </span>
                   </span>
-                  <span className={cn("shrink-0 text-sm", t.due_date && t.due_date < today ? "text-late" : "text-muted")} title={dmy(t.due_date)}>{dueLabel(t.due_date, t.due_time, today)}</span>
+                  <span className={cn("num shrink-0 text-sm", t.due_date && t.due_date < today ? "text-late" : "text-muted")} title={dmy(t.due_date)}>{dueLabel(t.due_date, t.due_time, today)}</span>
                 </button>
               </li>
             ))}

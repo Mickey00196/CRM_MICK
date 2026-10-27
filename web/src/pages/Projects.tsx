@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/Skeleton";
 import { useStageChange } from "@/components/StageChange";
 import { useUI } from "@/components/ui-context";
 import { dueLabel } from "@/components/TodoItem";
+import { StageDot } from "@/components/Brand";
 
 const COLUMN_LABEL: Record<ProjectStage, string> = { todo: "To do", active: "Active", waiting: "Waiting", done: "Done" };
 
@@ -66,7 +67,7 @@ export function Projects() {
       {!data && !error && <Skeleton title={false} rows={5} className="max-w-none" />}
       {data && data.length === 0 && (
         <p className="py-12 text-center text-muted">
-          No projects yet. Press <kbd className="rounded border border-line px-1 text-xs">P</kbd> to add your first.
+          No projects yet. Press <kbd className="keycap">P</kbd> to add your first.
         </p>
       )}
 
@@ -104,9 +105,12 @@ export function Projects() {
                   key !== mobileStage && "hidden",
                 )}
               >
-                <h2 className="label mb-3 hidden items-baseline justify-between border-b border-line pb-2 md:flex">
-                  {COLUMN_LABEL[key]}
-                  <span className="font-normal normal-case tracking-normal text-faint">{columns[key].length}</span>
+                <h2 className="label mb-3 hidden items-center justify-between border-b border-line pb-2 md:flex">
+                  <span className="flex items-center gap-2">
+                    <StageDot stage={key} />
+                    {COLUMN_LABEL[key]}
+                  </span>
+                  <span className="font-normal text-faint">{columns[key].length}</span>
                 </h2>
                 <div className="grid gap-2">
                   {columns[key].map((p) => (
@@ -182,7 +186,7 @@ function Card({
       onKeyDown={(e) => e.key === "Enter" && e.target === e.currentTarget && navigate(`/projects/${p.id}`)}
       tabIndex={0}
       className={cn(
-        "group/card min-w-0 cursor-pointer rounded-lg border border-line bg-surface px-3.5 py-3 transition-colors hover:border-line-strong",
+        "group/card min-w-0 cursor-pointer rounded-lg border border-line bg-surface px-3.5 py-3 transition-[border-color,box-shadow] hover:border-accent/40 hover:shadow-[0_2px_12px_-4px_var(--accent-glow)]",
         dragging && "opacity-40",
       )}
     >
@@ -222,7 +226,7 @@ function Card({
           {next ? (
             <p className="flex items-baseline justify-between gap-3">
               <span className="truncate">{next.title}</span>
-              <span className={cn("shrink-0", late ? "text-late" : "text-muted")} title={next.due_date ? dmy(next.due_date) : undefined}>
+              <span className={cn("num shrink-0", late ? "text-late" : "text-muted")} title={next.due_date ? dmy(next.due_date) : undefined}>
                 {dueLabel(next.due_date, next.due_time, today)}
               </span>
             </p>

@@ -88,11 +88,11 @@ export function ContactPage() {
           <ul>
             {tasks.map((t) => (
               <li key={t.id} className="border-t border-line">
-                <button onClick={() => ui.openTask(t.id)} className="flex w-full items-baseline justify-between gap-4 py-3.5 text-left hover:text-accent">
+                <button onClick={() => ui.openTask(t.id)} className="flex w-full items-baseline justify-between gap-4 py-3.5 text-left hover:text-accent-text">
                   <span>
                     {t.title} <span className="text-sm text-muted">· {taskTypeLabel(t.type)}</span>
                   </span>
-                  <span className={cn("text-sm", t.due_date && t.due_date < today ? "text-late" : "text-muted")} title={dmy(t.due_date)}>{dueLabel(t.due_date, t.due_time, today)}</span>
+                  <span className={cn("num text-sm", t.due_date && t.due_date < today ? "text-late" : "text-muted")} title={dmy(t.due_date)}>{dueLabel(t.due_date, t.due_time, today)}</span>
                 </button>
               </li>
             ))}

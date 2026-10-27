@@ -40,7 +40,7 @@ export function Timeline({
         ].filter(Boolean);
         return (
           <li key={a.id} className={cn("group grid grid-cols-[5.5rem_1fr_auto] gap-x-4 border-t border-line py-4", !showDay && "border-t-transparent pt-0")}>
-            <time className="pt-px text-[13px] text-faint" dateTime={a.occurred_at} title={dmyTime(a.occurred_at)}>
+            <time className="num pt-[3px] text-[13px] text-faint" dateTime={a.occurred_at} title={dmyTime(a.occurred_at)}>
               {showDay ? day : ""}
             </time>
             <div className="min-w-0">
@@ -50,7 +50,7 @@ export function Timeline({
                 {showProject && a.project_id && (
                   <>
                     <span className="text-muted"> · </span>
-                    <Link to={`/projects/${a.project_id}`} className="text-muted hover:text-accent">
+                    <Link to={`/projects/${a.project_id}`} className="text-muted hover:text-accent-text">
                       {a.project_name}
                     </Link>
                   </>
@@ -58,7 +58,7 @@ export function Timeline({
                 {showAccount && a.account_id && !(showProject && a.project_id) && (
                   <>
                     <span className="text-muted"> · </span>
-                    <Link to={`/accounts/${a.account_id}`} className="text-muted hover:text-accent">
+                    <Link to={`/accounts/${a.account_id}`} className="text-muted hover:text-accent-text">
                       {a.account_name}
                     </Link>
                   </>

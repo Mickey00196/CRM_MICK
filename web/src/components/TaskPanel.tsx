@@ -148,7 +148,7 @@ function ViewStep({
       <div className="mt-6">
         {project && (
           <Section label="Project">
-            <Link to={`/projects/${project.id}`} onClick={onClose} className="inline-flex items-center gap-1 font-medium hover:text-accent">
+            <Link to={`/projects/${project.id}`} onClick={onClose} className="inline-flex items-center gap-1 font-medium hover:text-accent-text">
               {project.name} <ArrowUpRight className="size-3.5 text-faint" />
             </Link>
             <span className="ml-2 text-sm text-muted">{projectStageLabel(project.stage)}</span>
@@ -157,7 +157,7 @@ function ViewStep({
 
         {account && (
           <Section label="Company">
-            <Link to={`/accounts/${account.id}`} onClick={onClose} className="inline-flex items-center gap-1 font-medium hover:text-accent">
+            <Link to={`/accounts/${account.id}`} onClick={onClose} className="inline-flex items-center gap-1 font-medium hover:text-accent-text">
               {account.name} <ArrowUpRight className="size-3.5 text-faint" />
             </Link>
           </Section>
@@ -166,7 +166,7 @@ function ViewStep({
         {contact && (
           <Section label="Contact">
             <p className="font-medium">
-              <Link to={`/contacts/${contact.id}`} onClick={onClose} className="hover:text-accent">
+              <Link to={`/contacts/${contact.id}`} onClick={onClose} className="hover:text-accent-text">
                 {contact.name}
               </Link>
               {contact.role && <span className="font-normal text-muted"> · {contact.role}</span>}

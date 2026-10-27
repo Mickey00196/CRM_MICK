@@ -99,7 +99,7 @@ function WaitingForm({ project, onDone }: { project: StageTarget; onDone: () => 
         <Input value={waitingOn} onChange={(e) => setWaitingOn(e.target.value)} placeholder="e.g. landlord's counter-offer" autoFocus />
       </Field>
       <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" className="size-4 accent-[var(--fg)]" checked={followUp} onChange={(e) => setFollowUp(e.target.checked)} />
+        <input type="checkbox" className="size-4 accent-[var(--accent)]" checked={followUp} onChange={(e) => setFollowUp(e.target.checked)} />
         Remind me to follow up
       </label>
       {followUp && (
@@ -153,7 +153,7 @@ function DoneForm({ project, onDone }: { project: StageTarget; onDone: () => voi
       </Field>
       {open > 0 && (
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" className="size-4 accent-[var(--fg)]" checked={closeTasks} onChange={(e) => setCloseTasks(e.target.checked)} />
+          <input type="checkbox" className="size-4 accent-[var(--accent)]" checked={closeTasks} onChange={(e) => setCloseTasks(e.target.checked)} />
           Close the {open === 1 ? "open to-do" : `${open} open to-dos`}
         </label>
       )}

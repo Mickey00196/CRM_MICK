@@ -325,12 +325,12 @@ export function OfficeForm({
 
       <div className="flex flex-wrap gap-6 text-sm">
         <label className="flex items-center gap-2">
-          <input type="checkbox" className="size-4 accent-[var(--fg)]" checked={f.is_current !== false} onChange={(e) => setF({ ...f, is_current: e.target.checked })} />
+          <input type="checkbox" className="size-4 accent-[var(--accent)]" checked={f.is_current !== false} onChange={(e) => setF({ ...f, is_current: e.target.checked })} />
           Current location
         </label>
         {!office?.is_primary && (
           <label className="flex items-center gap-2">
-            <input type="checkbox" className="size-4 accent-[var(--fg)]" checked={f.is_primary === true} onChange={(e) => setF({ ...f, is_primary: e.target.checked })} />
+            <input type="checkbox" className="size-4 accent-[var(--accent)]" checked={f.is_primary === true} onChange={(e) => setF({ ...f, is_primary: e.target.checked })} />
             Make primary
           </label>
         )}

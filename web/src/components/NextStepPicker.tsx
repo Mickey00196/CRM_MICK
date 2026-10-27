@@ -73,7 +73,7 @@ export function NextStepPicker({
           ) : (
             <span className="text-missing">None{noneHint ? ` · ${noneHint}` : ""}</span>
           )}
-          <button type="button" className="text-accent hover:underline" onClick={() => set({ mode: "new" })}>
+          <button type="button" className="text-accent-text hover:underline" onClick={() => set({ mode: "new" })}>
             {value.mode === "keep" ? "Add another" : "Add one"}
           </button>
         </div>
@@ -121,7 +121,7 @@ export function NextStepPicker({
               onClick={() => set({ due_date: d })}
               className={cn(
                 "h-7 rounded-full border px-2.5 text-[13px] transition-colors",
-                value.due_date === d ? "border-fg bg-fg text-bg" : "border-line-strong text-muted hover:text-fg",
+                value.due_date === d ? "border-accent/50 bg-accent-soft font-medium text-accent-text" : "border-line-strong text-muted hover:text-fg",
               )}
             >
               {p.label}

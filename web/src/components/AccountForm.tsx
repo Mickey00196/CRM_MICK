@@ -104,7 +104,7 @@ export function AccountForm({ onDone }: { onDone: () => void }) {
         <div className="flex flex-wrap gap-3 text-sm">
           <button
             type="button"
-            className="text-accent hover:underline"
+            className="text-accent-text hover:underline"
             onClick={() => {
               onDone();
               navigate(`/accounts/${dupe.id}`);

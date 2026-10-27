@@ -48,7 +48,7 @@ export function QuickCapture({
               onClick={() => onKind(k.key)}
               className={cn(
                 "-mb-px whitespace-nowrap border-b-2 pb-3 text-sm transition-colors",
-                kind === k.key ? "border-fg text-fg" : "border-transparent text-muted hover:text-fg",
+                kind === k.key ? "border-accent text-fg" : "border-transparent text-muted hover:text-fg",
               )}
             >
               {k.label}

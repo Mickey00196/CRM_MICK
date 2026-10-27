@@ -12,7 +12,12 @@ export default defineConfig({
       "@shared": path.resolve(import.meta.dirname, "shared"),
     },
   },
-  build: { outDir: "../dist-web", emptyOutDir: true },
+  build: {
+    outDir: "../dist-web",
+    emptyOutDir: true,
+    // Never inline fonts as data: URLs; the CSP only allows fonts from our own origin.
+    assetsInlineLimit: (file) => (/\.(woff2?|ttf|otf)$/.test(file) ? false : undefined),
+  },
   server: {
     port: 5173,
     proxy: { "/api": "http://localhost:3000" },

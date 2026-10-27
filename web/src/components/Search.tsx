@@ -104,7 +104,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()} title="Search or run a command" hideTitle className="top-[10vh]">
       <div className="flex items-center gap-3 border-b border-line px-4">
-        <SearchIcon className="size-4 text-faint" />
+        <SearchIcon className="size-4 text-accent-text" />
         <input
           autoFocus
           value={q}
@@ -134,13 +134,13 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
             aria-selected={i === active}
             onMouseEnter={() => setActive(i)}
             onClick={() => choose(item)}
-            className={cn("flex cursor-pointer items-baseline gap-3 rounded-md px-3 py-2", i === active && "bg-hover")}
+            className={cn("flex cursor-pointer items-baseline gap-3 rounded-md px-3 py-2", i === active && "bg-accent-soft [&_svg]:text-accent-text")}
           >
             {item.kind === "command" ? (
               <>
                 <item.command.icon className="relative top-[2px] size-3.5 w-16 shrink-0 text-faint" />
                 <span className="min-w-0 flex-1 truncate text-sm">{item.command.label}</span>
-                {item.command.key && <kbd className="font-sans text-xs text-faint">{item.command.key}</kbd>}
+                {item.command.key && <kbd className="keycap">{item.command.key}</kbd>}
               </>
             ) : (
               <>

@@ -40,7 +40,7 @@ export function Toaster() {
       <span className="truncate">{current.message}</span>
       {current.action && (
         <button
-          className="shrink-0 font-medium text-accent-soft underline-offset-2 hover:underline"
+          className="shrink-0 font-medium text-[#8db2ff] underline-offset-2 dark:text-accent hover:underline"
           onClick={() => {
             current.action!.run();
             setCurrent(null);

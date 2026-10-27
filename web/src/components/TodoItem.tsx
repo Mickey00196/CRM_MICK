@@ -90,11 +90,11 @@ export function TodoItem({
       <div className="flex items-center gap-4 py-3">
         <button
           onClick={() => complete(todo)}
-          className="group relative grid size-5 shrink-0 place-items-center rounded-full border-[1.5px] border-line-strong transition-colors before:absolute before:-inset-3 before:content-[''] hover:border-fg"
+          className="group relative grid size-5 shrink-0 place-items-center rounded-full border-[1.5px] border-line-strong transition-colors before:absolute before:-inset-3 before:content-[''] hover:border-accent"
           aria-label={comm ? `Complete and log: ${todo.title}` : `Complete: ${todo.title}`}
           title={comm ? "Complete and log how it went" : "Mark done"}
         >
-          <span className="size-2 rounded-full bg-fg opacity-0 transition-opacity group-hover:opacity-30" />
+          <span className="size-2 rounded-full bg-accent opacity-0 transition-opacity group-hover:opacity-50" />
         </button>
 
         <button onClick={() => ui.openTask(todo.id)} className="flex min-w-0 flex-1 items-baseline gap-2 text-left">
@@ -112,7 +112,7 @@ export function TodoItem({
             <span className="block truncate">{todo.title}</span>
             {(dueStr || context || pushedBack) && (
               <span className="block truncate text-[13px] text-muted">
-                {dueStr && <span className={cn(late && "text-late")}>{dueStr}</span>}
+                {dueStr && <span className={cn("num", late && "text-late")}>{dueStr}</span>}
                 {dueStr && context && " · "}
                 {context}
                 {pushedBack && <span className="text-missing"> · pushed back {todo.snooze_count}×</span>}
@@ -157,7 +157,7 @@ export function TodoItem({
           </div>
           <span
             title={todo.due_date ? dmy(todo.due_date) : undefined}
-            className={cn("hidden min-w-14 text-right text-sm sm:block", late ? "text-late" : "text-muted")}
+            className={cn("num hidden min-w-14 text-right text-sm sm:block", late ? "text-late" : "text-muted")}
           >
             {dueStr}
           </span>

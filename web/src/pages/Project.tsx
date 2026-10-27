@@ -5,6 +5,7 @@ import { PROJECT_STAGES, type Channel, type ProjectDetail, type ProjectStage, ty
 import { api, useApi } from "@/lib/api";
 import { addDays, dmy, relative, todayISO, workday } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { StageDot } from "@/components/Brand";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/dropdown";
@@ -130,7 +131,7 @@ export function ProjectPage() {
               <ul className="grid gap-3">
                 {data.contacts.map((c) => (
                   <li key={c.id} className="text-sm">
-                    <Link to={`/contacts/${c.id}`} className="font-medium hover:text-accent">
+                    <Link to={`/contacts/${c.id}`} className="font-medium hover:text-accent-text">
                       {c.name}
                     </Link>
                     {c.role && <span className="text-muted"> · {c.role}</span>}
@@ -285,9 +286,11 @@ function StageSwitcher({
             onClick={() => onStage(s.key)}
             className={cn(
               "rounded-md px-3 py-1.5 text-sm transition-colors",
+              "flex items-center gap-2",
               stage === s.key ? "bg-surface font-medium text-fg shadow-sm" : "text-muted hover:text-fg",
             )}
           >
+            <StageDot stage={s.key} className={stage === s.key ? undefined : "opacity-60"} />
             {s.key === "waiting" ? "Waiting" : s.label}
           </button>
         ))}
@@ -349,7 +352,7 @@ function InlineAddTodo({ projectId }: { projectId: string }) {
                 key={q.label}
                 type="button"
                 onClick={() => setDue(d)}
-                className={cn("h-7 rounded-full border px-2.5", due === d ? "border-fg bg-fg text-bg" : "border-line-strong text-muted hover:text-fg")}
+                className={cn("h-7 rounded-full border px-2.5", due === d ? "border-accent/50 bg-accent-soft font-medium text-accent-text" : "border-line-strong text-muted hover:text-fg")}
               >
                 {q.label}
               </button>

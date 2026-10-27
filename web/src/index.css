@@ -3,43 +3,52 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
-  Calm and neutral: near-white paper, soft ink, hairline dividers, one accent.
-  Muted red only for overdue, amber only for a missing next step.
+  The original layout with one blue. Cool neutrals, hairline dividers, and blue for
+  what you act on: buttons, where you are, today, focus. Numbers, dates and keys in a
+  monospace. Muted red only for overdue, amber only for a missing next step.
 */
 :root {
-  --bg: #fbfbfa;
+  --bg: #f8f9fb;
   --surface: #ffffff;
-  --subtle: #f3f3f1;
-  --hover: #f0f0ed;
-  --fg: #1c1d1f;
-  --muted: #6c6f73;
-  --faint: #797c80;
-  --line: #e8e8e5;
-  --line-strong: #d9d9d5;
-  --accent: #2f4fd0;
+  --subtle: #f0f2f5;
+  --hover: #eef1f5;
+  --fg: #0f141a;
+  --muted: #5d6470;
+  --faint: #6e7582;
+  --line: #e4e7ec;
+  --line-strong: #d3d8df;
+  --accent: #2563eb;
+  --accent-hover: #1d4fd8;
   --accent-fg: #ffffff;
-  --accent-soft: #eaeefc;
+  --accent-text: #1d4fd8;
+  --accent-soft: #e9f0fe;
+  --accent-glow: rgb(37 99 235 / 0.28);
   --late: #b4443a;
   --missing: #a8701a;
-  --ring: #2f4fd0;
+  --ring: #2563eb;
+  --grid: rgb(15 20 26 / 0.07);
 }
 
 .dark {
-  --bg: #141517;
-  --surface: #1a1b1e;
-  --subtle: #1f2023;
-  --hover: #232428;
-  --fg: #e8e8e6;
-  --muted: #9a9da1;
-  --faint: #7d8085;
-  --line: #2a2b2f;
-  --line-strong: #36383c;
-  --accent: #8da0ff;
-  --accent-fg: #0f1222;
-  --accent-soft: #222a4a;
-  --late: #e2796f;
+  --bg: #0b0e13;
+  --surface: #11151c;
+  --subtle: #171c24;
+  --hover: #1a2029;
+  --fg: #e6e9ef;
+  --muted: #9aa3b1;
+  --faint: #7a8392;
+  --line: #1f252f;
+  --line-strong: #2b323d;
+  --accent: #2f6fed;
+  --accent-hover: #4580f5;
+  --accent-fg: #ffffff;
+  --accent-text: #7ea8ff;
+  --accent-soft: #14213b;
+  --accent-glow: rgb(47 111 237 / 0.4);
+  --late: #f07a70;
   --missing: #d9a24a;
-  --ring: #8da0ff;
+  --ring: #5b8ff7;
+  --grid: rgb(230 233 239 / 0.06);
   color-scheme: dark;
 }
 
@@ -54,12 +63,15 @@
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
   --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
   --color-accent-fg: var(--accent-fg);
+  --color-accent-text: var(--accent-text);
   --color-accent-soft: var(--accent-soft);
   --color-late: var(--late);
   --color-missing: var(--missing);
   --color-ring: var(--ring);
   --font-sans: "Archivo Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, "SF Mono", Menlo, monospace;
 }
 
 @layer base {
@@ -77,6 +89,12 @@
   ::before,
   ::after {
     border-color: var(--line);
+  }
+  ::selection {
+    background: var(--accent-soft);
+  }
+  kbd {
+    font-family: var(--font-mono);
   }
   :focus-visible {
     outline: 2px solid var(--ring);
@@ -100,13 +118,41 @@
     font-weight: 600;
     letter-spacing: -0.01em;
   }
-  /* Quiet section labels. */
+  /* Section labels: small monospace caps, like a status readout. */
   .label {
-    font-size: 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
     font-weight: 500;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--muted);
+  }
+  /* Dates, times and counts. */
+  .num {
+    font-family: var(--font-mono);
+    font-size: 0.86em;
+    letter-spacing: -0.01em;
+  }
+  /* A key you can press. */
+  .keycap {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.4rem;
+    height: 1.25rem;
+    padding: 0 0.3rem;
+    border: 1px solid var(--line-strong);
+    border-bottom-width: 2px;
+    border-radius: 5px;
+    background: var(--surface);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    line-height: 1;
+    color: var(--muted);
+  }
+  /* Faint engineering-paper dots, for empty and sign-in screens. */
+  .dot-grid {
+    background-image: radial-gradient(var(--grid) 1px, transparent 1px);
+    background-size: 18px 18px;
   }
 }
 
