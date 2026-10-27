@@ -4,7 +4,7 @@
     "buildCommand": "npm install --include=dev --no-audit --no-fund && npm run build"
   },
   "deploy": {
-    "startCommand": "npm start",
+    "startCommand": "node dist-server/server/index.js",
     "healthcheckPath": "/healthz",
     "healthcheckTimeout": 60,
     "restartPolicyType": "ON_FAILURE",
