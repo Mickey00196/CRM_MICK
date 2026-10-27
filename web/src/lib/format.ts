@@ -1,4 +1,14 @@
-const TZ = "Europe/Amsterdam";
+let TZ = "Europe/Amsterdam";
+
+/** Uses the server's time zone so dates match what the server considers "today". */
+export function setTimezone(tz: string) {
+  try {
+    new Intl.DateTimeFormat("en", { timeZone: tz });
+    TZ = tz;
+  } catch {
+    /* unknown zone: keep the default */
+  }
+}
 const nl = new Intl.NumberFormat("nl-NL");
 const eur = new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 

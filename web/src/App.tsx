@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { api, setUnauthorizedHandler } from "@/lib/api";
+import { setTimezone } from "@/lib/format";
 import { Shell } from "@/components/Shell";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Login } from "@/pages/Login";
 import { Todos } from "@/pages/Todos";
 import { Accounts } from "@/pages/Accounts";
@@ -16,8 +18,11 @@ export default function App() {
 
   useEffect(() => {
     setUnauthorizedHandler(() => setAuthed(false));
-    api<{ user: unknown }>("/me")
-      .then((r) => setAuthed(Boolean(r.user)))
+    api<{ user: unknown; timezone: string }>("/me")
+      .then((r) => {
+        setTimezone(r.timezone);
+        setAuthed(Boolean(r.user));
+      })
       .catch(() => setAuthed(false));
   }, []);
 
@@ -26,6 +31,16 @@ export default function App() {
 
   return (
     <Shell>
+      <Pages onLogout={() => setAuthed(false)} />
+    </Shell>
+  );
+}
+
+function Pages({ onLogout }: { onLogout: () => void }) {
+  const location = useLocation();
+  // Keyed on the path so a crash on one page doesn't stick when you navigate away.
+  return (
+    <ErrorBoundary key={location.pathname}>
       <Routes>
         <Route path="/" element={<Todos />} />
         <Route path="/accounts" element={<Accounts />} />
@@ -33,9 +48,9 @@ export default function App() {
         <Route path="/contacts" element={<Contacts />} />
         <Route path="/contacts/:id" element={<ContactPage />} />
         <Route path="/communication" element={<Communication />} />
-        <Route path="/settings" element={<SettingsPage onLogout={() => setAuthed(false)} />} />
+        <Route path="/settings" element={<SettingsPage onLogout={onLogout} />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </Shell>
+    </ErrorBoundary>
   );
 }

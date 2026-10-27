@@ -30,6 +30,12 @@ export function SettingsPage({ onLogout }: { onLogout: () => void }) {
     setTestResult(r.sent ? "Sent. Check your inbox." : r.reason ?? "Not sent.");
   }
 
+  async function logoutEverywhere() {
+    if (!confirm("Log out on every device, including this one?")) return;
+    await api("/logout-everywhere", "POST").catch(() => {});
+    onLogout();
+  }
+
   async function logout() {
     await api("/logout", "POST").catch(() => {});
     onLogout();
@@ -99,10 +105,16 @@ export function SettingsPage({ onLogout }: { onLogout: () => void }) {
         </dl>
       </Row>
 
-      <Row label="Account">
-        <Button variant="outline" size="sm" onClick={logout}>
-          Log out
-        </Button>
+      <Row label="Sessions">
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={logout}>
+            Log out
+          </Button>
+          <Button variant="ghost" size="sm" onClick={logoutEverywhere}>
+            Log out on all devices
+          </Button>
+        </div>
+        <p className="mt-2 text-[13px] text-muted">Use this if you lost a phone or laptop. Changing APP_PASSWORD on the server does the same.</p>
       </Row>
     </div>
   );

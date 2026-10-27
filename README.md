@@ -28,11 +28,11 @@ Deals board, documents upload, custom fields, CSV import. The tables for deals, 
 
 ## Stack
 
-- React, TypeScript, Tailwind and Radix (shadcn-style components), built with Vite.
-- An Express API on Postgres.
-- One service serves both the API and the built app.
-- Every table has `owner_id`, `created_at`, `updated_at` and `archived_at` (soft delete), and every query is scoped to the signed-in user.
-- Migrations run automatically on start.
+React, TypeScript, Tailwind and Radix (shadcn-style) on Vite. An Express API on Postgres. One service serves both the API and the app.
+
+## Architecture
+
+See [`docs/architecture.md`](docs/architecture.md): structure, security model, operations, the latest review and what's deliberately deferred.
 
 ## Run locally
 
@@ -44,12 +44,26 @@ npm run dev                   # API on :3000, app on :5173
 npm run seed:dev              # optional: 6 demo accounts tagged "demo"
 ```
 
+## Test
+
+```bash
+createdb crm_test                                   # once
+TEST_DATABASE_URL=postgres://localhost/crm_test npm test
+npm run typecheck
+```
+
+The tests wipe and rebuild the schema in the test database, so never point `TEST_DATABASE_URL` at real data. CI runs all of this on every push.
+
 ## Deploy on Railway
 
-1. Create a project with a **Postgres** database and a service from this GitHub repo.
-2. On the service, set these variables:
+1. Create a project. When asked for a region, pick **EU West (Amsterdam)**.
+2. Add a **PostgreSQL** database, and turn on **Backups** in its settings.
+3. Add a service from this GitHub repo.
+4. On the service, set these variables:
    - `DATABASE_URL` = `${{Postgres.DATABASE_URL}}`
-   - `APP_EMAIL`
-   - `APP_PASSWORD`
+   - `APP_EMAIL` and `APP_PASSWORD` (at least 16 characters)
+   - `TIMEZONE` = `Europe/Amsterdam`
    - optionally the reminder-email variables from `.env.example`
-3. Generate a domain. `railway.json` takes care of the build, start command and health check.
+5. Generate a domain and set `APP_URL` to it.
+
+`railway.json` sets the build and start commands and the health check (`/healthz`).

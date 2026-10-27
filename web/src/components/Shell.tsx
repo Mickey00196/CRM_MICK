@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   CheckCircle2,
@@ -53,9 +53,10 @@ export function Shell({ children }: { children: ReactNode }) {
     setTask(null);
   }, [location.pathname]);
 
-  const currentAccount = useCallback((): PickedAccount | null => {
-    const el = document.querySelector<HTMLElement>("[data-account-id]");
-    return el ? { id: el.dataset.accountId!, name: el.dataset.accountName ?? "" } : null;
+  const current = useRef<PickedAccount | null>(null);
+  const currentAccount = useCallback(() => current.current, []);
+  const setCurrentAccount = useCallback((a: PickedAccount | null) => {
+    current.current = a;
   }, []);
 
   const ui: UIActions = useMemo(
@@ -63,8 +64,9 @@ export function Shell({ children }: { children: ReactNode }) {
       openCapture: (kind = "todo", preset) => setCapture({ kind, account: preset?.account ?? currentAccount() }),
       openLog: (preset) => setLog(preset),
       openTask: (id, step = "view") => setTask({ id, step }),
+      setCurrentAccount,
     }),
-    [currentAccount],
+    [currentAccount, setCurrentAccount],
   );
 
   useEffect(() => {

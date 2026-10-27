@@ -58,19 +58,29 @@ export async function tx<T>(fn: (db: Db) => Promise<T>): Promise<T> {
   }
 }
 
+const MIGRATION_LOCK = 4242_0001;
+
+/** Applies pending migrations, one transaction each. An advisory lock stops two instances migrating at once. */
 export async function migrate(): Promise<void> {
-  await pool.query(`create table if not exists schema_migrations (
-    id text primary key,
-    applied_at timestamptz not null default now()
-  )`);
-  const done = new Set((await q<{ id: string }>("select id from schema_migrations")).map((r) => r.id));
-  for (const m of MIGRATIONS) {
-    if (done.has(m.id)) continue;
-    await tx(async (t) => {
-      await t.q(m.sql);
-      await t.q("insert into schema_migrations (id) values ($1)", [m.id]);
-    });
-    console.log(`Applied migration ${m.id}`);
+  const lock = await pool.connect();
+  try {
+    await lock.query("select pg_advisory_lock($1)", [MIGRATION_LOCK]);
+    await pool.query(`create table if not exists schema_migrations (
+      id text primary key,
+      applied_at timestamptz not null default now()
+    )`);
+    const done = new Set((await q<{ id: string }>("select id from schema_migrations")).map((r) => r.id));
+    for (const m of MIGRATIONS) {
+      if (done.has(m.id)) continue;
+      await tx(async (t) => {
+        await t.q(m.sql);
+        await t.q("insert into schema_migrations (id) values ($1)", [m.id]);
+      });
+      if (process.env.NODE_ENV !== "test") console.log(`Applied migration ${m.id}`);
+    }
+  } finally {
+    await lock.query("select pg_advisory_unlock($1)", [MIGRATION_LOCK]).catch(() => {});
+    lock.release();
   }
 }
 

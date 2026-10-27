@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { db, tx, type Db } from "../db.js";
 import { uid } from "../auth.js";
-import { f, pick, idOf, bad, notFound, insertSql, updateSql, HttpError, type Spec } from "../validate.js";
+import { f, pick, idOf, bad, notFound, insertSql, updateSql, normalizeDomain, HttpError, type Spec } from "../validate.js";
+import { csvCell, dmy } from "../csv.js";
 import { LAST_CONTACT, NEXT_STEP, OPEN_TASK_ORDER, PRIMARY_OFFICE } from "../sql.js";
 import {
   ACCOUNT_STATUSES,
@@ -13,22 +14,9 @@ import {
   TENURES,
   accountStatusLabel,
 } from "../../shared/model.js";
-import { createTask, parseNext } from "./tasks.js";
+import { createTask, parseNext } from "../domain/tasks.js";
 
 const keys = (opts: readonly { key: string }[]) => opts.map((o) => o.key);
-
-export function normalizeDomain(input: unknown, strict: boolean): string | null {
-  if (typeof input !== "string" || !input.trim()) return null;
-  const s = input
-    .trim()
-    .toLowerCase()
-    .replace(/^[a-z]+:\/\//, "")
-    .replace(/^www\./, "")
-    .split(/[/?#:]/)[0];
-  if (/^[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/.test(s)) return s;
-  if (strict) throw bad("Domain doesn't look right. Use something like example.nl.");
-  return null;
-}
 
 const ACCOUNT_SPEC: Spec = {
   name: [f.required(200), "Account name"],
@@ -145,12 +133,6 @@ accounts.get("/accounts", async (req, res) => {
   const archived = req.query.archived === "1";
   res.json(await db.q(`${LIST_SQL} where a.owner_id = $1 and ($2::boolean or a.archived_at is null) order by lower(a.name)`, [owner, archived]));
 });
-
-function csvCell(v: unknown, sep: string): string {
-  const s = v == null ? "" : String(v);
-  return s.includes(sep) || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s;
-}
-const dmy = (iso: string | null) => (iso ? `${iso.slice(8, 10)}-${iso.slice(5, 7)}-${iso.slice(0, 4)}` : "");
 
 accounts.get("/accounts/export.csv", async (req, res) => {
   const owner = uid(req);

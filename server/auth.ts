@@ -1,7 +1,8 @@
 import crypto from "node:crypto";
 import { promisify } from "node:util";
 import type { Request, Response, NextFunction } from "express";
-import { one, q, getMeta, setMeta } from "./db.js";
+import { one, q, getMeta } from "./db.js";
+import { TIMEZONE } from "./time.js";
 
 const scrypt = promisify(crypto.scrypt) as (pw: string, salt: string, len: number) => Promise<Buffer>;
 
@@ -9,7 +10,10 @@ const COOKIE = "df_session";
 const MAX_AGE_MS = 60 * 86400_000;
 let secret = process.env.SESSION_SECRET || "";
 
-async function hashPassword(pw: string): Promise<string> {
+/** Header every state-changing API request must carry. Browsers can't add it cross-site without CORS approval. */
+export const APP_HEADER = "x-crm-request";
+
+export async function hashPassword(pw: string): Promise<string> {
   const salt = crypto.randomBytes(16).toString("hex");
   const hash = await scrypt(pw, salt, 64);
   return `scrypt$${salt}$${hash.toString("hex")}`;
@@ -24,16 +28,16 @@ async function verifyPassword(pw: string, stored: string): Promise<boolean> {
 }
 
 /**
- * Creates or updates the login from APP_EMAIL / APP_PASSWORD on boot,
- * and makes sure there is a session signing secret.
+ * Makes sure there is a session signing secret, and creates or updates the login from APP_EMAIL / APP_PASSWORD.
+ * A changed password signs out all existing sessions.
  */
 export async function setupAuth(): Promise<void> {
   if (!secret) {
-    secret = (await getMeta("session_secret")) ?? "";
-    if (!secret) {
-      secret = crypto.randomBytes(32).toString("hex");
-      await setMeta("session_secret", secret);
-    }
+    // Insert-if-missing, then read back, so instances starting together agree on one secret.
+    await q("insert into meta (key, value) values ('session_secret', $1) on conflict (key) do nothing", [
+      crypto.randomBytes(32).toString("hex"),
+    ]);
+    secret = (await getMeta("session_secret"))!;
   }
 
   const email = (process.env.APP_EMAIL || "").trim().toLowerCase();
@@ -43,6 +47,7 @@ export async function setupAuth(): Promise<void> {
     if (!count?.n) console.warn("No login yet. Set APP_EMAIL and APP_PASSWORD to create one.");
     return;
   }
+  if (password.length < 10) console.warn("APP_PASSWORD is shorter than 10 characters. Use a longer one.");
   const existing = await one<{ id: string; password_hash: string }>(
     "select id, password_hash from users where lower(email) = $1",
     [email],
@@ -55,8 +60,11 @@ export async function setupAuth(): Promise<void> {
     ]);
     console.log(`Created login for ${email}.`);
   } else if (!(await verifyPassword(password, existing.password_hash))) {
-    await q("update users set password_hash = $2 where id = $1", [existing.id, await hashPassword(password)]);
-    console.log(`Updated password for ${email}.`);
+    await q("update users set password_hash = $2, session_version = session_version + 1 where id = $1", [
+      existing.id,
+      await hashPassword(password),
+    ]);
+    console.log(`Updated password for ${email}; existing sessions are signed out.`);
   }
 }
 
@@ -72,15 +80,26 @@ function readCookie(req: Request): string | undefined {
   return undefined;
 }
 
-function sessionUserId(req: Request): string | null {
+/** Token format: userId.sessionVersion.expiry.signature */
+function readSession(req: Request): { userId: string; version: number } | null {
   const token = readCookie(req);
   if (!token) return null;
-  const [userId, exp, sig] = token.split(".");
-  if (!userId || !exp || !sig) return null;
-  const expected = sign(`${userId}.${exp}`);
+  const [userId, version, exp, sig] = token.split(".");
+  if (!userId || !version || !exp || !sig) return null;
+  const expected = sign(`${userId}.${version}.${exp}`);
   if (sig.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null;
   if (Number(exp) < Date.now()) return null;
-  return userId;
+  return { userId, version: Number(version) };
+}
+
+async function sessionUser(req: Request) {
+  const s = readSession(req);
+  if (!s) return undefined;
+  const user = await one<{ id: string; email: string; name: string; session_version: number }>(
+    "select id, email, name, session_version from users where id = $1",
+    [s.userId],
+  );
+  return user && user.session_version === s.version ? user : undefined;
 }
 
 declare global {
@@ -98,18 +117,21 @@ export function uid(req: Request): string {
 }
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction) {
-  const id = sessionUserId(req);
-  if (id && (await one("select 1 from users where id = $1", [id]))) {
-    req.userId = id;
-    return next();
-  }
-  res.status(401).json({ error: "Log in to continue." });
+  const user = await sessionUser(req);
+  if (!user) return res.status(401).json({ error: "Log in to continue." });
+  req.userId = user.id;
+  next();
+}
+
+/** CSRF defence in depth (on top of SameSite=Lax cookies): writes must come from our own front end. */
+export function requireAppHeader(req: Request, res: Response, next: NextFunction) {
+  if (req.method === "GET" || req.method === "HEAD" || req.headers[APP_HEADER] === "1") return next();
+  res.status(403).json({ error: "This request didn't come from the app." });
 }
 
 export async function me(req: Request, res: Response) {
-  const id = sessionUserId(req);
-  const user = id ? await one("select id, email, name from users where id = $1", [id]) : undefined;
-  res.json({ user: user ?? null });
+  const user = await sessionUser(req);
+  res.json({ user: user ? { id: user.id, email: user.email, name: user.name } : null, timezone: TIMEZONE });
 }
 
 const attempts = new Map<string, { count: number; first: number }>();
@@ -118,20 +140,24 @@ const WINDOW_MS = 15 * 60 * 1000;
 export async function login(req: Request, res: Response) {
   const ip = req.ip || "unknown";
   const now = Date.now();
+  for (const [k, v] of attempts) if (now - v.first >= WINDOW_MS) attempts.delete(k);
   const entry = attempts.get(ip);
-  if (entry && now - entry.first < WINDOW_MS && entry.count >= 10) {
+  if (entry && entry.count >= 10) {
     return res.status(429).json({ error: "Too many attempts. Try again in 15 minutes." });
   }
   const email = typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : "";
   const password = typeof req.body?.password === "string" ? req.body.password : "";
   const user = email
-    ? await one<{ id: string; password_hash: string }>("select id, password_hash from users where lower(email) = $1", [email])
+    ? await one<{ id: string; password_hash: string; session_version: number }>(
+        "select id, password_hash, session_version from users where lower(email) = $1",
+        [email],
+      )
     : undefined;
   const ok = user ? await verifyPassword(password, user.password_hash) : false;
 
   if (!user || !ok) {
-    if (!entry || now - entry.first >= WINDOW_MS) attempts.set(ip, { count: 1, first: now });
-    else entry.count++;
+    if (entry) entry.count++;
+    else attempts.set(ip, { count: 1, first: now });
     const anyUser = await one<{ n: number }>("select count(*)::int as n from users");
     return res.status(anyUser?.n ? 401 : 503).json({
       error: anyUser?.n
@@ -142,7 +168,8 @@ export async function login(req: Request, res: Response) {
 
   attempts.delete(ip);
   const exp = String(now + MAX_AGE_MS);
-  res.cookie(COOKIE, `${user.id}.${exp}.${sign(`${user.id}.${exp}`)}`, {
+  const payload = `${user.id}.${user.session_version}.${exp}`;
+  res.cookie(COOKIE, `${payload}.${sign(payload)}`, {
     httpOnly: true,
     sameSite: "lax",
     secure: req.secure,
@@ -153,6 +180,13 @@ export async function login(req: Request, res: Response) {
 }
 
 export function logout(_req: Request, res: Response) {
+  res.clearCookie(COOKIE, { path: "/" });
+  res.json({ ok: true });
+}
+
+/** Signs out every device, including this one. */
+export async function logoutEverywhere(req: Request, res: Response) {
+  await q("update users set session_version = session_version + 1 where id = $1", [uid(req)]);
   res.clearCookie(COOKIE, { path: "/" });
   res.json({ ok: true });
 }

@@ -255,4 +255,9 @@ ${["users", "accounts", "office_locations", "contacts", "deals", "tasks", "activ
   .join("\n")}
 `,
   },
+  {
+    // Bumping a user's session_version signs out every existing session (password change, "log out everywhere").
+    id: "002_session_version",
+    sql: `alter table users add column session_version integer not null default 1;`,
+  },
 ];

@@ -159,3 +159,17 @@ export function updateSql(table: string, id: string, ownerId: string, cols: Reco
     values: [id, ownerId, ...Object.values(cols)],
   };
 }
+
+/** "https://www.Example.nl/about" -> "example.nl". With strict, rejects input that isn't a domain. */
+export function normalizeDomain(input: unknown, strict: boolean): string | null {
+  if (typeof input !== "string" || !input.trim()) return null;
+  const s = input
+    .trim()
+    .toLowerCase()
+    .replace(/^[a-z]+:\/\//, "")
+    .replace(/^www\./, "")
+    .split(/[/?#:]/)[0];
+  if (/^[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/.test(s)) return s;
+  if (strict) throw bad("Domain doesn't look right. Use something like example.nl.");
+  return null;
+}

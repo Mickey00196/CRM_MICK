@@ -59,7 +59,7 @@
   --color-late: var(--late);
   --color-missing: var(--missing);
   --color-ring: var(--ring);
-  --font-sans: "Archivo", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: "Archivo Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 @layer base {

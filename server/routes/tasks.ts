@@ -1,64 +1,10 @@
 import { Router } from "express";
-import { db, tx, type Db } from "../db.js";
+import { db, tx } from "../db.js";
 import { uid } from "../auth.js";
-import { f, pick, idOf, bad, notFound, insertSql, updateSql, type Spec } from "../validate.js";
-import { LAST_CONTACT, OPEN_TASK_ORDER, assertOwned, todayISO } from "../sql.js";
-import {
-  ACTIVE_ACCOUNT_STATUSES,
-  CLOSED_DEAL_STAGES,
-  OUTCOMES,
-  TASK_TYPES,
-  channelForTaskType,
-  type Channel,
-  type TodoRow,
-} from "../../shared/model.js";
-
-const TYPE_KEYS = TASK_TYPES.map((t) => t.key);
-
-export const TASK_SPEC: Spec = {
-  title: [f.required(300), "To-do"],
-  type: [f.oneOf(TYPE_KEYS, false), "Type"],
-  due_date: [f.date(), "Due date"],
-  due_time: [f.time(), "Time"],
-  priority: [f.oneOf(["normal", "high"], false), "Priority"],
-  account_id: [f.uuid(), "Account"],
-  contact_id: [f.uuid(), "Contact"],
-  deal_id: [f.uuid(), "Deal"],
-  notes: [f.text(5000), "Notes"],
-};
-
-const NEXT_SPEC: Spec = {
-  type: [f.oneOf(TYPE_KEYS, false), "Next step type"],
-  title: [f.required(300), "Next step"],
-  due_date: [f.date(), "Next step date"],
-  due_time: [f.time(), "Next step time"],
-  contact_id: [f.uuid(), "Contact"],
-  priority: [f.oneOf(["normal", "high"], false), "Priority"],
-};
-
-/** Parses an optional { next: {...} } block. Returns null when absent or explicitly null. */
-export function parseNext(body: any): Record<string, unknown> | null {
-  if (!body?.next) return null;
-  const next = { type: "todo", priority: "normal", ...body.next };
-  return pick(next, NEXT_SPEC, true);
-}
-
-export async function createTask(t: Db, owner: string, cols: Record<string, unknown>) {
-  await assertOwned(t, "accounts", cols.account_id as string, owner, "That account");
-  await assertOwned(t, "contacts", cols.contact_id as string, owner, "That contact");
-  await assertOwned(t, "deals", cols.deal_id as string, owner, "That deal");
-  const { text, values } = insertSql("tasks", { ...cols, owner_id: owner });
-  return t.one(text, values);
-}
-
-export function validateOutcome(channel: string, outcome: unknown): string | null {
-  if (outcome === undefined || outcome === null || outcome === "") return null;
-  const options = OUTCOMES[channel as Channel] ?? [];
-  if (typeof outcome !== "string" || !options.some((o) => o.key === outcome)) {
-    throw bad("That outcome doesn't fit this channel.");
-  }
-  return outcome;
-}
+import { pick, idOf, notFound } from "../validate.js";
+import { LAST_CONTACT, OPEN_TASK_ORDER, todayISO } from "../sql.js";
+import { ACTIVE_ACCOUNT_STATUSES, CLOSED_DEAL_STAGES, type TodoRow } from "../../shared/model.js";
+import { TASK_SPEC, completeTask, createTask, updateTask } from "../domain/tasks.js";
 
 export const tasks = Router();
 
@@ -161,76 +107,20 @@ tasks.get("/tasks/:id", async (req, res) => {
 tasks.post("/tasks", async (req, res) => {
   const owner = uid(req);
   const cols = pick({ type: "todo", priority: "normal", ...req.body }, TASK_SPEC, true);
-  if (!cols.title) throw bad("To-do is required.");
-  res.status(201).json(await createTask(db, owner, cols));
+  res.status(201).json(await tx((t) => createTask(t, owner, cols)));
 });
 
 tasks.patch("/tasks/:id", async (req, res) => {
   const owner = uid(req);
   const id = idOf(req.params.id, "That to-do");
-  const cols = pick(req.body, TASK_SPEC, true);
-  // Snoozing moves the due date and remembers it was snoozed.
-  if (req.body?.snooze_until !== undefined) {
-    const until = f.date()(req.body.snooze_until, "Snooze date");
-    if (!until) throw bad("Pick a date to snooze to.");
-    cols.due_date = until;
-    cols.snoozed_until = until;
-  }
-  await assertOwned(db, "accounts", cols.account_id as string, owner, "That account");
-  await assertOwned(db, "contacts", cols.contact_id as string, owner, "That contact");
-  const { text, values } = updateSql("tasks", id, owner, cols);
-  const row = await db.one(text, values);
-  if (!row) throw notFound("That to-do");
-  res.json(row);
+  res.json(await tx((t) => updateTask(t, owner, id, req.body)));
 });
 
-/**
- * "How did it go?" — completes the to-do, logs the communication and creates the next step in one go.
- * Body: { outcome?, note?, contact_id?, direction?, next?: { type, title, due_date, due_time?, contact_id? } | null }
- */
+/** "How did it go?": completes the to-do, logs the communication and creates the next step in one go. */
 tasks.post("/tasks/:id/complete", async (req, res) => {
   const owner = uid(req);
   const id = idOf(req.params.id, "That to-do");
-  const body = req.body ?? {};
-  const note = f.text(5000)(body.note, "Note") as string;
-  const contactId = f.uuid()(body.contact_id, "Contact") as string | null;
-  const direction = f.oneOf(["outbound", "inbound"])(body.direction, "Direction") ?? "outbound";
-  const next = parseNext(body);
-
-  const result = await tx(async (t) => {
-    const task = await t.one(
-      "select * from tasks where id = $1 and owner_id = $2 and archived_at is null for update",
-      [id, owner],
-    );
-    if (!task) throw notFound("That to-do");
-    if (task.status === "done") throw bad("This to-do is already done.");
-    await assertOwned(t, "contacts", contactId, owner, "That contact");
-
-    const channel = channelForTaskType(task.type);
-    const outcome = channel ? validateOutcome(channel, body.outcome) : null;
-    let activity = null;
-    if (task.account_id && (channel || note)) {
-      activity = await t.one(
-        `insert into activities (owner_id, account_id, contact_id, deal_id, task_id, channel, direction, outcome, summary, source)
-         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'todo') returning *`,
-        [owner, task.account_id, contactId ?? task.contact_id, task.deal_id, task.id, channel ?? "note", direction, outcome, note || task.title],
-      );
-    }
-    await t.q(
-      "update tasks set status = 'done', completed_at = now(), completion_activity_id = $2 where id = $1",
-      [task.id, activity?.id ?? null],
-    );
-    const next_task = next
-      ? await createTask(t, owner, {
-          ...next,
-          account_id: task.account_id,
-          deal_id: task.deal_id,
-          contact_id: next.contact_id ?? contactId ?? task.contact_id,
-        })
-      : null;
-    return { activity, next_task };
-  });
-  res.json(result);
+  res.json(await tx((t) => completeTask(t, owner, id, req.body ?? {})));
 });
 
 tasks.post("/tasks/:id/reopen", async (req, res) => {

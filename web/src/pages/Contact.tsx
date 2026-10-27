@@ -8,8 +8,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/dialog";
 import { Timeline } from "@/components/Timeline";
-import { useUI } from "@/components/ui-context";
-import { ContactForm } from "./Account";
+import { useCurrentAccount, useUI } from "@/components/ui-context";
+import { ContactForm } from "@/components/ContactForm";
 
 export function ContactPage() {
   const id = useParams().id!;
@@ -17,6 +17,7 @@ export function ContactPage() {
   const [editing, setEditing] = useState(false);
   const ui = useUI();
   const today = todayISO();
+  useCurrentAccount(data?.contact.account_id ? { id: data.contact.account_id, name: data.contact.account_name ?? "" } : null);
 
   if (error) return <p className="text-sm text-late">{error}</p>;
   if (!data) return null;
@@ -24,7 +25,7 @@ export function ContactPage() {
   const account = c.account_id ? { id: c.account_id, name: c.account_name ?? "" } : null;
 
   return (
-    <div className="mx-auto max-w-4xl" {...(account ? { "data-account-id": account.id, "data-account-name": account.name } : {})}>
+    <div className="mx-auto max-w-4xl">
       <Link to={account ? `/accounts/${account.id}` : "/contacts"} className="mb-6 inline-flex items-center gap-1 text-[13px] text-muted hover:text-fg">
         <ArrowLeft className="size-3.5" /> {account ? account.name : "Contacts"}
       </Link>

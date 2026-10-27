@@ -21,7 +21,8 @@ export async function api<T = any>(path: string, method: Method = "GET", body?: 
   try {
     res = await fetch("/api" + path, {
       method,
-      headers: body !== undefined ? { "Content-Type": "application/json" } : undefined,
+      // The server rejects writes without this header (CSRF defence).
+      headers: { "X-CRM-Request": "1", ...(body !== undefined ? { "Content-Type": "application/json" } : {}) },
       body: body !== undefined ? JSON.stringify(body) : undefined,
       credentials: "same-origin",
     });
@@ -41,19 +42,23 @@ export function useLoad<T>(load: () => Promise<T>, deps: unknown[], { live = tru
   const [error, setError] = useState<string | null>(null);
   const loadRef = useRef(load);
   loadRef.current = load;
+  // Only the latest request may update state; a slow earlier response can't overwrite a newer one.
+  const seq = useRef(0);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const reload = useCallback(
-    () =>
-      loadRef
-        .current()
-        .then((d) => {
-          setData(d);
-          setError(null);
-        })
-        .catch((e: Error) => setError(e.message)),
-    deps,
-  );
+  const reload = useCallback(() => {
+    const n = ++seq.current;
+    return loadRef
+      .current()
+      .then((d) => {
+        if (n !== seq.current) return;
+        setData(d);
+        setError(null);
+      })
+      .catch((e: Error) => {
+        if (n === seq.current) setError(e.message);
+      });
+  }, deps);
 
   useEffect(() => {
     reload();
