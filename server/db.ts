@@ -20,6 +20,9 @@ export const pool = new pg.Pool({
   max: 8,
 });
 
+// An idle connection dropping (database restart, network blip) must not crash the app; the pool reconnects.
+pool.on("error", (err) => console.error("Database connection lost; will reconnect:", err.message));
+
 export interface Db {
   q<T = any>(text: string, params?: unknown[]): Promise<T[]>;
   one<T = any>(text: string, params?: unknown[]): Promise<T | undefined>;
