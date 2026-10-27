@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
-  CheckCircle2,
-  FolderKanban,
+  CircleCheck,
+  SquareKanban,
   FolderPlus,
   Building2,
   Users,
@@ -30,13 +30,17 @@ import { Toaster } from "./Toast";
 import { Wordmark } from "./Brand";
 
 const NAV = [
-  { to: "/", label: "To-dos", short: "To-dos", icon: CheckCircle2, end: true },
-  { to: "/projects", label: "Projects", short: "Projects", icon: FolderKanban },
+  { to: "/", label: "To-dos", short: "To-dos", icon: CircleCheck, end: true },
+  { to: "/projects", label: "Projects", short: "Projects", icon: SquareKanban },
   { to: "/accounts", label: "Companies", short: "Companies", icon: Building2 },
   { to: "/contacts", label: "Contacts", short: "Contacts", icon: Users },
   { to: "/communication", label: "Log", short: "Log", icon: MessagesSquare },
   { to: "/settings", label: "Settings", short: "Settings", icon: Settings },
 ];
+
+function Kbd({ children }: { children: ReactNode }) {
+  return <kbd className="mr-0.5 rounded-[4px] bg-subtle px-1 font-sans text-[11px] font-medium text-muted">{children}</kbd>;
+}
 
 function isTyping(e: KeyboardEvent) {
   const t = e.target as HTMLElement;
@@ -111,62 +115,61 @@ export function Shell({ children }: { children: ReactNode }) {
 
   return (
     <UIContext.Provider value={ui}>
-      <div className={cn("min-h-dvh md:grid", collapsed ? "md:grid-cols-[64px_1fr]" : "md:grid-cols-[224px_1fr]")}>
-        {/* Left menu (desktop) */}
-        <aside className="sticky top-0 hidden h-dvh flex-col bg-side px-3 pb-4 pt-5 text-side-fg md:flex">
-          <div className={cn("mb-6 flex items-center", collapsed ? "flex-col gap-3" : "justify-between pl-1.5")}>
-            <NavLink to="/" aria-label="Mick CRM, to-dos">
+      <div className={cn("min-h-dvh md:grid", collapsed ? "md:grid-cols-[68px_1fr]" : "md:grid-cols-[240px_1fr]")}>
+        {/* Sidebar (desktop) */}
+        <aside className="glass sticky top-0 z-10 hidden h-dvh flex-col border-r border-line bg-[var(--sidebar)] px-3 pb-4 pt-4 md:flex">
+          <div className={cn("mb-4 flex items-center", collapsed ? "flex-col gap-3" : "justify-between pl-1.5")}>
+            <NavLink to="/" aria-label="Mick CRM, to-dos" className="rounded-lg">
               <Wordmark collapsed={collapsed} />
             </NavLink>
             <button
               onClick={() => setCollapsed(!collapsed)}
-              className="rounded-md p-1.5 text-side-muted transition-colors hover:bg-side-hover hover:text-side-fg"
-              aria-label={collapsed ? "Expand menu" : "Collapse menu"}
+              className="grid size-7 place-items-center rounded-md text-muted transition-colors hover:bg-hover hover:text-fg"
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
-              {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
+              {collapsed ? <PanelLeftOpen className="size-[17px]" /> : <PanelLeftClose className="size-[17px]" />}
             </button>
           </div>
 
-          <Menu>
-            <MenuTrigger asChild>
-              <button
-                className={cn(
-                  "mb-2 flex h-10 items-center gap-2 rounded-lg bg-brass text-sm font-semibold text-brass-fg shadow-sm transition hover:brightness-105",
-                  collapsed ? "justify-center" : "px-3",
-                )}
-                aria-label="New"
-              >
-                <Plus className="size-4" strokeWidth={2.5} />
-                {!collapsed && "New"}
-              </button>
-            </MenuTrigger>
-            <MenuContent>
-              {newItems.map((i) => (
-                <MenuItem key={i.kind} onSelect={() => ui.openCapture(i.kind)}>
-                  <i.icon /> {i.label}
-                  {i.key && <kbd className="ml-auto pl-4 font-sans text-xs text-faint">{i.key}</kbd>}
-                </MenuItem>
-              ))}
-            </MenuContent>
-          </Menu>
+          <div className={cn("mb-4 flex gap-2", collapsed && "flex-col items-center")}>
+            <button
+              onClick={() => setSearching(true)}
+              className={cn(
+                "flex h-8 items-center gap-1.5 rounded-lg bg-subtle text-[14px] text-muted transition-colors hover:bg-subtle-hover",
+                collapsed ? "w-8 justify-center" : "flex-1 px-2.5",
+              )}
+              aria-label="Search"
+            >
+              <Search className="size-[15px]" />
+              {!collapsed && (
+                <>
+                  Search
+                  <kbd className="ml-auto rounded-[5px] bg-surface/70 px-1.5 font-sans text-[11px] text-faint shadow-[var(--shadow-card)]">/</kbd>
+                </>
+              )}
+            </button>
+            <Menu>
+              <MenuTrigger asChild>
+                <button
+                  className="grid size-8 shrink-0 place-items-center rounded-full bg-accent text-white shadow-[0_2px_6px_rgb(0_122_255/0.35)] transition hover:bg-accent-hover active:scale-95"
+                  aria-label="New"
+                  title="New"
+                >
+                  <Plus className="size-[17px]" strokeWidth={2.5} />
+                </button>
+              </MenuTrigger>
+              <MenuContent align={collapsed ? "start" : "end"}>
+                {newItems.map((i) => (
+                  <MenuItem key={i.kind} onSelect={() => ui.openCapture(i.kind)}>
+                    <i.icon /> {i.label}
+                    {i.key && <kbd className="ml-auto pl-4 font-sans text-xs text-faint">{i.key}</kbd>}
+                  </MenuItem>
+                ))}
+              </MenuContent>
+            </Menu>
+          </div>
 
-          <button
-            onClick={() => setSearching(true)}
-            className={cn(
-              "mb-5 flex h-9 items-center gap-2 rounded-lg text-sm text-side-muted ring-1 ring-side-line transition-colors hover:bg-side-hover hover:text-side-fg",
-              collapsed ? "justify-center" : "px-3",
-            )}
-            aria-label="Search"
-          >
-            <Search className="size-4" />
-            {!collapsed && (
-              <>
-                Search <kbd className="ml-auto rounded border border-side-line px-1.5 text-[11px]">/</kbd>
-              </>
-            )}
-          </button>
-
-          <nav className="grid gap-0.5">
+          <nav className="grid gap-px">
             {NAV.map((n) => (
               <NavLink
                 key={n.to}
@@ -175,69 +178,65 @@ export function Shell({ children }: { children: ReactNode }) {
                 title={collapsed ? n.label : undefined}
                 className={({ isActive }) =>
                   cn(
-                    "relative flex h-9 items-center gap-2.5 rounded-lg text-sm transition-colors",
-                    collapsed ? "justify-center" : "px-3",
-                    isActive ? "bg-side-active font-medium text-white" : "text-side-muted hover:bg-side-hover hover:text-side-fg",
+                    "flex h-8 items-center gap-2.5 rounded-lg text-[14px] transition-colors",
+                    collapsed ? "justify-center" : "px-2.5",
+                    isActive ? "bg-[rgb(0_0_0/0.07)] font-semibold dark:bg-white/10" : "text-fg hover:bg-hover",
                   )
                 }
               >
-                {({ isActive }) => (
-                  <>
-                    {isActive && <span className="absolute inset-y-2 left-0 w-[3px] rounded-r bg-brass" aria-hidden="true" />}
-                    <n.icon className="size-4 shrink-0" />
-                    {!collapsed && n.label}
-                  </>
-                )}
+                <n.icon className="size-[18px] shrink-0 text-accent" strokeWidth={1.9} />
+                {!collapsed && n.label}
               </NavLink>
             ))}
           </nav>
 
           {!collapsed && (
-            <p className="mt-auto px-3 text-xs leading-relaxed text-side-muted/80">
-              <kbd className="font-sans">N</kbd> to-do · <kbd className="font-sans">P</kbd> project · <kbd className="font-sans">L</kbd> log
+            <p className="mt-auto px-2.5 text-[12px] leading-relaxed text-faint">
+              <Kbd>N</Kbd> to-do <Kbd>P</Kbd> project <Kbd>L</Kbd> log
             </p>
           )}
         </aside>
 
-        {/* Top bar (mobile) */}
-        <header className="sticky top-0 z-20 flex h-13 items-center justify-between bg-side px-4 text-side-fg md:hidden">
+        {/* Navigation bar (mobile) */}
+        <header className="glass sticky top-0 z-20 flex h-12 items-center justify-between border-b border-line bg-[var(--bar)] px-4 md:hidden">
           <Wordmark />
-          <div className="flex items-center gap-1">
-            <button onClick={() => setSearching(true)} className="rounded-md p-2 text-side-muted hover:text-side-fg" aria-label="Search">
-              <Search className="size-[18px]" />
+          <div className="-mr-2 flex items-center">
+            <button onClick={() => setSearching(true)} className="grid size-10 place-items-center text-accent" aria-label="Search">
+              <Search className="size-[21px]" />
             </button>
-            <NavLink to="/settings" className="rounded-md p-2 text-side-muted hover:text-side-fg" aria-label="Settings">
-              <Settings className="size-[18px]" />
+            <NavLink to="/settings" className="grid size-10 place-items-center text-accent" aria-label="Settings">
+              <Settings className="size-[21px]" />
             </NavLink>
           </div>
         </header>
 
         {/* Page */}
-        <main className="min-w-0 px-4 pb-28 pt-6 sm:px-8 md:pb-16 md:pt-10 lg:px-12 xl:px-16">{children}</main>
+        <main className="min-w-0 px-4 pb-32 pt-5 sm:px-8 md:pb-16 md:pt-10 lg:px-12 xl:px-16">{children}</main>
 
-        {/* Bottom bar (mobile) */}
-        <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+        {/* Tab bar (mobile) */}
+        <nav className="glass fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-line bg-[var(--bar)] pb-[env(safe-area-inset-bottom)] md:hidden">
           {[NAV[0], NAV[1], null, NAV[2], NAV[4]].map((n, i) =>
             n ? (
               <NavLink
                 key={n.to}
                 to={n.to}
                 end={n.end}
-                className={({ isActive }) => cn("flex flex-col items-center gap-0.5 py-2 text-[11px]", isActive ? "font-medium text-accent" : "text-faint")}
+                className={({ isActive }) =>
+                  cn("flex flex-col items-center gap-0.5 pb-1.5 pt-2 text-[10.5px] font-medium", isActive ? "text-accent" : "text-[#8e8e93]")
+                }
               >
-                <n.icon className="size-5" />
+                <n.icon className="size-6" strokeWidth={1.8} />
                 {n.short}
               </NavLink>
             ) : (
-              <button key={i} onClick={() => ui.openCapture("todo")} className="flex flex-col items-center justify-center" aria-label="New">
-                <span className="grid size-11 place-items-center rounded-full bg-brass text-brass-fg shadow-[var(--shadow-lift)]">
-                  <Plus className="size-5" />
+              <button key={i} onClick={() => ui.openCapture("todo")} className="flex items-center justify-center" aria-label="New">
+                <span className="grid size-11 place-items-center rounded-full bg-accent text-white shadow-[0_4px_12px_rgb(0_122_255/0.4)] active:scale-95">
+                  <Plus className="size-6" strokeWidth={2.4} />
                 </span>
               </button>
             ),
           )}
         </nav>
-
       </div>
 
       <QuickCapture

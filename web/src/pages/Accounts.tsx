@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Menu, MenuCheckbox, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger } from "@/components/ui/dropdown";
 import { useUI } from "@/components/ui-context";
 import { Avatar } from "@/components/Avatar";
+import { PageHeader } from "@/components/Panel";
 
 type ColKey = "status" | "location" | "size" | "lease_end" | "next_step" | "last_contact" | "industry" | "source";
 
@@ -99,48 +100,44 @@ export function Accounts() {
 
   return (
     <div className="rise mx-auto max-w-6xl">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="display text-[28px] sm:text-[34px]">Companies</h1>
-          <p className="mt-1.5 text-sm text-muted">The clients and prospects behind your projects.</p>
-        </div>
-        <Button variant="accent" onClick={() => ui.openCapture("account")}>
-          <Plus /> Add company
-        </Button>
-      </header>
+      <PageHeader
+        title="Companies"
+        subtitle="The clients and prospects behind your projects."
+        actions={
+          <Button onClick={() => ui.openCapture("account")}>
+            <Plus /> New Company
+          </Button>
+        }
+      />
 
-      <div className="mb-4 flex max-w-full flex-wrap items-center gap-1 rounded-xl bg-subtle p-1 sm:w-fit">
-        {VIEWS.map((v) => (
-          <button
-            key={v.key}
-            onClick={() => setView(v.key)}
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-all",
-              view === v.key ? "bg-surface font-semibold text-fg shadow-[var(--shadow-card)]" : "text-muted hover:text-fg",
-            )}
-          >
-            {v.label} <span className={cn("text-[12px] tabular-nums", view === v.key ? "text-accent" : "text-faint")}>{counts[v.key]}</span>
-          </button>
-        ))}
-        {saved.map((s) => (
-          <button
-            key={s.name}
-            onClick={() => {
-              setView(s.view);
-              setQ(s.q);
-              setSort(s.sort);
-            }}
-            className="rounded-lg px-3 py-1.5 text-sm text-muted hover:text-fg"
-          >
-            {s.name}
-          </button>
-        ))}
+      <div className="mb-4 max-w-full overflow-x-auto">
+        <div className="segmented" role="radiogroup" aria-label="View">
+          {VIEWS.map((v) => (
+            <button key={v.key} role="radio" aria-checked={view === v.key} onClick={() => setView(v.key)}>
+              {v.label} <span className="text-[12px] font-medium tabular-nums text-faint">{counts[v.key]}</span>
+            </button>
+          ))}
+          {saved.map((s) => (
+            <button
+              key={s.name}
+              role="radio"
+              aria-checked={false}
+              onClick={() => {
+                setView(s.view);
+                setQ(s.q);
+                setSort(s.sort);
+              }}
+            >
+              {s.name}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="relative min-w-48 flex-1 sm:max-w-xs">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-faint" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter by name, area, tag…" className="h-9 pl-8 text-[13px]" />
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-faint" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, area, tag" className="h-9 pl-8" />
         </div>
         {selected.size > 0 ? (
           <div className="flex items-center gap-2 text-[13px]">
@@ -258,8 +255,8 @@ export function Accounts() {
                   </td>
                   <td>
                     <span className="flex items-center gap-2.5">
-                      <Avatar name={a.name} size="sm" />
-                      <span className="font-semibold">{a.name}</span>
+                      <Avatar name={a.name} size="md" />
+                      <span className="font-medium">{a.name}</span>
                     </span>
                   </td>
                   {shown.map((c) => (
@@ -308,7 +305,7 @@ function Cell({ row: a, col, today }: { row: AccountRow; col: ColKey; today: str
         <span
           className={cn(
             "inline-flex rounded-full px-2 py-0.5 text-[12px] font-semibold",
-            a.status === "client" ? "bg-accent-soft text-accent" : a.status === "prospect" ? "bg-brass-soft text-fg" : "bg-subtle text-muted",
+            a.status === "client" ? "bg-green-soft text-green-text" : a.status === "prospect" ? "bg-accent-soft text-accent" : "bg-subtle text-muted",
           )}
         >
           {accountStatusLabel(a.status)}
@@ -326,7 +323,7 @@ function Cell({ row: a, col, today }: { row: AccountRow; col: ColKey; today: str
       }
       const late = a.next_step.due_date && a.next_step.due_date < today;
       return (
-        <span className={cn("block max-w-56 truncate", late ? "text-late" : "text-fg")}>
+        <span className={cn("block max-w-56 truncate", late ? "text-late-text" : "text-fg")}>
           {a.next_step.title}
           {a.next_step.due_date && <span className={late ? "" : "text-muted"}> · {dmy(a.next_step.due_date)}</span>}
         </span>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, useLoad, useStored } from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import { Chips } from "@/components/ui/input";
+import { Archive, Bell, ChevronRight, FileSpreadsheet, Send, SunMoon } from "lucide-react";
+import { PageHeader } from "@/components/Panel";
 
 type Theme = "system" | "light" | "dark";
 
@@ -43,93 +43,125 @@ export function SettingsPage({ onLogout }: { onLogout: () => void }) {
 
   return (
     <div className="rise mx-auto max-w-2xl">
-      <h1 className="display mb-6 text-[28px] sm:text-[34px]">Settings</h1>
-      <div className="card px-5 sm:px-6">
+      <PageHeader title="Settings" />
 
-      <Row label="Appearance">
-        <Chips
-          options={[
-            { key: "system", label: "System" },
-            { key: "light", label: "Light" },
-            { key: "dark", label: "Dark" },
-          ]}
-          value={theme}
-          onChange={setTheme}
-          size="sm"
-        />
-      </Row>
-
-      <Row label="Daily reminder email">
-        {data?.reminders ? (
-          <div className="grid gap-2 text-sm">
-            <p className="text-muted">Weekdays at 07:30 to {data.reminder_to}: overdue, today, and accounts without a next step.</p>
-            <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm" onClick={testEmail}>
-                Send a test now
-              </Button>
-              {testResult && <span className="text-[13px] text-muted">{testResult}</span>}
+      <div className="grid gap-8">
+        <Group>
+          <Row icon={SunMoon} tone="bg-indigo" label="Appearance">
+            <div className="segmented" role="radiogroup" aria-label="Appearance">
+              {(["system", "light", "dark"] as const).map((t) => (
+                <button key={t} role="radio" aria-checked={theme === t} onClick={() => setTheme(t)} className="capitalize">
+                  {t === "system" ? "Auto" : t}
+                </button>
+              ))}
             </div>
-          </div>
-        ) : (
-          <p className="text-sm text-muted">Off. Set RESEND_API_KEY and DIGEST_TO on the server to turn it on.</p>
-        )}
-      </Row>
+          </Row>
+        </Group>
 
-      <Row label="Your data">
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <a href="/api/accounts/export.csv" download>
-              Export companies (CSV)
-            </a>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <a href="/api/export.json" download>
-              Export everything (JSON)
-            </a>
-          </Button>
-        </div>
-      </Row>
+        <Group
+          footer={
+            data?.reminders
+              ? `Weekdays at 07:30 to ${data.reminder_to}: overdue, today, and projects without a next step.`
+              : "Set RESEND_API_KEY and DIGEST_TO on the server to turn it on."
+          }
+        >
+          <Row icon={Bell} tone="bg-late" label="Daily reminder email">
+            <span className="text-[15px] text-muted">{data?.reminders ? "On" : "Off"}</span>
+          </Row>
+          {data?.reminders && (
+            <Row icon={Send} tone="bg-accent" label="Send a test now" onClick={testEmail}>
+              <span className="text-[15px] text-muted">{testResult}</span>
+            </Row>
+          )}
+        </Group>
 
-      <Row label="Keyboard">
-        <dl className="grid grid-cols-[6.5rem_1fr] items-baseline gap-y-2 text-sm">
+        <Group header="Your data" footer="A full copy of everything in the CRM. Keep one somewhere safe.">
+          <Row icon={FileSpreadsheet} tone="bg-green" label="Export companies" href="/api/accounts/export.csv" value="CSV" />
+          <Row icon={Archive} tone="bg-accent" label="Export everything" href="/api/export.json" value="JSON" />
+        </Group>
+
+        <Group header="Keyboard shortcuts">
           {[
             ["N", "New to-do"],
             ["P", "New project"],
-            ["L", "Log a call, email or note (for the project or company you're on)"],
+            ["L", "Log a call, email or note"],
             ["/", "Search"],
-            ["⌘K / Ctrl K", "Quick capture, from anywhere"],
+            ["⌘K", "Quick capture"],
           ].map(([k, v]) => (
-            <div key={k} className="contents">
-              <dt>
-                <kbd className="rounded-md border border-line-strong bg-subtle px-1.5 py-0.5 text-[12px] font-semibold">{k}</kbd>
-              </dt>
-              <dd>{v}</dd>
-            </div>
+            <Row key={k} label={v}>
+              <kbd className="rounded-md bg-subtle px-2 py-0.5 font-sans text-[13px] font-semibold text-muted">{k}</kbd>
+            </Row>
           ))}
-        </dl>
-      </Row>
+        </Group>
 
-      <Row label="Sessions">
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={logout}>
-            Log out
-          </Button>
-          <Button variant="ghost" size="sm" onClick={logoutEverywhere}>
-            Log out on all devices
-          </Button>
-        </div>
-        <p className="mt-2 text-[13px] text-muted">Use this if you lost a phone or laptop. Changing APP_PASSWORD on the server does the same.</p>
-      </Row>
+        <Group footer="Log out on all devices if you lost a phone or laptop. Changing APP_PASSWORD on the server does the same.">
+          <Row label={<span className="text-accent">Log Out</span>} onClick={logout} />
+          <Row label={<span className="text-late-text">Log Out on All Devices</span>} onClick={logoutEverywhere} />
+        </Group>
       </div>
     </div>
   );
 }
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
+/** An inset grouped list, as in the iOS Settings app. */
+function Group({ header, footer, children }: { header?: string; footer?: string; children: React.ReactNode }) {
   return (
-    <section className="grid gap-3 border-t border-line py-5 first:border-t-0 sm:grid-cols-[11rem_1fr]">
-      <h2 className="title text-[14px]">{label}</h2>
-      <div>{children}</div>
+    <section>
+      {header && <h2 className="mb-1.5 px-4 text-[13px] uppercase tracking-[0.02em] text-muted">{header}</h2>}
+      <ul className="card overflow-hidden">{children}</ul>
+      {footer && <p className="mt-1.5 px-4 text-[13px] leading-snug text-muted">{footer}</p>}
     </section>
+  );
+}
+
+function Row({
+  icon: Icon,
+  tone,
+  label,
+  value,
+  href,
+  onClick,
+  children,
+}: {
+  icon?: typeof Bell;
+  tone?: string;
+  label: React.ReactNode;
+  value?: string;
+  href?: string;
+  onClick?: () => void;
+  children?: React.ReactNode;
+}) {
+  const body = (
+    <>
+      {Icon && (
+        <span className={`grid size-[29px] shrink-0 place-items-center rounded-[7px] text-white ${tone}`}>
+          <Icon className="size-[17px]" strokeWidth={2} />
+        </span>
+      )}
+      <span className="flex min-h-11 min-w-0 flex-1 items-center justify-between gap-3 border-b border-line py-1.5 pr-4 group-last/row:border-b-0">
+        <span className="truncate text-[15px]">{label}</span>
+        <span className="flex shrink-0 items-center gap-1.5">
+          {value && <span className="text-[15px] text-muted">{value}</span>}
+          {children}
+          {(href || (onClick && Icon)) && <ChevronRight className="size-4 text-faint" />}
+        </span>
+      </span>
+    </>
+  );
+  const cls = "flex w-full items-center gap-3 pl-4 text-left";
+  return (
+    <li className="group/row transition-colors has-[a:hover,button:hover]:bg-hover">
+      {href ? (
+        <a href={href} download className={cls}>
+          {body}
+        </a>
+      ) : onClick ? (
+        <button onClick={onClick} className={cls}>
+          {body}
+        </button>
+      ) : (
+        <div className={cls}>{body}</div>
+      )}
+    </li>
   );
 }

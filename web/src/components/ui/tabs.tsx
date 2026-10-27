@@ -4,25 +4,24 @@ import type { ReactNode } from "react";
 export const Tabs = T.Root;
 export const TabPanel = T.Content;
 
+/** iOS-style segmented control. */
 export function TabList({ tabs }: { tabs: { value: string; label: string }[] }) {
   return (
-    <T.List className="flex gap-6 overflow-x-auto border-b border-line">
-      {tabs.map((t) => (
-        <T.Trigger
-          key={t.value}
-          value={t.value}
-          className="-mb-px whitespace-nowrap border-b-2 border-transparent pb-2.5 text-sm font-medium text-muted transition-colors hover:text-fg data-[state=active]:border-accent data-[state=active]:font-semibold data-[state=active]:text-fg"
-        >
-          {t.label}
-        </T.Trigger>
-      ))}
-    </T.List>
+    <div className="max-w-full overflow-x-auto">
+      <T.List className="segmented">
+        {tabs.map((t) => (
+          <T.Trigger key={t.value} value={t.value} className="min-w-24">
+            {t.label}
+          </T.Trigger>
+        ))}
+      </T.List>
+    </div>
   );
 }
 
 export function TabPanelBody({ value, children }: { value: string; children: ReactNode }) {
   return (
-    <T.Content value={value} className="pt-8 focus:outline-none">
+    <T.Content value={value} className="pt-6 focus:outline-none">
       {children}
     </T.Content>
   );

@@ -1,4 +1,4 @@
-import { Check, Eye, Link2, Mail, Phone, Users } from "lucide-react";
+import { Eye, Link2, Mail, Phone, Users } from "lucide-react";
 import { channelForTaskType, taskTypeLabel, type ProjectStage, type TaskType } from "@shared/model";
 import { api } from "@/lib/api";
 import { daysBetween, dmy, relative, todayISO, weekday } from "@/lib/format";
@@ -61,10 +61,10 @@ function lateLabel(due: string, today: string): string {
 }
 
 /**
- * Due date as a small pill: red when late, brass for today, quiet otherwise.
+ * When it's due, as plain text the way Reminders shows it: red when late, blue for today.
  * `timeOnly` is for lists already grouped by day, where repeating the day is noise.
  */
-export function DuePill({ due, time, timeOnly }: { due: string | null; time: string | null; timeOnly?: boolean }) {
+export function DuePill({ due, time, timeOnly, className }: { due: string | null; time: string | null; timeOnly?: boolean; className?: string }) {
   const today = todayISO();
   if (!due) return null;
   const late = due < today;
@@ -74,10 +74,9 @@ export function DuePill({ due, time, timeOnly }: { due: string | null; time: str
     <span
       title={dmy(due) + (time ? ` ${time}` : "")}
       className={cn(
-        "shrink-0 whitespace-nowrap rounded-md px-2 py-0.5 text-[12.5px] font-medium tabular-nums",
-        late && "bg-late-soft text-late",
-        isToday && "bg-brass-soft text-[color-mix(in_srgb,var(--brass)_70%,var(--fg))]",
-        !late && !isToday && "text-muted",
+        "shrink-0 whitespace-nowrap tabular-nums",
+        late ? "font-medium text-late-text" : isToday ? "text-accent" : "text-muted",
+        className,
       )}
     >
       {late ? lateLabel(due, today) : timeOnly ? time : dueLabel(due, time, today)}
@@ -85,7 +84,7 @@ export function DuePill({ due, time, timeOnly }: { due: string | null; time: str
   );
 }
 
-/** One row: check circle, type icon, title, what it's for, due date. */
+/** One row, like a reminder: circle, title, what it's for and when. */
 export function TodoItem({
   todo,
   context,
@@ -104,38 +103,47 @@ export function TodoItem({
   const complete = useComplete();
   const comm = channelForTaskType(todo.type);
   const Icon = TYPE_ICON[todo.type];
+  const due = <DuePill due={todo.due_date} time={todo.due_time} timeOnly={timeOnly} />;
+  const hasDue = Boolean(todo.due_date && (!timeOnly || todo.due_time || todo.due_date < todayISO()));
 
   return (
-    <li className={cn("group/row border-b border-line last:border-b-0", fading && "fade-out")}>
-      <div className="flex items-center gap-3.5 px-4 py-3 transition-colors hover:bg-hover/50 sm:px-5">
-        <button
-          onClick={() => complete(todo)}
-          className="group grid size-[22px] shrink-0 place-items-center rounded-full border-[1.5px] border-line-strong bg-surface transition-colors hover:border-accent hover:bg-accent-soft"
-          aria-label={comm ? `Complete and log: ${todo.title}` : `Complete: ${todo.title}`}
-          title={comm ? "Complete and log how it went" : "Mark done"}
-        >
-          <Check className="size-3 text-accent opacity-0 transition-opacity group-hover:opacity-100" strokeWidth={3} />
-        </button>
-        <button onClick={() => ui.openTask(todo.id)} className="flex min-w-0 flex-1 items-center justify-between gap-3 text-left">
-          <span className="min-w-0">
-            <span className="flex min-w-0 items-center gap-2">
-              {Icon && (
-                <span title={taskTypeLabel(todo.type)} className="grid size-5 shrink-0 place-items-center rounded-md bg-subtle text-muted">
-                  <Icon className="size-3" />
-                </span>
+    <li className={cn("group/row flex items-start gap-3 pl-4 transition-colors hover:bg-hover", fading && "fade-out")}>
+      <button
+        onClick={() => complete(todo)}
+        className={cn(
+          "group mt-[11px] grid size-[22px] shrink-0 place-items-center rounded-full border-[1.5px] transition-colors",
+          fading ? "border-accent bg-accent" : "border-check hover:border-accent",
+        )}
+        aria-label={comm ? `Complete and log: ${todo.title}` : `Complete: ${todo.title}`}
+        title={comm ? "Complete and log how it went" : "Mark done"}
+      >
+        <span className={cn("size-3 rounded-full transition-opacity", fading ? "opacity-0" : "bg-accent opacity-0 group-hover:opacity-25")} />
+      </button>
+      <button
+        onClick={() => ui.openTask(todo.id)}
+        className="flex min-w-0 flex-1 items-center gap-3 border-b border-line py-2.5 pr-4 text-left group-last/row:border-b-0"
+      >
+        <span className="min-w-0 flex-1">
+          <span className={cn("block truncate text-[15px] leading-snug", fading && "text-muted")}>{todo.title}</span>
+          {(context || hasDue) && (
+            <span className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[13px] text-muted">
+              {hasDue && due}
+              {hasDue && context && <span className="text-faint">·</span>}
+              {context && (
+                <>
+                  {stage && <StageDot stage={stage} className="size-1.5" />}
+                  <span className="truncate">{context}</span>
+                </>
               )}
-              <span className="truncate font-medium">{todo.title}</span>
             </span>
-            {context && (
-              <span className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[13px] text-muted">
-                {stage && <StageDot stage={stage} className="size-1.5" />}
-                <span className="truncate">{context}</span>
-              </span>
-            )}
+          )}
+        </span>
+        {Icon && (
+          <span title={taskTypeLabel(todo.type)} className="grid size-7 shrink-0 place-items-center rounded-full bg-accent-soft text-accent">
+            <Icon className="size-3.5" />
           </span>
-          <DuePill due={todo.due_date} time={todo.due_time} timeOnly={timeOnly} />
-        </button>
-      </div>
+        )}
+      </button>
     </li>
   );
 }

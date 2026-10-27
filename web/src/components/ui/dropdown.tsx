@@ -12,7 +12,7 @@ export function MenuContent({ children, align = "start", className }: { children
         align={align}
         sideOffset={6}
         className={cn(
-          "z-50 min-w-44 rounded-xl border border-line bg-surface p-1 shadow-[var(--shadow-lift)] [animation:pop-in_.12s_ease]",
+          "glass z-50 min-w-48 rounded-xl bg-elevated/85 p-1 shadow-[var(--shadow-pop)] [animation:pop-in_.12s_ease]",
           className,
         )}
       >
@@ -27,7 +27,7 @@ export function MenuItem({ children, onSelect, className }: { children: ReactNod
     <M.Item
       onSelect={onSelect}
       className={cn(
-        "flex cursor-pointer select-none items-center gap-2 rounded-md px-2.5 py-1.5 text-sm outline-none data-[highlighted]:bg-hover [&_svg]:size-4 [&_svg]:text-muted",
+        "flex cursor-pointer select-none items-center gap-2 rounded-md px-2.5 py-1.5 text-[14px] outline-none data-[highlighted]:bg-accent data-[highlighted]:text-white [&_svg]:size-4 [&_svg]:text-accent data-[highlighted]:[&_svg]:text-white data-[highlighted]:[&_kbd]:text-white/70",
         className,
       )}
     >
@@ -41,7 +41,7 @@ export function MenuSeparator() {
 }
 
 export function MenuLabel({ children }: { children: ReactNode }) {
-  return <M.Label className="px-2.5 pb-1 pt-1.5 text-xs text-faint">{children}</M.Label>;
+  return <M.Label className="px-2.5 pb-1 pt-1.5 text-[12px] font-semibold text-muted">{children}</M.Label>;
 }
 
 export function MenuCheckbox({ checked, onChange, children }: { checked: boolean; onChange: (v: boolean) => void; children: ReactNode }) {
@@ -50,11 +50,9 @@ export function MenuCheckbox({ checked, onChange, children }: { checked: boolean
       checked={checked}
       onCheckedChange={onChange}
       onSelect={(e) => e.preventDefault()}
-      className="flex cursor-pointer select-none items-center gap-2 rounded-md px-2.5 py-1.5 text-sm outline-none data-[highlighted]:bg-hover"
+      className="flex cursor-pointer select-none items-center gap-2 rounded-md px-2.5 py-1.5 text-[14px] outline-none data-[highlighted]:bg-accent data-[highlighted]:text-white"
     >
-      <span className={cn("grid size-4 place-items-center rounded border", checked ? "border-accent bg-accent text-accent-fg" : "border-line-strong")}>
-        {checked && "✓"}
-      </span>
+      <span className="grid size-4 place-items-center text-[13px] font-semibold">{checked && "✓"}</span>
       {children}
     </M.CheckboxItem>
   );

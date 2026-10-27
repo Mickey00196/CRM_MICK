@@ -5,6 +5,17 @@ import { api } from "@/lib/api";
 import { daysBetween, dmy, dmyTime, relative, todayISO } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
+// Filled circles in system colours, like the app icons they stand for.
+const CHANNEL_TONE: Partial<Record<Channel, string>> = {
+  call: "bg-green text-white",
+  email: "bg-accent text-white",
+  linkedin: "bg-indigo text-white",
+  meeting: "bg-orange text-white",
+  viewing: "bg-purple text-white",
+  whatsapp: "bg-teal text-white",
+  note: "bg-yellow text-[#5c4300]",
+};
+
 const CHANNEL_ICON: Partial<Record<Channel, typeof Phone>> = {
   call: Phone,
   email: Mail,
@@ -53,15 +64,12 @@ export function Timeline({
         ].filter(Boolean);
         return (
           <li key={a.id} className="group relative grid grid-cols-[28px_1fr_auto] gap-x-3 py-3">
-            {i < items.length - 1 && <span aria-hidden="true" className="absolute bottom-0 left-[13.5px] top-10 w-px bg-line" />}
+            {i < items.length - 1 && <span aria-hidden="true" className="absolute bottom-0 left-[13.5px] top-11 w-px bg-line" />}
             <span
-              className={cn(
-                "relative grid size-7 place-items-center rounded-full ring-4 ring-surface",
-                a.channel === "note" ? "bg-brass-soft text-[color-mix(in_srgb,var(--brass)_75%,var(--fg))]" : "bg-accent-soft text-accent",
-              )}
+              className={cn("relative mt-0.5 grid size-7 place-items-center rounded-full", CHANNEL_TONE[a.channel] ?? "bg-gray text-white")}
               title={channelLabel(a.channel)}
             >
-              <Icon className="size-3.5" />
+              <Icon className="size-3.5" strokeWidth={2.2} />
             </span>
             <div className="min-w-0 pt-0.5">
               <p className="flex flex-wrap items-baseline gap-x-2 text-sm">
@@ -76,7 +84,7 @@ export function Timeline({
                   {showProject && a.project_id && (
                     <>
                       {meta.length > 0 && " · "}
-                      <Link to={`/projects/${a.project_id}`} className="font-medium text-fg/80 hover:text-accent">
+                      <Link to={`/projects/${a.project_id}`} className="text-accent hover:underline">
                         {a.project_name}
                       </Link>
                     </>
@@ -84,7 +92,7 @@ export function Timeline({
                   {showAccount && a.account_id && !(showProject && a.project_id) && (
                     <>
                       {meta.length > 0 && " · "}
-                      <Link to={`/accounts/${a.account_id}`} className="font-medium text-fg/80 hover:text-accent">
+                      <Link to={`/accounts/${a.account_id}`} className="text-accent hover:underline">
                         {a.account_name}
                       </Link>
                     </>

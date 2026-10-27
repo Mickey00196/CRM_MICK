@@ -58,9 +58,9 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()} title="Search" hideTitle className="top-[10vh]">
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()} title="Search" hideTitle className="glass top-[14vh] bg-elevated/85">
       <div className="flex items-center gap-3 border-b border-line px-4">
-        <SearchIcon className="size-4 text-faint" />
+        <SearchIcon className="size-5 text-muted" />
         <input
           autoFocus
           value={q}
@@ -78,7 +78,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
             }
           }}
           placeholder="Search projects, companies, people, to-dos, notes…"
-          className="h-14 flex-1 bg-transparent text-base outline-none placeholder:text-faint"
+          className="h-14 flex-1 bg-transparent text-[20px] outline-none placeholder:text-faint"
           aria-label="Search"
         />
       </div>
@@ -92,10 +92,13 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
             aria-selected={i === active}
             onMouseEnter={() => setActive(i)}
             onClick={() => go(h)}
-            className={cn("flex cursor-pointer items-baseline gap-3 rounded-md px-3 py-2", i === active && "bg-hover")}
+            className={cn(
+              "flex cursor-pointer items-baseline gap-3 rounded-lg px-3 py-2",
+              i === active && "bg-accent text-white [&_.text-faint]:text-white/70 [&_.text-muted]:text-white/75",
+            )}
           >
             <span className="w-16 shrink-0 text-xs text-faint">{KIND[h.kind]}</span>
-            <span className="min-w-0 flex-1 truncate text-sm">
+            <span className="min-w-0 flex-1 truncate text-[15px]">
               {h.title}
               {h.subtitle && <span className="text-muted"> · {h.subtitle}</span>}
             </span>

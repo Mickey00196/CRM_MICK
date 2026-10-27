@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
+import { PageHeader } from "@/components/Panel";
 import { CHANNELS, OUTCOMES, type ActivityRow, type Channel } from "@shared/model";
 import { api, useApi } from "@/lib/api";
 import { addDays, dmy, todayISO } from "@/lib/format";
@@ -54,15 +55,15 @@ export function Communication() {
 
   return (
     <div className="rise mx-auto max-w-4xl">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="display text-[28px] sm:text-[34px]">Log</h1>
-          <p className="mt-1.5 text-sm text-muted">Calls, emails, meetings and notes, newest first.</p>
-        </div>
-        <Button variant="accent" onClick={() => ui.openCapture("log")}>
-          <Plus /> Log something
-        </Button>
-      </header>
+      <PageHeader
+        title="Log"
+        subtitle="Calls, emails, meetings and notes, newest first."
+        actions={
+          <Button onClick={() => ui.openCapture("log")}>
+            <Plus /> Log Something
+          </Button>
+        }
+      />
 
       <section className="card mb-8 overflow-x-auto">
         <table className="data min-w-[520px]">
@@ -82,15 +83,15 @@ export function Communication() {
               const total = COUNTED.reduce((s, c) => s + count(w, c), 0);
               const current = i === weeks.length - 1;
               return (
-                <tr key={w} className={current ? "bg-brass-soft/40" : undefined}>
-                  <td className={current ? "font-semibold" : "text-muted"}>{current ? "This week" : dmy(w)}</td>
+                <tr key={w} className={current ? "bg-accent-soft/60" : undefined}>
+                  <td className={current ? "font-semibold text-accent" : "text-muted"}>{current ? "This week" : dmy(w)}</td>
                   {COUNTED.map((c) => {
                     const n = count(w, c);
                     return (
                       <td key={c} className="text-right">
                         <span
-                          className={`inline-grid min-w-7 place-items-center rounded-md px-1.5 py-0.5 tabular-nums ${n ? "font-medium" : "text-faint"}`}
-                          style={n ? { background: `color-mix(in srgb, var(--accent) ${Math.min(32, 8 + n * 6)}%, transparent)` } : undefined}
+                          className={`inline-grid min-w-7 place-items-center rounded-full px-1.5 py-0.5 tabular-nums ${n ? "font-semibold text-white" : "text-faint"}`}
+                          style={n ? { background: `color-mix(in srgb, var(--accent) ${Math.min(100, 55 + n * 15)}%, transparent)` } : undefined}
                         >
                           {n}
                         </span>
@@ -154,7 +155,7 @@ export function Communication() {
 
       {error && <p className="text-sm text-late">{error}</p>}
       {items && (
-        <div className="card px-4 py-1 sm:px-5">
+        <div className="card px-4 py-1">
           <Timeline items={items} showAccount showProject empty={filtered ? "Nothing matches these filters." : "Nothing logged yet."} />
         </div>
       )}

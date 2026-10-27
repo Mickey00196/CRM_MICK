@@ -35,12 +35,12 @@ export function Toaster() {
   return (
     <div
       role="status"
-      className="fixed inset-x-0 bottom-20 z-50 mx-auto flex w-fit max-w-[calc(100vw-32px)] items-center gap-4 rounded-xl bg-side px-4 py-2.5 text-sm text-side-fg shadow-[var(--shadow-lift)] [animation:pop-in_.15s_ease] md:bottom-6"
+      className="glass fixed inset-x-0 bottom-24 z-50 mx-auto flex w-fit max-w-[calc(100vw-32px)] items-center gap-4 rounded-full bg-[rgb(28_28_30/0.86)] py-2.5 pl-5 pr-4 text-[14px] font-medium text-white shadow-[var(--shadow-pop)] [animation:pop-in_.18s_cubic-bezier(.2,.8,.2,1)] md:bottom-8"
     >
       <span className="truncate">{current.message}</span>
       {current.action && (
         <button
-          className="shrink-0 font-semibold text-brass underline-offset-2 hover:underline"
+          className="shrink-0 font-semibold text-[#0a84ff] hover:text-[#409cff]"
           onClick={() => {
             current.action!.run();
             setCurrent(null);

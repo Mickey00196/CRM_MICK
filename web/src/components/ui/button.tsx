@@ -4,22 +4,21 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-40 [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex select-none items-center justify-center gap-1.5 whitespace-nowrap rounded-full text-[14px] font-medium transition-[background-color,transform,opacity] active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40 [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-accent text-accent-fg shadow-sm hover:bg-accent-hover",
-        accent: "bg-accent text-accent-fg shadow-sm hover:bg-accent-hover",
-        brass: "bg-brass text-brass-fg shadow-sm hover:brightness-105",
-        outline: "border border-line-strong bg-surface shadow-[var(--shadow-card)] hover:bg-hover",
-        ghost: "text-muted hover:bg-hover hover:text-fg",
-        link: "px-0 text-muted underline-offset-4 hover:text-fg hover:underline",
-        danger: "text-late hover:bg-hover",
+        default: "bg-accent text-accent-fg hover:bg-accent-hover",
+        accent: "bg-accent text-accent-fg hover:bg-accent-hover",
+        outline: "bg-subtle text-fg hover:bg-subtle-hover [&_svg]:text-accent",
+        ghost: "text-accent hover:bg-accent-soft",
+        link: "px-0 text-accent hover:underline active:scale-100",
+        danger: "text-late-text hover:bg-late-soft",
       },
       size: {
-        default: "h-9 px-3.5",
-        sm: "h-8 px-2.5 text-[13px]",
-        xs: "h-7 px-2 text-[13px]",
+        default: "h-9 px-4",
+        sm: "h-8 px-3 text-[13px]",
+        xs: "h-7 px-2.5 text-[13px]",
         icon: "size-8",
       },
     },
