@@ -3,7 +3,7 @@ import { db, tx } from "../db.js";
 import { uid } from "../auth.js";
 import { pick, idOf, notFound } from "../validate.js";
 import { OPEN_TASK_ORDER, todayISO } from "../sql.js";
-import { OPEN_PROJECT_STAGES, type TodoRow } from "../../shared/model.js";
+import { FOLLOW_UP_STATUSES, type TodoRow } from "../../shared/model.js";
 import { TASK_SPEC, completeTask, createTask, updateTask } from "../domain/tasks.js";
 
 export const tasks = Router();
@@ -23,23 +23,25 @@ tasks.get("/todos", async (req, res) => {
      order by ${OPEN_TASK_ORDER}`,
     [owner],
   );
-  // Open projects with nothing lined up: the ones that silently stall.
-  const no_next_step = await db.q(
-    `select p.id, p.name, p.stage, p.account_id, a.name as account_name,
-            (select max(x.occurred_at) from activities x where x.project_id = p.id and x.archived_at is null) as last_activity_at
-     from projects p
-     left join accounts a on a.id = p.account_id
-     where p.owner_id = $1 and p.archived_at is null and p.stage = any($2::text[])
-       and not exists (select 1 from tasks t where t.project_id = p.id and t.status = 'open' and t.archived_at is null)
-     order by p.stage_changed_at asc`,
-    [owner, OPEN_PROJECT_STAGES],
+  // Accounts you're working with nothing planned: the ones that silently go cold.
+  const no_follow_up = await db.q(
+    `select a.id, a.name, a.status,
+            (select o.city from office_locations o where o.account_id = a.id and o.archived_at is null and o.is_current
+             order by o.is_primary desc, o.created_at limit 1) as city,
+            (select max(x.occurred_at) from activities x
+             where x.account_id = a.id and x.archived_at is null and x.channel <> 'note') as last_contact_at
+     from accounts a
+     where a.owner_id = $1 and a.archived_at is null and a.status = any($2::text[])
+       and not exists (select 1 from tasks t where t.account_id = a.id and t.status = 'open' and t.archived_at is null)
+     order by a.created_at asc`,
+    [owner, FOLLOW_UP_STATUSES],
   );
   res.json({
     today,
     overdue: rows.filter((r) => r.due_date && r.due_date < today),
     due_today: rows.filter((r) => r.due_date === today),
     upcoming: rows.filter((r) => !r.due_date || r.due_date > today),
-    no_next_step,
+    no_follow_up,
   });
 });
 

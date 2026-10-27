@@ -120,7 +120,7 @@ export function AccountForm({ onDone }: { onDone: () => void }) {
         </div>
       )}
       <div className="flex justify-end">
-        <Button disabled={busy || !f.name.trim()}>Add company</Button>
+        <Button disabled={busy || !f.name.trim()}>Add account</Button>
       </div>
     </form>
   );

@@ -43,7 +43,7 @@ export function NextStepPicker({
   onChange,
   existing,
   noneHint,
-  label = "Next step",
+  label = "Next follow-up",
 }: {
   value: NextStepValue;
   onChange: (v: NextStepValue) => void;

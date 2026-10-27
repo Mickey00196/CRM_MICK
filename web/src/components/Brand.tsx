@@ -1,6 +1,6 @@
 import { useId } from "react";
 import { cn } from "@/lib/utils";
-import type { ProjectStage } from "@shared/model";
+import type { AccountStatus, ProjectStage } from "@shared/model";
 
 /** The mark: a blue tile with a ticked circle. Same drawing as the favicon. */
 export function Mark({ className }: { className?: string }) {
@@ -41,6 +41,23 @@ export function StageDot({ stage, className }: { stage: ProjectStage; className?
         stage === "active" && "bg-accent shadow-[0_0_0_3px_var(--accent-soft)]",
         stage === "waiting" && "bg-faint",
         stage === "done" && "bg-fg",
+        className,
+      )}
+    />
+  );
+}
+
+/** Account status light: open ring for leads, live blue for prospects, ink for clients, grey for the rest. */
+export function StatusDot({ status, className }: { status: AccountStatus; className?: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "inline-block size-2 shrink-0 rounded-full",
+        status === "lead" && "border-[1.5px] border-faint",
+        status === "prospect" && "bg-accent shadow-[0_0_0_3px_var(--accent-soft)]",
+        status === "client" && "bg-fg",
+        (status === "former_client" || status === "not_a_fit") && "bg-line-strong",
         className,
       )}
     />

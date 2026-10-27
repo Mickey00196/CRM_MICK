@@ -94,7 +94,7 @@ export function Communication() {
       </section>
 
       <div className="mb-4 grid gap-2 sm:grid-cols-[1fr_9rem_9rem]">
-        <AccountPicker value={account} onChange={setAccount} placeholder="All companies" />
+        <AccountPicker value={account} onChange={setAccount} placeholder="All accounts" />
         <Select
           value={channel}
           onChange={(e) => {

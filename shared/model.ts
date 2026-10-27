@@ -15,6 +15,8 @@ export const ACCOUNT_STATUSES = [
 ] as const;
 export type AccountStatus = (typeof ACCOUNT_STATUSES)[number]["key"];
 export const accountStatusLabel = (k: string) => label(ACCOUNT_STATUSES, k);
+/** Accounts you are working: each should always have a dated follow-up. */
+export const FOLLOW_UP_STATUSES: AccountStatus[] = ["lead", "prospect", "client"];
 
 export const SIZE_BANDS = [
   { key: "1-10", label: "1–10" },
@@ -243,12 +245,21 @@ export interface StalledProject {
   last_activity_at: string | null;
 }
 
+/** An account you're working with no follow-up planned. */
+export interface StalledAccount {
+  id: string;
+  name: string;
+  status: AccountStatus;
+  city: string | null;
+  last_contact_at: string | null;
+}
+
 export interface TodoList {
   today: string;
   overdue: TodoRow[];
   due_today: TodoRow[];
   upcoming: TodoRow[];
-  no_next_step: StalledProject[];
+  no_follow_up: StalledAccount[];
 }
 
 export interface ActivityRow {

@@ -9,7 +9,7 @@ import { useUI } from "./ui-context";
 
 const KIND: Record<SearchHit["kind"], string> = {
   project: "Project",
-  account: "Company",
+  account: "Account",
   contact: "Contact",
   task: "To-do",
   activity: "Logged",
@@ -36,14 +36,12 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
   const commands: Command[] = useMemo(
     () => [
       { label: "New to-do", key: "N", icon: Plus, run: () => ui.openCapture("todo") },
-      { label: "New project", key: "P", icon: Plus, run: () => ui.openCapture("project") },
+      { label: "New account", key: "A", icon: Plus, run: () => ui.openCapture("account") },
       { label: "Log a call, email or note", key: "L", icon: Plus, run: () => ui.openCapture("log") },
-      { label: "New company", icon: Plus, run: () => ui.openCapture("account") },
       { label: "New contact", icon: Plus, run: () => ui.openCapture("contact") },
       { label: "Go to To-dos", icon: ArrowRight, run: () => navigate("/") },
-      { label: "Go to Projects", icon: ArrowRight, run: () => navigate("/projects") },
+      { label: "Go to Accounts", icon: ArrowRight, run: () => navigate("/accounts") },
       { label: "Go to Weekly review", icon: ArrowRight, run: () => navigate("/review") },
-      { label: "Go to Companies", icon: ArrowRight, run: () => navigate("/accounts") },
       { label: "Go to Contacts", icon: ArrowRight, run: () => navigate("/contacts") },
       { label: "Go to Log", icon: ArrowRight, run: () => navigate("/communication") },
       { label: "Go to Settings", icon: ArrowRight, run: () => navigate("/settings") },
@@ -121,7 +119,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
               choose(items[active]);
             }
           }}
-          placeholder="Search, or type a command like “new project”"
+          placeholder="Search, or type a command like “new account”"
           className="h-14 flex-1 bg-transparent text-base outline-none placeholder:text-faint"
           aria-label="Search or run a command"
         />

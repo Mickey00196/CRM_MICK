@@ -5,8 +5,6 @@ import {
   CheckCircle2,
   ChevronDown,
   MoreHorizontal,
-  FolderKanban,
-  FolderPlus,
   Building2,
   Users,
   MessagesSquare,
@@ -42,11 +40,10 @@ interface NavItem {
 // What you use every day first; the address book below it; settings out of the way.
 const MAIN: NavItem[] = [
   { to: "/", label: "To-dos", icon: CheckCircle2, end: true },
-  { to: "/projects", label: "Projects", icon: FolderKanban },
+  { to: "/accounts", label: "Accounts", icon: Building2 },
   { to: "/review", label: "Weekly review", icon: CalendarCheck },
 ];
 const ADDRESS_BOOK: NavItem[] = [
-  { to: "/accounts", label: "Companies", icon: Building2 },
   { to: "/contacts", label: "Contacts", icon: Users },
   { to: "/communication", label: "Log", icon: MessagesSquare },
 ];
@@ -102,9 +99,9 @@ export function Shell({ children }: { children: ReactNode }) {
       } else if (e.key === "n") {
         e.preventDefault();
         ui.openCapture("todo");
-      } else if (e.key === "p") {
+      } else if (e.key === "a") {
         e.preventDefault();
-        ui.openCapture("project");
+        ui.openCapture("account");
       } else if (e.key === "l") {
         e.preventDefault();
         const ctx = pageContext();
@@ -117,9 +114,8 @@ export function Shell({ children }: { children: ReactNode }) {
 
   const newItems: { kind: CaptureKind; label: string; key: string; icon: typeof Plus }[] = [
     { kind: "todo", label: "To-do", key: "N", icon: ListTodo },
-    { kind: "project", label: "Project", key: "P", icon: FolderPlus },
+    { kind: "account", label: "Account", key: "A", icon: Building },
     { kind: "log", label: "Log a call, email or note", key: "L", icon: MessageSquarePlus },
-    { kind: "account", label: "Company", key: "", icon: Building },
     { kind: "contact", label: "Contact", key: "", icon: UserPlus },
   ];
 
@@ -161,7 +157,7 @@ export function Shell({ children }: { children: ReactNode }) {
                     collapsed ? "rounded-md" : "w-8 rounded-r-md border-l border-white/20",
                   )}
                   aria-label="New something else"
-                  title="New project, log, company or contact"
+                  title="New account, log or contact"
                 >
                   <ChevronDown className="size-4" />
                 </button>
@@ -203,7 +199,7 @@ export function Shell({ children }: { children: ReactNode }) {
 
           {!collapsed && (
             <p className="mt-3 flex items-center gap-1 whitespace-nowrap px-3 text-xs text-faint">
-              <kbd className="keycap">N</kbd> to-do <kbd className="keycap ml-1.5">P</kbd> project <kbd className="keycap ml-1.5">L</kbd> log
+              <kbd className="keycap">N</kbd> to-do <kbd className="keycap ml-1.5">A</kbd> account <kbd className="keycap ml-1.5">L</kbd> log
             </p>
           )}
         </aside>

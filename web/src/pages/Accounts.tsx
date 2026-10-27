@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowDown, ArrowUp, Building2, Columns3, Download, Plus, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, Building2, Columns3, Download, KanbanSquare, List, Plus, Search } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { ACCOUNT_STATUSES, accountStatusLabel, type AccountRow } from "@shared/model";
 import { api, useApi, useStored } from "@/lib/api";
@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Menu, MenuCheckbox, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger } from "@/components/ui/dropdown";
 import { useUI } from "@/components/ui-context";
 import { dueLabel } from "@/components/TodoItem";
+import { Skeleton } from "@/components/Skeleton";
+import { AccountsBoard } from "./AccountsBoard";
 
 type ColKey = "status" | "location" | "size" | "lease_end" | "next_step" | "last_contact" | "industry" | "source";
 
@@ -19,7 +21,7 @@ const COLUMNS: { key: ColKey; label: string; sort: (a: AccountRow) => string | n
   { key: "location", label: "Office", sort: (a) => (a.office_submarket || a.office_city || "").toLowerCase() || null },
   { key: "size", label: "m²", sort: (a) => a.area_m2, className: "text-right" },
   { key: "lease_end", label: "Lease end", sort: (a) => a.lease_end },
-  { key: "next_step", label: "Next step", sort: (a) => a.next_step?.due_date ?? null },
+  { key: "next_step", label: "Next follow-up", sort: (a) => a.next_step?.due_date ?? null },
   { key: "last_contact", label: "Last contact", sort: (a) => a.last_contact_at },
   { key: "industry", label: "Industry", sort: (a) => a.industry.toLowerCase() || null },
   { key: "source", label: "Source", sort: (a) => a.lead_source.toLowerCase() || null },
@@ -31,6 +33,7 @@ const VIEWS = [
   { key: "lead", label: "Leads", match: (a: AccountRow) => a.status === "lead" },
   { key: "prospect", label: "Prospects", match: (a: AccountRow) => a.status === "prospect" },
   { key: "client", label: "Clients", match: (a: AccountRow) => a.status === "client" },
+  { key: "other", label: "Former / not a fit", match: (a: AccountRow) => a.status === "former_client" || a.status === "not_a_fit" },
   { key: "all", label: "All", match: (_a: AccountRow) => true },
 ];
 
@@ -41,9 +44,76 @@ interface SavedView {
   sort: { key: string; dir: 1 | -1 };
 }
 
+/** Accounts: the companies you're working. A board by status (default) or a sortable list. */
 export function Accounts() {
-  const { data, error } = useApi<AccountRow[]>("/accounts");
+  const { data, error, setData } = useApi<AccountRow[]>("/accounts");
+  const [mode, setMode] = useStored<"board" | "list">("accounts-mode", "board");
   const [view, setView] = useStored("accounts-view", "all");
+  const ui = useUI();
+
+  return (
+    <div className={cn("mx-auto", mode === "board" ? "max-w-7xl" : "max-w-6xl")}>
+      <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <h1 className="title text-2xl">Accounts</h1>
+        <div className="flex items-center gap-2">
+          <div className="inline-flex rounded-lg border border-line bg-subtle p-0.5" role="radiogroup" aria-label="View">
+            {(
+              [
+                ["board", "Board", KanbanSquare],
+                ["list", "List", List],
+              ] as const
+            ).map(([k, label, Icon]) => (
+              <button
+                key={k}
+                role="radio"
+                aria-checked={mode === k}
+                onClick={() => setMode(k)}
+                className={cn(
+                  "flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[13px] transition-colors",
+                  mode === k ? "bg-surface font-medium text-fg shadow-sm" : "text-muted hover:text-fg",
+                )}
+              >
+                <Icon className="size-3.5" /> {label}
+              </button>
+            ))}
+          </div>
+          <Button size="sm" onClick={() => ui.openCapture("account")} title="New account">
+            <Plus /> New account
+          </Button>
+        </div>
+      </header>
+
+      {error && <p className="text-sm text-late">{error}</p>}
+      {!data && !error && <Skeleton title={false} rows={5} className="max-w-none" />}
+      {data && data.length === 0 && (
+        <EmptyState
+          icon={Building2}
+          title="No accounts yet"
+          text="An account is a company you're chasing or working for, like a scale-up in Amsterdam you want as a client. Plan a follow-up date on each one and it lands in your to-dos."
+        >
+          <Button size="lg" onClick={() => ui.openCapture("account")}>
+            <Plus /> New account
+          </Button>
+        </EmptyState>
+      )}
+      {data && data.length > 0 &&
+        (mode === "board" ? (
+          <AccountsBoard
+            data={data}
+            setData={setData}
+            onShowOthers={() => {
+              setView("other");
+              setMode("list");
+            }}
+          />
+        ) : (
+          <AccountsList data={data} view={view} setView={setView} />
+        ))}
+    </div>
+  );
+}
+
+function AccountsList({ data, view, setView }: { data: AccountRow[]; view: string; setView: (v: string) => void }) {
   const [cols, setCols] = useStored<ColKey[]>("accounts-cols", DEFAULT_COLS);
   const [sort, setSort] = useStored<{ key: string; dir: 1 | -1 }>("accounts-sort", { key: "name", dir: 1 });
   const [saved, setSaved] = useStored<SavedView[]>("accounts-saved-views", []);
@@ -54,8 +124,7 @@ export function Accounts() {
   const today = todayISO();
 
   const rows = useMemo(() => {
-    if (!data) return [];
-    const v = VIEWS.find((x) => x.key === view) ?? VIEWS[3];
+    const v = VIEWS.find((x) => x.key === view) ?? VIEWS[VIEWS.length - 1];
     const t = q.trim().toLowerCase();
     const filtered = data.filter(
       (a) =>
@@ -77,14 +146,14 @@ export function Accounts() {
     });
   }, [data, view, q, sort]);
 
-  const counts = useMemo(() => Object.fromEntries(VIEWS.map((v) => [v.key, data?.filter(v.match).length ?? 0])), [data]);
+  const counts = useMemo(() => Object.fromEntries(VIEWS.map((v) => [v.key, data.filter(v.match).length])), [data]);
 
   function toggleSort(key: string) {
     setSort(sort.key === key ? { key, dir: sort.dir === 1 ? -1 : 1 } : { key, dir: 1 });
   }
 
   async function bulk(body: Record<string, unknown>) {
-    if (body.action === "archive" && !confirm(`Archive ${selected.size} compan${selected.size === 1 ? "y" : "ies"}?`)) return;
+    if (body.action === "archive" && !confirm(`Archive ${selected.size} account${selected.size === 1 ? "" : "s"}?`)) return;
     await api("/accounts/bulk", "POST", { ids: [...selected], ...body });
     setSelected(new Set());
   }
@@ -99,14 +168,7 @@ export function Accounts() {
   const allSelected = rows.length > 0 && rows.every((r) => selected.has(r.id));
 
   return (
-    <div className="mx-auto max-w-6xl">
-      <header className="mb-8 flex flex-wrap items-baseline justify-between gap-4">
-        <h1 className="title text-2xl">Companies</h1>
-        <Button size="sm" onClick={() => ui.openCapture("account")}>
-          <Plus /> New company
-        </Button>
-      </header>
-
+    <>
       <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-3 border-b border-line">
         {VIEWS.map((v) => (
           <button
@@ -208,16 +270,8 @@ export function Accounts() {
         )}
       </div>
 
-      {error && <p className="text-sm text-late">{error}</p>}
-
-      {data && data.length === 0 ? (
-        <EmptyState icon={Building2} title="No companies yet" text="Add a company when a project involves a client or prospect. Their offices, people and history live here.">
-          <Button size="lg" onClick={() => ui.openCapture("account")}>
-            <Plus /> New company
-          </Button>
-        </EmptyState>
-      ) : data && rows.length === 0 ? (
-        <p className="py-12 text-center text-muted">No companies match this view.</p>
+      {rows.length === 0 ? (
+        <p className="py-12 text-center text-muted">No accounts match this view.</p>
       ) : (
         <>
         {/* Phones: a simple list instead of a wide table. */}
@@ -232,7 +286,7 @@ export function Accounts() {
                     <span className="shrink-0 text-[13px] text-muted">{accountStatusLabel(a.status)}</span>
                   </span>
                   <span className={cn("mt-0.5 block truncate text-[13px]", late ? "text-late" : "text-muted")}>
-                    {a.next_step ? `${a.next_step.title}${a.next_step.due_date ? ` · ${dueLabel(a.next_step.due_date, null, today)}` : ""}` : "No next step"}
+                    {a.next_step ? `${a.next_step.title}${a.next_step.due_date ? ` · ${dueLabel(a.next_step.due_date, null, today)}` : ""}` : "No follow-up"}
                   </span>
                 </Link>
               </li>
@@ -252,7 +306,7 @@ export function Accounts() {
                     aria-label="Select all"
                   />
                 </th>
-                <SortHeader label="Company" k="name" sort={sort} onSort={toggleSort} />
+                <SortHeader label="Account" k="name" sort={sort} onSort={toggleSort} />
                 {shown.map((c) => (
                   <SortHeader key={c.key} label={c.label} k={c.key} sort={sort} onSort={toggleSort} className={c.className} />
                 ))}
@@ -291,7 +345,7 @@ export function Accounts() {
         </div>
         </>
       )}
-    </div>
+    </>
   );
 }
 

@@ -128,6 +128,30 @@ describe("link integrity", () => {
   });
 });
 
+describe("accounts and follow-ups", () => {
+  test("an account you're working with nothing planned asks for a follow-up", async () => {
+    const id = await account(a, { name: "Follow-up Co", status: "lead" });
+    let todos = (await a.get("/todos")).data;
+    assert.ok(todos.no_follow_up.some((x: any) => x.id === id), "a new lead needs a first follow-up");
+
+    const t = await a.post("/tasks", { title: "Intro call", type: "call", account_id: id, due_date: "2026-11-03" });
+    assert.equal(t.status, 201, JSON.stringify(t.data));
+    todos = (await a.get("/todos")).data;
+    assert.ok(!todos.no_follow_up.some((x: any) => x.id === id));
+    const row = [...todos.overdue, ...todos.due_today, ...todos.upcoming].find((r: any) => r.id === t.data.id);
+    assert.equal(row.account_name, "Follow-up Co");
+
+    assert.equal((await a.post(`/tasks/${t.data.id}/complete`, {})).status, 200);
+    todos = (await a.get("/todos")).data;
+    assert.ok(todos.no_follow_up.some((x: any) => x.id === id), "done with the last follow-up: ask again");
+
+    await a.patch(`/accounts/${id}`, { status: "not_a_fit" });
+    todos = (await a.get("/todos")).data;
+    assert.ok(!todos.no_follow_up.some((x: any) => x.id === id), "not a fit: nothing to chase");
+    assert.ok(!(await b.get("/todos")).data.no_follow_up.some((x: any) => x.id === id), "other users never see it");
+  });
+});
+
 describe("projects", () => {
   test("a project with a first to-do shows up on the board and the to-do list", async () => {
     const r = await a.post("/projects", { name: "Q4 market update", stage: "active", next: { title: "Draft outline", due_date: "2026-11-03" } });
@@ -139,19 +163,6 @@ describe("projects", () => {
     const todos = (await a.get("/todos")).data;
     const row = [...todos.overdue, ...todos.due_today, ...todos.upcoming].find((t: any) => t.title === "Draft outline");
     assert.equal(row.project_name, "Q4 market update");
-  });
-
-  test("finishing the last to-do flags the project as having no next step", async () => {
-    const p = (await a.post("/projects", { name: "Lonely project", next: { title: "Only step", due_date: "2026-11-03" } })).data;
-    let todos = (await a.get("/todos")).data;
-    assert.ok(!todos.no_next_step.some((x: any) => x.id === p.id));
-    const [task] = await env.q("select id from tasks where project_id = $1", [p.id]);
-    assert.equal((await a.post(`/tasks/${task.id}/complete`, {})).status, 200);
-    todos = (await a.get("/todos")).data;
-    assert.ok(todos.no_next_step.some((x: any) => x.id === p.id));
-    await a.patch(`/projects/${p.id}`, { stage: "done" });
-    todos = (await a.get("/todos")).data;
-    assert.ok(!todos.no_next_step.some((x: any) => x.id === p.id), "done projects don't need a next step");
   });
 
   test("moving to Done records when, moving back clears it", async () => {

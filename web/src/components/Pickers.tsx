@@ -153,7 +153,7 @@ function Picker<T extends Item>({
 export function AccountPicker({
   value,
   onChange,
-  placeholder = "Company",
+  placeholder = "Account",
   autoFocus,
 }: {
   value: PickedAccount | null;

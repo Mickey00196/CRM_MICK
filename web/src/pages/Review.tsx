@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import type { ProjectRow, TodoList, TodoRow } from "@shared/model";
+import { FOLLOW_UP_STATUSES, accountStatusLabel, type AccountRow, type TodoList, type TodoRow } from "@shared/model";
 import { useApi } from "@/lib/api";
 import { addDays, daysBetween, relative, todayISO } from "@/lib/format";
 import { useUI } from "@/components/ui-context";
@@ -7,67 +7,55 @@ import { TodoItem } from "@/components/TodoItem";
 import { Skeleton } from "@/components/Skeleton";
 
 /**
- * Weekly review: the five-minute check that nothing is quietly stuck.
- * Built from the to-do list and the board; nothing extra is stored.
+ * Weekly review: the five-minute check that no account goes cold.
+ * Built from the to-do list and the accounts; nothing extra is stored.
  */
 export function Review() {
   const todos = useApi<TodoList>("/todos");
-  const projects = useApi<ProjectRow[]>("/projects");
+  const accounts = useApi<AccountRow[]>("/accounts");
   const ui = useUI();
 
-  if (!todos.data || !projects.data) return <Skeleton />;
+  if (!todos.data || !accounts.data) return <Skeleton />;
 
   const today = todayISO();
   const weekAgo = addDays(today, -7);
-  const lastTouch = (p: ProjectRow) => (p.last_activity_at ?? p.stage_changed_at).slice(0, 10);
 
-  const stalled = todos.data.no_next_step;
-  const waiting = projects.data.filter((p) => p.stage === "waiting" && p.stage_changed_at.slice(0, 10) <= weekAgo);
-  const stalledIds = new Set(todos.data.no_next_step.map((p) => p.id));
-  const quiet = projects.data.filter(
-    (p) => (p.stage === "todo" || p.stage === "active") && !stalledIds.has(p.id) && daysBetween(lastTouch(p), today) >= 14,
+  const stalled = todos.data.no_follow_up;
+  const stalledIds = new Set(stalled.map((a) => a.id));
+  // Being worked, something is planned, but nobody has spoken to them in two weeks.
+  const lastTouch = (a: AccountRow) => (a.last_contact_at ?? a.created_at).slice(0, 10);
+  const quiet = accounts.data.filter(
+    (a) => FOLLOW_UP_STATUSES.includes(a.status) && !stalledIds.has(a.id) && daysBetween(lastTouch(a), today) >= 14,
   );
   const longOverdue = todos.data.overdue.filter((t) => t.due_date && t.due_date < weekAgo);
   const all = [...todos.data.overdue, ...todos.data.due_today, ...todos.data.upcoming];
   const avoided = all.filter((t) => (t.snooze_count ?? 0) >= 3);
-  const total = stalled.length + waiting.length + quiet.length + longOverdue.length + avoided.length;
+  const total = stalled.length + quiet.length + longOverdue.length + avoided.length;
 
-  const addStep = (p: { id: string; name: string; account_id: string | null; account_name: string | null }) =>
-    ui.openCapture("todo", {
-      project: { id: p.id, name: p.name, account_id: p.account_id, account_name: p.account_name },
-      account: p.account_id ? { id: p.account_id, name: p.account_name ?? "" } : null,
-    });
+  const followUp = (a: { id: string; name: string }) => ui.openCapture("todo", { account: { id: a.id, name: a.name } });
 
   return (
     <div className="mx-auto max-w-3xl">
       <header className="mb-10">
         <h1 className="title text-2xl">Weekly review</h1>
         <p className="mt-1 text-sm text-muted">
-          {total === 0 ? "All clear. Nothing is stuck." : `${total} ${total === 1 ? "thing needs" : "things need"} a decision. Five minutes keeps every project moving.`}
+          {total === 0 ? "All clear. Every account has a follow-up." : `${total} ${total === 1 ? "thing needs" : "things need"} a decision. Five minutes keeps every account warm.`}
         </p>
       </header>
 
-      <Group label="No next step" hint="Add what moves it forward, or mark it done.">
-        {stalled.map((p) => (
-          <ProjectLine key={p.id} id={p.id} name={p.name} meta={[p.account_name, p.last_activity_at && `last update ${relative(p.last_activity_at)}`]}>
-            <ActionButton onClick={() => addStep(p)}>+ Next step</ActionButton>
-          </ProjectLine>
+      <Group label="No follow-up planned" hint="Plan the next touch, or move the account to Not a fit.">
+        {stalled.map((a) => (
+          <AccountLine key={a.id} id={a.id} name={a.name} meta={[accountStatusLabel(a.status), a.city, a.last_contact_at ? `last contact ${relative(a.last_contact_at)}` : "not contacted yet"]}>
+            <ActionButton onClick={() => followUp(a)}>+ Follow-up</ActionButton>
+          </AccountLine>
         ))}
       </Group>
 
-      <Group label="Waiting for more than a week" hint="Chase it, or move it back to Active.">
-        {waiting.map((p) => (
-          <ProjectLine key={p.id} id={p.id} name={p.name} meta={[p.waiting_on && `waiting on ${p.waiting_on}`, `since ${relative(p.stage_changed_at)}`]}>
-            <ActionButton onClick={() => addStep(p)}>+ Follow up</ActionButton>
-          </ProjectLine>
-        ))}
-      </Group>
-
-      <Group label="Quiet for two weeks or more" hint="Nothing logged lately. Still alive?">
-        {quiet.map((p) => (
-          <ProjectLine key={p.id} id={p.id} name={p.name} meta={[p.account_name, `last update ${relative(lastTouch(p))}`]}>
-            <ActionButton onClick={() => addStep(p)}>+ To-do</ActionButton>
-          </ProjectLine>
+      <Group label="No contact for two weeks or more" hint="A follow-up is planned, but it's been quiet. Still warm?">
+        {quiet.map((a) => (
+          <AccountLine key={a.id} id={a.id} name={a.name} meta={[accountStatusLabel(a.status), a.last_contact_at ? `last contact ${relative(a.last_contact_at)}` : "not contacted yet"]}>
+            <ActionButton onClick={() => ui.openLog({ account: { id: a.id, name: a.name }, channel: "call" })}>Log contact</ActionButton>
+          </AccountLine>
         ))}
       </Group>
 
@@ -94,17 +82,17 @@ function TodoGroup({ label, hint, rows }: { label: string; hint: string; rows: T
   return (
     <Group label={label} hint={hint}>
       {rows.map((r) => (
-        <TodoItem key={r.id} todo={r} context={r.project_name ?? r.account_name} showType />
+        <TodoItem key={r.id} todo={r} context={r.account_name ?? r.project_name} showType />
       ))}
     </Group>
   );
 }
 
-function ProjectLine({ id, name, meta, children }: { id: string; name: string; meta: (string | null | false | undefined)[]; children?: React.ReactNode }) {
+function AccountLine({ id, name, meta, children }: { id: string; name: string; meta: (string | null | false | undefined)[]; children?: React.ReactNode }) {
   const parts = meta.filter(Boolean);
   return (
     <li className="flex items-center justify-between gap-4 border-b border-line py-3">
-      <Link to={`/projects/${id}`} className="min-w-0 truncate hover:underline">
+      <Link to={`/accounts/${id}`} className="min-w-0 truncate hover:underline">
         {name}
         {parts.length > 0 && <span className="text-sm text-muted"> · {parts.join(" · ")}</span>}
       </Link>

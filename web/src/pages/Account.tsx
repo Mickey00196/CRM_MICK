@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Phone, Mail, Link2, Users, StickyNote, Plus, MoreHorizontal, ArrowLeft, FolderPlus } from "lucide-react";
+import { Phone, Mail, Link2, Users, StickyNote, MoreHorizontal, ArrowLeft, CalendarPlus } from "lucide-react";
 import {
   ACCOUNT_STATUSES,
   projectStageLabel,
@@ -28,12 +28,13 @@ import { Timeline } from "@/components/Timeline";
 import { OfficeCard, OfficeForm } from "@/components/Office";
 import { ContactForm } from "@/components/ContactForm";
 import { Skeleton } from "@/components/Skeleton";
-import { dueLabel } from "@/components/TodoItem";
+import { TodoItem, dueLabel } from "@/components/TodoItem";
+import { StatusDot } from "@/components/Brand";
 
 const TABS = [
   { value: "overview", label: "Overview" },
   { value: "office", label: "Office & lease" },
-  { value: "communication", label: "Communication" },
+  { value: "communication", label: "Log" },
 ];
 
 export function AccountPage() {
@@ -49,7 +50,7 @@ export function AccountPage() {
       <div className="mx-auto max-w-4xl">
         <p className="text-sm text-late">{error}</p>
         <Link to="/accounts" className="mt-3 inline-block text-sm text-muted hover:text-fg">
-          Back to companies
+          Back to accounts
         </Link>
       </div>
     );
@@ -62,12 +63,15 @@ export function AccountPage() {
   return (
     <div className="mx-auto max-w-4xl">
       <Link to="/accounts" className="mb-6 inline-flex items-center gap-1 text-[13px] text-muted hover:text-fg">
-        <ArrowLeft className="size-3.5" /> Companies
+        <ArrowLeft className="size-3.5" /> Accounts
       </Link>
 
       <Header data={data} />
 
       <div className="mt-6 flex flex-wrap gap-1.5">
+        <Button size="sm" onClick={() => ui.openCapture("todo", { account: picked })}>
+          <CalendarPlus /> Plan follow-up
+        </Button>
         <Button variant="outline" size="sm" onClick={() => log("call")}>
           <Phone /> Log call
         </Button>
@@ -82,12 +86,6 @@ export function AccountPage() {
         </Button>
         <Button variant="outline" size="sm" onClick={() => log("note")}>
           <StickyNote /> Add note
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => ui.openCapture("todo", { account: picked })}>
-          <Plus /> Add to-do
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => ui.openCapture("project", { account: picked })}>
-          <FolderPlus /> New project
         </Button>
       </div>
 
@@ -132,18 +130,6 @@ function Header({ data }: { data: AccountDetail }) {
         <div className="min-w-0">
           <h1 className="title text-3xl">{account.name}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
-            <Select
-              value={account.status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="h-7 w-auto border-transparent bg-transparent pl-0 pr-6 text-sm text-muted [field-sizing:content] hover:text-fg"
-              aria-label="Status"
-            >
-              {ACCOUNT_STATUSES.map((s) => (
-                <option key={s.key} value={s.key}>
-                  {s.label}
-                </option>
-              ))}
-            </Select>
             {account.domain && (
               <a href={`https://${account.domain}`} target="_blank" rel="noreferrer" className="hover:text-fg">
                 {account.domain}
@@ -160,29 +146,47 @@ function Header({ data }: { data: AccountDetail }) {
             </Button>
           </MenuTrigger>
           <MenuContent align="end">
-            <MenuItem onSelect={archive}>Archive company</MenuItem>
+            <MenuItem onSelect={archive}>Archive account</MenuItem>
           </MenuContent>
         </Menu>
       </div>
 
+      <div className="mt-5 inline-flex max-w-full flex-wrap rounded-lg border border-line bg-subtle p-0.5" role="radiogroup" aria-label="Status">
+        {ACCOUNT_STATUSES.map((s) => (
+          <button
+            key={s.key}
+            role="radio"
+            aria-checked={account.status === s.key}
+            onClick={() => account.status !== s.key && setStatus(s.key)}
+            className={cn(
+              "flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors",
+              account.status === s.key ? "bg-surface font-medium text-fg shadow-sm" : "text-muted hover:text-fg",
+            )}
+          >
+            <StatusDot status={s.key} className={account.status === s.key ? undefined : "opacity-60"} />
+            {s.label}
+          </button>
+        ))}
+      </div>
+
       <div className="mt-8 border-y border-line py-4">
-        <p className="mb-1 text-[13px] text-muted">Next step</p>
+        <p className="mb-1 text-[13px] text-muted">Next follow-up</p>
         {next ? (
           <button onClick={() => ui.openTask(next.id)} className="group flex w-full items-baseline justify-between gap-4 text-left">
             <span className="text-lg group-hover:text-accent-text">
               {next.title} <span className="text-sm text-muted">· {taskTypeLabel(next.type)}</span>
             </span>
-            <span className={cn("shrink-0 text-sm", next.due_date && next.due_date < today ? "text-late" : "text-muted")}>
+            <span className={cn("num shrink-0 text-sm", next.due_date && next.due_date < today ? "text-late" : "text-muted")}>
               {next.due_date ? dueLabel(next.due_date, null, today) : "No date"}
               {next.due_time && ` ${next.due_time}`}
             </span>
           </button>
         ) : (
-          <div className="flex items-baseline justify-between gap-4">
-            <span className="text-lg text-muted">No next step</span>
-            <button onClick={() => ui.openCapture("todo", { account: { id: account.id, name: account.name } })} className="text-sm text-accent-text hover:underline">
-              Set next step
-            </button>
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-lg text-missing">No follow-up planned</span>
+            <Button size="sm" onClick={() => ui.openCapture("todo", { account: { id: account.id, name: account.name } })}>
+              <CalendarPlus /> Plan follow-up
+            </Button>
           </div>
         )}
       </div>
@@ -203,56 +207,24 @@ function Overview({ data }: { data: AccountDetail }) {
   return (
     <div className="grid gap-12">
       <section>
-        <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="label">Projects</h2>
-          <Button variant="ghost" size="xs" onClick={() => ui.openCapture("project", { account: { id: account.id, name: account.name } })}>
-            + New
+        <div className="mb-1 flex items-baseline justify-between">
+          <h2 className="label">Follow-ups</h2>
+          <Button variant="ghost" size="xs" onClick={() => ui.openCapture("todo", { account: { id: account.id, name: account.name } })}>
+            + Plan
           </Button>
         </div>
-        {data.projects.length === 0 ? (
-          <p className="border-t border-line pt-5 text-sm text-muted">No projects with this company yet.</p>
+        {tasks.length === 0 ? (
+          <p className="border-t border-line pt-5 text-sm text-muted">Nothing planned. Every account you're chasing should have a next follow-up date.</p>
         ) : (
-          <ul>
-            {data.projects.map((p) => (
-              <li key={p.id} className="border-t border-line">
-                <Link to={`/projects/${p.id}`} className="flex items-baseline justify-between gap-4 py-3.5 hover:text-accent-text">
-                  <span className={cn("min-w-0 truncate", p.stage === "done" && "text-muted")}>{p.name}</span>
-                  <span className="shrink-0 text-sm text-muted">
-                    {p.stage === "waiting" && p.waiting_on ? `Waiting on ${p.waiting_on}` : projectStageLabel(p.stage)}
-                  </span>
-                </Link>
-              </li>
+          <ul className="border-t border-line">
+            {tasks.map((t) => (
+              <TodoItem key={t.id} todo={t} showType />
             ))}
           </ul>
         )}
       </section>
 
-      <section>
-        <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="label">Company</h2>
-          <Button variant="ghost" size="xs" onClick={() => setEditing(true)}>
-            Edit
-          </Button>
-        </div>
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-4 border-t border-line pt-5 sm:grid-cols-4">
-          <Info label="Industry" value={account.industry} />
-          <Info label="Size" value={SIZE_BANDS.find((s) => s.key === account.size_band)?.label} />
-          <Info label="ICP fit" value={ICP_FIT.find((s) => s.key === account.icp_fit)?.label} />
-          <Info label="Lead source" value={account.lead_source} />
-          <Info label="Website" value={account.website} />
-          <Info label="Tags" value={account.tags.join(", ")} />
-        </dl>
-        {account.notes && <p className="mt-5 whitespace-pre-wrap text-sm text-muted">{account.notes}</p>}
-      </section>
-
-      <section>
-        <h2 className="label mb-3">Office</h2>
-        {primary ? (
-          <OfficeCard office={primary} compact />
-        ) : (
-          <p className="border-t border-line pt-5 text-sm text-muted">No office details yet. Add them on the Office & lease tab.</p>
-        )}
-      </section>
+      <LatestActivity accountId={account.id} />
 
       <section>
         <div className="mb-3 flex items-baseline justify-between">
@@ -299,34 +271,57 @@ function Overview({ data }: { data: AccountDetail }) {
 
       <section>
         <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="label">Open to-dos</h2>
-          <Button variant="ghost" size="xs" onClick={() => ui.openCapture("todo", { account: { id: account.id, name: account.name } })}>
-            + Add
+          <h2 className="label">Company</h2>
+          <Button variant="ghost" size="xs" onClick={() => setEditing(true)}>
+            Edit
           </Button>
         </div>
-        {tasks.length === 0 ? (
-          <p className="border-t border-line pt-5 text-sm text-muted">Nothing open.</p>
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-4 border-t border-line pt-5 sm:grid-cols-4">
+          <Info label="Industry" value={account.industry} />
+          <Info label="Size" value={SIZE_BANDS.find((s) => s.key === account.size_band)?.label} />
+          <Info label="ICP fit" value={ICP_FIT.find((s) => s.key === account.icp_fit)?.label} />
+          <Info label="Lead source" value={account.lead_source} />
+          <Info label="Website" value={account.website} />
+          <Info label="Tags" value={account.tags.join(", ")} />
+        </dl>
+        {account.notes && <p className="mt-5 whitespace-pre-wrap text-sm text-muted">{account.notes}</p>}
+      </section>
+
+      <section>
+        <h2 className="label mb-3">Office</h2>
+        {primary ? (
+          <OfficeCard office={primary} compact />
+        ) : (
+          <p className="border-t border-line pt-5 text-sm text-muted">No office details yet. Add them on the Office & lease tab.</p>
+        )}
+      </section>
+
+      {data.projects.length > 0 && (
+      <section>
+        <div className="mb-3 flex items-baseline justify-between">
+          <h2 className="label">Projects (from before)</h2>
+        </div>
+        {data.projects.length === 0 ? (
+          <p className="border-t border-line pt-5 text-sm text-muted">No projects with this company yet.</p>
         ) : (
           <ul>
-            {tasks.map((t) => (
-              <li key={t.id} className="border-t border-line">
-                <button onClick={() => ui.openTask(t.id)} className="flex w-full items-baseline justify-between gap-4 py-3.5 text-left hover:text-accent-text">
-                  <span className="min-w-0 truncate">
-                    {t.title}{" "}
-                    <span className="text-sm text-muted">
-                      · {taskTypeLabel(t.type)}
-                      {t.project_name && ` · ${t.project_name}`}
-                    </span>
+            {data.projects.map((p) => (
+              <li key={p.id} className="border-t border-line">
+                <Link to={`/projects/${p.id}`} className="flex items-baseline justify-between gap-4 py-3.5 hover:text-accent-text">
+                  <span className={cn("min-w-0 truncate", p.stage === "done" && "text-muted")}>{p.name}</span>
+                  <span className="shrink-0 text-sm text-muted">
+                    {p.stage === "waiting" && p.waiting_on ? `Waiting on ${p.waiting_on}` : projectStageLabel(p.stage)}
                   </span>
-                  <span className={cn("num shrink-0 text-sm", t.due_date && t.due_date < today ? "text-late" : "text-muted")} title={dmy(t.due_date)}>{dueLabel(t.due_date, t.due_time, today)}</span>
-                </button>
+                </Link>
               </li>
             ))}
           </ul>
         )}
       </section>
 
-      <Sheet open={editing} onOpenChange={setEditing} title="Edit company">
+      )}
+
+      <Sheet open={editing} onOpenChange={setEditing} title="Edit account">
         {editing && <AccountEdit data={data} onDone={() => setEditing(false)} />}
       </Sheet>
       <Sheet open={contactForm !== null} onOpenChange={(o) => !o && setContactForm(null)} title={contactForm === "new" ? "Add contact" : "Edit contact"}>
@@ -437,6 +432,25 @@ function AccountEdit({ data, onDone }: { data: AccountDetail; onDone: () => void
         <Button>Save</Button>
       </div>
     </form>
+  );
+}
+
+/** The last few things that happened, so the follow-ups have context. */
+function LatestActivity({ accountId }: { accountId: string }) {
+  const { data: items } = useApi<ActivityRow[]>(`/activities?account_id=${accountId}&limit=3`);
+  if (!items) return null;
+  return (
+    <section>
+      <div className="mb-3 flex items-baseline justify-between">
+        <h2 className="label">Latest activity</h2>
+        {items.length > 0 && (
+          <Link to="?tab=communication" className="text-[13px] text-muted hover:text-fg">
+            Full log
+          </Link>
+        )}
+      </div>
+      <Timeline items={items} empty="Nothing logged yet. Log a call, email or meeting with the buttons above." />
+    </section>
   );
 }
 

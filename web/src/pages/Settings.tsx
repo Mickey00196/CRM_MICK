@@ -61,7 +61,7 @@ export function SettingsPage({ onLogout }: { onLogout: () => void }) {
       <Row label="Daily reminder email">
         {data?.reminders ? (
           <div className="grid gap-2 text-sm">
-            <p className="text-muted">Weekdays at 07:30 to {data.reminder_to}: overdue, today, and accounts without a next step.</p>
+            <p className="text-muted">Weekdays at 07:30 to {data.reminder_to}: overdue, today, and accounts without a follow-up.</p>
             <div className="flex items-center gap-3">
               <Button variant="outline" size="sm" onClick={testEmail}>
                 Send a test now
@@ -78,7 +78,7 @@ export function SettingsPage({ onLogout }: { onLogout: () => void }) {
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" asChild>
             <a href="/api/accounts/export.csv" download>
-              Export companies (CSV)
+              Export accounts (CSV)
             </a>
           </Button>
           <Button variant="outline" size="sm" asChild>
@@ -93,8 +93,8 @@ export function SettingsPage({ onLogout }: { onLogout: () => void }) {
         <dl className="grid grid-cols-[5rem_1fr] gap-y-1.5 text-sm">
           {[
             ["N", "New to-do"],
-            ["P", "New project"],
-            ["L", "Log a call, email or note (for the project or company you're on)"],
+            ["A", "New account"],
+            ["L", "Log a call, email or note (for the account you're on)"],
             ["/", "Search"],
             ["⌘K / Ctrl K", "Quick capture, from anywhere"],
           ].map(([k, v]) => (

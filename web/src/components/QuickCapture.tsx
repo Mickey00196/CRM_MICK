@@ -17,9 +17,8 @@ import type { CaptureKind, PageContext } from "./ui-context";
 
 const KINDS: { key: CaptureKind; label: string }[] = [
   { key: "todo", label: "To-do" },
-  { key: "project", label: "Project" },
+  { key: "account", label: "Account" },
   { key: "log", label: "Log" },
-  { key: "account", label: "Company" },
   { key: "contact", label: "Contact" },
 ];
 
@@ -132,7 +131,11 @@ function TodoForm({ ctx, onDone }: { ctx: PageContext; onDone: () => void }) {
         )}
       </div>
       <div className="grid gap-3 sm:grid-cols-[1fr_9rem]">
-        <ProjectPicker value={project} onChange={setProject} placeholder="Project (optional)" />
+        {project ? (
+          <ProjectPicker value={project} onChange={setProject} placeholder="Project" />
+        ) : (
+          <AccountPicker value={account} onChange={setAccount} placeholder="Account (optional)" />
+        )}
         <Select value={effectiveType} onChange={(e) => setType(e.target.value as TaskType)} aria-label="Type">
           {TASK_TYPES.map((t) => (
             <option key={t.key} value={t.key}>
@@ -141,7 +144,6 @@ function TodoForm({ ctx, onDone }: { ctx: PageContext; onDone: () => void }) {
           ))}
         </Select>
       </div>
-      {!project && <AccountPicker value={account} onChange={setAccount} placeholder="Company (optional)" />}
       <div className="flex flex-wrap items-center gap-2">
         <Chips options={DUE} value={presetKey} onChange={(k) => setDue(k === "0" ? today : workday(addDays(today, Number(k))))} size="sm" />
         <Input type="date" value={effectiveDue} onChange={(e) => setDue(e.target.value)} className="h-7 w-auto px-2 text-[13px]" aria-label="Due date" />

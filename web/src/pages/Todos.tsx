@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { projectStageLabel, type TodoList, type TodoRow } from "@shared/model";
+import { accountStatusLabel, type TodoList, type TodoRow } from "@shared/model";
 import { api, DATA_CHANGED } from "@/lib/api";
 import { addDays, longDate, relative } from "@/lib/format";
 import { TASK_DONE, useUI } from "@/components/ui-context";
 import { TodoItem } from "@/components/TodoItem";
 import { Skeleton } from "@/components/Skeleton";
 import { cn } from "@/lib/utils";
-import { FolderPlus, ListTodo, Plus } from "lucide-react";
+import { Building2, ListTodo, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/EmptyState";
 
@@ -66,7 +66,7 @@ export function Todos() {
   const nextWeek = data.upcoming.filter((r) => r.due_date && r.due_date <= weekEnd);
   const later = data.upcoming.filter((r) => r.due_date && r.due_date > weekEnd);
   const undated = data.upcoming.filter((r) => !r.due_date);
-  const stalled = data.no_next_step;
+  const stalled = data.no_follow_up;
   const shownStalled = showStalled ? stalled : stalled.slice(0, 3);
 
   return (
@@ -88,28 +88,24 @@ export function Todos() {
       {stalled.length > 0 && (
         <section className="mb-10 rounded-lg border border-missing/30 bg-missing/[0.06] px-4 pb-1 pt-3" aria-labelledby="stalled-title">
           <h2 id="stalled-title" className="text-sm font-medium text-missing">
-            {stalled.length === 1 ? "1 project has" : `${stalled.length} projects have`} no next step
+            {stalled.length === 1 ? "1 account has" : `${stalled.length} accounts have`} no follow-up planned
           </h2>
           <ul className="mt-1">
-            {shownStalled.map((p) => (
-              <li key={p.id} className="flex items-center justify-between gap-4 border-t border-missing/15 py-2.5 first:border-t-0">
-                <Link to={`/projects/${p.id}`} className="min-w-0 truncate text-sm hover:underline">
-                  {p.name}
+            {shownStalled.map((a) => (
+              <li key={a.id} className="flex items-center justify-between gap-4 border-t border-missing/15 py-2.5 first:border-t-0">
+                <Link to={`/accounts/${a.id}`} className="min-w-0 truncate text-sm hover:underline">
+                  {a.name}
                   <span className="text-muted">
-                    {p.account_name && ` · ${p.account_name}`}
-                    {p.last_activity_at ? ` · last update ${relative(p.last_activity_at)}` : ` · ${projectStageLabel(p.stage)}`}
+                    {` · ${accountStatusLabel(a.status)}`}
+                    {a.city && ` · ${a.city}`}
+                    {a.last_contact_at ? ` · last contact ${relative(a.last_contact_at)}` : " · not contacted yet"}
                   </span>
                 </Link>
                 <button
-                  onClick={() =>
-                    ui.openCapture("todo", {
-                      project: { id: p.id, name: p.name, account_id: p.account_id, account_name: p.account_name },
-                      account: p.account_id ? { id: p.account_id, name: p.account_name ?? "" } : null,
-                    })
-                  }
+                  onClick={() => ui.openCapture("todo", { account: { id: a.id, name: a.name } })}
                   className="shrink-0 rounded-md px-2 py-1 text-[13px] font-medium text-missing hover:bg-missing/10"
                 >
-                  + Next step
+                  + Follow-up
                 </button>
               </li>
             ))}
@@ -126,13 +122,13 @@ export function Todos() {
         <EmptyState
           icon={ListTodo}
           title="Nothing on your list"
-          text={<>Add what you need to do next. Type it the way you'd say it, like “Call Sanne tomorrow 10:00”, and the date and time fill themselves in.</>}
+          text={<>Plan your next follow-up. Type it the way you'd say it, like “Call Sanne tomorrow 10:00”, link it to an account, and the date and time fill themselves in.</>}
         >
           <Button size="lg" onClick={() => ui.openCapture("todo")}>
             <Plus /> New to-do
           </Button>
-          <Button size="lg" variant="outline" onClick={() => ui.openCapture("project")}>
-            <FolderPlus /> New project
+          <Button size="lg" variant="outline" onClick={() => ui.openCapture("account")}>
+            <Building2 /> New account
           </Button>
         </EmptyState>
       )}
@@ -156,7 +152,7 @@ function Section({ label, rows, fading, highlight }: { label: string; rows: Todo
       </h2>
       <ul>
         {rows.map((r) => (
-          <TodoItem key={r.id} todo={r} context={r.project_name ?? r.account_name} fading={fading.has(r.id)} showType />
+          <TodoItem key={r.id} todo={r} context={r.account_name ?? r.project_name} fading={fading.has(r.id)} showType />
         ))}
       </ul>
     </section>

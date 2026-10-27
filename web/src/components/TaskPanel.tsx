@@ -156,7 +156,7 @@ function ViewStep({
         )}
 
         {account && (
-          <Section label="Company">
+          <Section label="Account">
             <Link to={`/accounts/${account.id}`} onClick={onClose} className="inline-flex items-center gap-1 font-medium hover:text-accent-text">
               {account.name} <ArrowUpRight className="size-3.5 text-faint" />
             </Link>
@@ -298,7 +298,7 @@ function CompleteStep({ data, onBack, onDone }: { data: TaskDetail; onBack: () =
         <h2 className="title mt-1 text-xl">How did it go?</h2>
         <p className="mt-1 text-sm text-muted">
           {task.title}
-          {(task.project_name ?? task.account_name) && ` · ${task.project_name ?? task.account_name}`}
+          {(task.account_name ?? task.project_name) && ` · ${task.account_name ?? task.project_name}`}
         </p>
       </div>
 
@@ -327,7 +327,13 @@ function CompleteStep({ data, onBack, onDone }: { data: TaskDetail; onBack: () =
           value={next}
           onChange={setNext}
           noneHint={
-            data.other_open_tasks > 0 ? "another to-do is still open" : data.project && data.project.stage !== "done" ? "the project will show as having no next step" : undefined
+            data.other_open_tasks > 0
+              ? "another to-do is still open"
+              : task.account_id
+                ? "the account will show as having no follow-up"
+                : data.project && data.project.stage !== "done"
+                  ? "the project will show as having no next step"
+                  : undefined
           }
         />
       )}

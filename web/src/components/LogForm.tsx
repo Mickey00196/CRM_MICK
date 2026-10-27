@@ -78,7 +78,7 @@ export function LogForm({ preset, onSaved, onCancel }: { preset: LogPreset; onSa
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    if (!account && !project) return setError("Pick a project or a company.");
+    if (!account && !project) return setError("Pick an account.");
     setBusy(true);
     setError(null);
     try {
@@ -106,8 +106,7 @@ export function LogForm({ preset, onSaved, onCancel }: { preset: LogPreset; onSa
     <form className="grid gap-5" onSubmit={save}>
       {!preset.account && !preset.project && (
         <div className="grid gap-3 sm:grid-cols-2">
-          <ProjectPicker value={project} onChange={setProject} placeholder="Project" autoFocus />
-          {!project && <AccountPicker value={account} onChange={setAccount} placeholder="or company" />}
+          <AccountPicker value={account} onChange={setAccount} placeholder="Account" autoFocus />
         </div>
       )}
 

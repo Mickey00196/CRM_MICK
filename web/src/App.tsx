@@ -6,7 +6,6 @@ import { Shell } from "@/components/Shell";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Login } from "@/pages/Login";
 import { Todos } from "@/pages/Todos";
-import { Projects } from "@/pages/Projects";
 import { ProjectPage } from "@/pages/Project";
 import { Accounts } from "@/pages/Accounts";
 import { AccountPage } from "@/pages/Account";
@@ -54,7 +53,7 @@ function Pages({ onLogout }: { onLogout: () => void }) {
     <ErrorBoundary key={location.pathname}>
       <Routes>
         <Route path="/" element={<Todos />} />
-        <Route path="/projects" element={<Projects />} />
+        <Route path="/projects" element={<Navigate to="/accounts" replace />} />
         <Route path="/projects/:id" element={<ProjectPage />} />
         <Route path="/review" element={<Review />} />
         <Route path="/accounts" element={<Accounts />} />
