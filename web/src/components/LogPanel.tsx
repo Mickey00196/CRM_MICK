@@ -52,6 +52,8 @@ export function LogPanel({ account, className }: { account: { id: string; name: 
     }
   }
 
+  const entryCount = (items ?? []).filter((x) => x.channel !== "stage").length;
+
   const groups = useMemo(() => {
     const out: Group[] = [];
     for (const x of items ?? []) {
@@ -71,17 +73,23 @@ export function LogPanel({ account, className }: { account: { id: string; name: 
   }, [items, account.status]);
 
   return (
-    <aside className={cn("flex flex-col rounded-xl border border-line bg-surface lg:max-h-[calc(100dvh-3rem)]", className)} aria-label="Log">
+    <aside
+      className={cn("flex max-h-[85vh] min-h-[28rem] flex-col overflow-hidden rounded-xl border border-line bg-surface shadow-[0_1px_2px_rgb(15_20_26/0.04)]", className)}
+      aria-label="Log"
+    >
+      <header className="flex min-h-12 items-center justify-between gap-2 border-b border-line px-4 py-2.5">
+        <h2 className="label flex items-center gap-2">
+          Log <span className="num font-normal text-faint">{entryCount || ""}</span>
+        </h2>
+        <span className="flex items-center gap-1.5 rounded-full border border-line px-2.5 py-0.5 text-[12px] text-muted">
+          <StatusDot status={account.status} /> at {accountStatusLabel(account.status)}
+        </span>
+      </header>
+
       {/* Write */}
-      <div className="border-b border-line p-4">
-        <div className="mb-2.5 flex items-center justify-between gap-2">
-          <h2 className="label">Log</h2>
-          <span className="flex items-center gap-1.5 text-[12px] text-muted">
-            <StatusDot status={account.status} /> at {accountStatusLabel(account.status)}
-          </span>
-        </div>
+      <div className="border-b border-line bg-subtle/40 p-4">
         <Textarea
-          rows={3}
+          rows={4}
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
@@ -92,7 +100,7 @@ export function LogPanel({ account, className }: { account: { id: string; name: 
           }}
           placeholder="What happened? Write it down while it's fresh."
           aria-label="New log entry"
-          className="resize-none text-[14px]"
+          className="resize-none bg-surface text-[14px] leading-relaxed"
         />
         <div className="mt-2 flex items-center justify-between gap-2">
           <div className="flex gap-0.5" role="radiogroup" aria-label="Type">

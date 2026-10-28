@@ -131,7 +131,7 @@ export function TodoItem({
         <div
           className={cn(
             "flex shrink-0 items-center gap-0.5 transition-opacity",
-            "sm:pointer-events-none sm:absolute sm:inset-y-0 sm:right-0 sm:bg-linear-to-l sm:from-bg sm:from-75% sm:to-transparent sm:pl-12 sm:opacity-0",
+            "sm:pointer-events-none sm:absolute sm:inset-y-0 sm:right-0 sm:bg-linear-to-l sm:from-[var(--row-bg,var(--bg))] sm:from-75% sm:to-transparent sm:pl-12 sm:opacity-0",
             "sm:focus-within:pointer-events-auto sm:focus-within:opacity-100 sm:group-hover/row:pointer-events-auto sm:group-hover/row:opacity-100",
             "[@media(hover:none)]:pointer-events-auto [@media(hover:none)]:static [@media(hover:none)]:bg-none [@media(hover:none)]:pl-0 [@media(hover:none)]:opacity-100",
           )}

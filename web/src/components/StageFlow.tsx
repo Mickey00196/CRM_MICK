@@ -1,3 +1,4 @@
+import { useEffect, useRef, type ReactNode } from "react";
 import { Check, ChevronRight } from "lucide-react";
 import { ACCOUNT_STATUSES, FLOW, OPPORTUNITY_STAGES, nextStatus, phaseOf, type AccountStatus } from "@shared/model";
 import { cn } from "@/lib/utils";
@@ -9,12 +10,30 @@ const label = (s: AccountStatus) => ACCOUNT_STATUSES.find((x) => x.key === s)!.l
  * Where the account is: Lead, the seven opportunity steps, Invoicing. Click any step to jump there;
  * the button moves it one step on ("Start opportunity", "Next: Viewing", "Move to invoicing").
  */
-export function StageFlow({ status, onChange }: { status: AccountStatus; onChange: (s: AccountStatus) => void }) {
+export function StageFlow({
+  status,
+  onChange,
+  footer,
+}: {
+  status: AccountStatus;
+  onChange: (s: AccountStatus) => void;
+  /** A strip at the bottom of the card, e.g. the next follow-up. */
+  footer?: ReactNode;
+}) {
   const parked = status === "not_now";
   const at = FLOW.indexOf(status);
   const next = nextStatus(status);
   const phase = phaseOf(status);
   const step = OPPORTUNITY_STAGES.indexOf(status) + 1;
+
+  const scroller = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = scroller.current;
+    const cur = el?.querySelector<HTMLElement>("[data-current]");
+    if (!el || !cur || el.scrollWidth <= el.clientWidth) return;
+    const offset = cur.getBoundingClientRect().left - el.getBoundingClientRect().left;
+    el.scrollLeft += offset - el.clientWidth / 2 + cur.offsetWidth / 2;
+  }, [status]);
 
   const action =
     status === "lead"
@@ -26,7 +45,8 @@ export function StageFlow({ status, onChange }: { status: AccountStatus; onChang
           : null;
 
   return (
-    <section className="mt-6 rounded-xl border border-line bg-surface p-4 sm:p-5" aria-label="Stage">
+    <section className="rounded-xl border border-line bg-surface shadow-[0_1px_2px_rgb(15_20_26/0.04)]" aria-label="Stage">
+      <div className="p-4 sm:p-5">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm">
           {parked ? (
@@ -60,9 +80,9 @@ export function StageFlow({ status, onChange }: { status: AccountStatus; onChang
         </div>
       </div>
 
-      {/* The steps. Scrolls sideways on narrow screens. */}
-      <div className="-mx-1 overflow-x-auto px-1 pb-1">
-        <div className={cn("grid min-w-[620px] grid-cols-9", parked && "opacity-50")}>
+      {/* The steps. Scrolls sideways on narrow screens, starting at the current step. */}
+      <div ref={scroller} className="-mx-1 overflow-x-auto px-1 pb-1">
+        <div className={cn("grid min-w-[540px] grid-cols-9", parked && "opacity-50")}>
           <PhaseLabel span={1} text="Lead" active={phase === "lead"} />
           <PhaseLabel span={7} text="Opportunity" active={phase === "opportunity"} bracket />
           <PhaseLabel span={1} text="Invoicing" active={phase === "invoicing"} />
@@ -75,6 +95,7 @@ export function StageFlow({ status, onChange }: { status: AccountStatus; onChang
                 onClick={() => s !== status && onChange(s)}
                 className="group relative flex flex-col items-center gap-2 pt-1 text-center"
                 aria-current={current ? "step" : undefined}
+                data-current={current || undefined}
                 title={current ? label(s) : `Move to ${label(s)}`}
               >
                 {/* line to the next step */}
@@ -108,6 +129,8 @@ export function StageFlow({ status, onChange }: { status: AccountStatus; onChang
           })}
         </div>
       </div>
+      </div>
+      {footer && <div className="rounded-b-xl border-t border-line bg-subtle/50 px-4 py-3 sm:px-5">{footer}</div>}
     </section>
   );
 }
