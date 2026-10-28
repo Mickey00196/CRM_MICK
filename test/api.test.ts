@@ -472,13 +472,14 @@ describe("opportunity: brief, buildings, terms and the new office", () => {
 
   test("buildings: add, edit, track terms, choose one, remove", async () => {
     const id = await account(a, { name: "Options BV" });
-    const one = await a.post(`/accounts/${id}/options`, { data: { name: "The Atrium", area_m2: "1.000", asking_rent_m2: "425" } });
+    const one = await a.post(`/accounts/${id}/options`, { data: { address: "Strawinskylaan 3051", area_m2: "1.000", asking_rent_m2: "425" } });
     assert.equal(one.status, 201, JSON.stringify(one.data));
     assert.equal(one.data.data.area_m2, 1000);
-    const two = await a.post(`/accounts/${id}/options`, { data: { name: "Mahler 4" }, status: "viewed" });
+    const two = await a.post(`/accounts/${id}/options`, { data: { address: "Gustav Mahlerlaan 10" }, status: "viewed" });
     assert.equal(two.data.position, 1);
-    assert.equal((await a.post(`/accounts/${id}/options`, { data: { area_m2: 5 } })).status, 400, "needs a name");
-    assert.equal((await b.post(`/accounts/${id}/options`, { data: { name: "x" } })).status, 404);
+    assert.equal((await a.post(`/accounts/${id}/options`, { data: { area_m2: 5 } })).status, 400, "needs an address");
+    assert.equal((await a.patch(`/options/${one.data.id}`, { data: { address: null } })).status, 400, "keeps its address");
+    assert.equal((await b.post(`/accounts/${id}/options`, { data: { address: "x" } })).status, 404);
 
     let r = await a.patch(`/options/${one.data.id}`, { data: { offer_rent_m2: "395", area_m2: null }, terms: { rent: { landlord: "€425", ask: "€380" } } });
     assert.equal(r.status, 200, JSON.stringify(r.data));
@@ -500,7 +501,7 @@ describe("opportunity: brief, buildings, terms and the new office", () => {
     assert.equal((await b.req("DELETE", `/options/${two.data.id}`)).status, 404);
     assert.equal((await a.req("DELETE", `/options/${two.data.id}`)).status, 200);
     const detail = await a.get(`/accounts/${id}`);
-    assert.deepEqual(detail.data.options.map((o: any) => o.data.name), ["The Atrium"]);
+    assert.deepEqual(detail.data.options.map((o: any) => o.data.address), ["Strawinskylaan 3051"]);
   });
 
   test("import from a live shortlist link adds new buildings and keeps your edits", async () => {
@@ -529,14 +530,14 @@ describe("opportunity: brief, buildings, terms and the new office", () => {
       assert.equal(atrium.data.area_m2, 900);
 
       // Edit one, remove the other, then import again with a third building.
-      await a.patch(`/options/${atrium.id}`, { data: { area_m2: 850, notes: "Only floors 3-4" } });
+      await a.patch(`/options/${atrium.id}`, { data: { area_m2: 850 } });
       const mahler = r.data.options.find((o: any) => o.source_id === "brochure:b2");
       await a.req("DELETE", `/options/${mahler.id}`);
       buildings = [...buildings, { building_id: "b3", name: "Basisweg 10", address: "Basisweg 10", city: "Amsterdam", units: [] }];
       r = await a.post(`/accounts/${id}/options/import`, { url: link });
       assert.deepEqual([r.data.added, r.data.updated, r.data.skipped], [1, 1, 1]);
-      const names = r.data.options.map((o: any) => o.data.name);
-      assert.deepEqual(names, ["The Atrium", "Basisweg 10"], "the removed one stays removed");
+      const addresses = r.data.options.map((o: any) => o.data.address);
+      assert.deepEqual(addresses, ["Strawinskylaan 3", "Basisweg 10"], "the removed one stays removed");
       assert.equal(r.data.options[0].data.area_m2, 850, "your edit is kept");
 
       const detail = await a.get(`/accounts/${id}`);
@@ -556,20 +557,20 @@ describe("opportunity: brief, buildings, terms and the new office", () => {
     const id = await account(a, { name: "Move BV", office: { building_name: "Old HQ", lease_end: "2027-12-31" } });
     await a.patch(`/accounts/${id}/opportunity`, { lease_start: "2027-10-01", lease_end: "2032-09-30", notice_months: 12, rent_year: 380_000, headcount_now: 90 });
     const opt = await a.post(`/accounts/${id}/options`, {
-      data: { name: "The Atrium", address: "Strawinskylaan 3", city: "Amsterdam", offer_area_m2: 1000, offer_rent_m2: 380, offer_term_years: 5, offer_service_m2: 60, landlord: "Atrium CV" },
+      data: { address: "Strawinskylaan 3", area_m2: 1000, asking_rent_m2: 395, offer_rent_m2: 380, offer_term_years: 5, offer_service_m2: 60 },
     });
     assert.equal((await b.post(`/options/${opt.data.id}/adopt`)).status, 404);
     const r = await a.post(`/options/${opt.data.id}/adopt`);
     assert.equal(r.status, 201, JSON.stringify(r.data));
-    assert.equal(r.data.building_name, "The Atrium");
+    assert.equal(r.data.address, "Strawinskylaan 3");
     assert.equal(r.data.is_current, true);
     assert.equal(r.data.is_primary, true);
     assert.equal(r.data.lease_end, "2032-09-30");
     assert.equal(r.data.annual_rent, 380_000);
     assert.equal(r.data.service_charges, 60_000);
     assert.equal(r.data.headcount, 90);
-    const offices = await env.q("select building_name, is_current, is_primary from office_locations where account_id = $1 order by created_at", [id]);
-    assert.deepEqual(offices.map((o) => [o.building_name, o.is_current, o.is_primary]), [["Old HQ", false, false], ["The Atrium", true, true]]);
+    const offices = await env.q("select building_name, address, is_current, is_primary from office_locations where account_id = $1 order by created_at", [id]);
+    assert.deepEqual(offices.map((o) => [o.building_name || o.address, o.is_current, o.is_primary]), [["Old HQ", false, false], ["Strawinskylaan 3", true, true]]);
     const [o] = await env.q("select status from options where id = $1", [opt.data.id]);
     assert.equal(o.status, "chosen");
     assert.equal((await a.post(`/options/${opt.data.id}/adopt`)).status, 400, "not twice");

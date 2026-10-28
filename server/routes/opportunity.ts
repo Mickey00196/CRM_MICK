@@ -10,6 +10,7 @@ import {
   FieldError,
   coercePatch,
   coerceTerms,
+  buildingLabel,
   offerMetrics,
   type OptionRow,
   type OptionStatus,
@@ -90,7 +91,7 @@ opportunity.post("/accounts/:id/options", async (req, res) => {
   const owner = uid(req);
   const accountId = idOf(req.params.id, "That account");
   const { set } = split(coercePatch(req.body?.data ?? {}, OPTION_FIELD_MAP));
-  if (!set.name) throw bad("Give the building a name.");
+  if (!set.address) throw bad("Add the building's address.");
   const status = req.body?.status === undefined ? "overview" : optionStatus(req.body.status);
   const row = await tx(async (t) => {
     await ownAccount(t, owner, accountId, true);
@@ -113,7 +114,7 @@ opportunity.patch("/options/:id", async (req, res) => {
   const terms = body.terms === undefined ? null : coerceTerms(body.terms);
   const position = body.position === undefined ? null : Number(body.position);
   if (position !== null && (!Number.isInteger(position) || position < 0 || position > 10_000)) throw bad("That position isn't valid.");
-  if (data?.remove.includes("name")) throw bad("A building needs a name.");
+  if (data?.remove.includes("address")) throw bad("A building needs an address.");
 
   const row = await tx(async (t) => {
     const cur = await ownOption(t, owner, id, true);
@@ -168,7 +169,7 @@ opportunity.post("/accounts/:id/options/import", async (req, res) => {
   } catch (e) {
     throw bad((e as Error).message);
   }
-  const incoming = shortlist.buildings.slice(0, 100).map((b) => buildingToOption(b, link));
+  const incoming = shortlist.buildings.slice(0, 100).map((b) => buildingToOption(b));
 
   const result = await tx(async (t) => {
     const acc = await ownAccount(t, owner, accountId, true);
@@ -195,7 +196,7 @@ opportunity.post("/accounts/:id/options/import", async (req, res) => {
         added++;
       }
     }
-    if (!acc.opportunity?.overview_link) {
+    if (!acc.opportunity?.overview_link && /^https?:\/\/[^\s"<>]+$/i.test(link) && link.length <= 1000) {
       await t.q("update accounts set opportunity = opportunity || $2::jsonb where id = $1", [accountId, JSON.stringify({ overview_link: link })]);
     }
     if (added) await logNote(t, owner, accountId, `Added ${added} building${added === 1 ? "" : "s"} from the shortlist "${shortlist.display_name}".`);
@@ -239,13 +240,13 @@ opportunity.post("/options/:id/adopt", async (req, res) => {
         acc.id,
         str(d.name).slice(0, 200),
         str(d.address).slice(0, 300),
-        str(d.city).slice(0, 100),
-        str(d.submarket).slice(0, 100),
+        "",
+        "",
         area === null ? null : Math.round(area),
         num(opp.headcount_now) === null ? null : Math.round(num(opp.headcount_now)!),
         num(d.offer_parking_spaces) === null ? null : Math.round(num(d.offer_parking_spaces)!),
-        str(d.landlord).slice(0, 200),
-        str(d.agent).slice(0, 200),
+        "",
+        "",
         str(opp.lease_start) || str(d.offer_start) || null,
         str(opp.lease_end) || null,
         num(opp.notice_months) === null ? null : Math.round(num(opp.notice_months)!),
@@ -263,7 +264,7 @@ opportunity.post("/options/:id/adopt", async (req, res) => {
     await t.q("update options set status = 'negotiating' where account_id = $1 and id <> $2 and status = 'chosen' and archived_at is null", [acc.id, id]);
     await t.q("update options set status = 'chosen' where id = $1", [id]);
     await t.q("update accounts set opportunity = opportunity || $2::jsonb where id = $1", [acc.id, JSON.stringify({ adopted_office_id: row!.id })]);
-    await logNote(t, owner, acc.id, `${str(d.name) || "The new building"} is now the current office.`);
+    await logNote(t, owner, acc.id, `${buildingLabel(d)} is now the current office.`);
     return t.one("select * from office_locations where id = $1", [row!.id]);
   });
   res.status(201).json(office);

@@ -102,7 +102,7 @@ export const STAGE_FIELDS: Record<AccountStatus, FieldDef[]> = {
     { key: "overview_sent_at", label: "Sent on", type: "date" },
     { key: "overview_version", label: "Version", type: "text", placeholder: "v1" },
   ],
-  viewing: [{ key: "viewing_notes", label: "Viewing round notes", type: "longtext", wide: true }],
+  viewing: [{ key: "viewing_notes", label: "How the viewings went", type: "longtext", wide: true }],
   rfp: [
     { key: "rfp_sent_at", label: "RFP sent", type: "date" },
     { key: "rfp_deadline", label: "Responses due", type: "date" },
@@ -164,30 +164,15 @@ export const OPTION_STATUSES = [
 export type OptionStatus = (typeof OPTION_STATUSES)[number]["key"];
 
 export const OPTION_FIELDS: FieldDef[] = [
-  // the building as offered in the overview
-  { key: "name", label: "Building", type: "text" },
-  { key: "address", label: "Address", type: "text" },
-  { key: "city", label: "City", type: "text" },
-  { key: "submarket", label: "Area", type: "text" },
-  { key: "area_m2", label: "Available", type: "number", unit: "m²" },
-  { key: "asking_rent_m2", label: "Asking rent", type: "money", unit: "€/m²/yr" },
-  { key: "service_m2", label: "Service charges", type: "money", unit: "€/m²/yr" },
-  { key: "available_from", label: "Available from", type: "text" },
-  { key: "energy_label", label: "Energy label", type: "text" },
-  { key: "landlord", label: "Landlord", type: "text" },
-  { key: "agent", label: "Landlord's agent", type: "text" },
-  { key: "link", label: "Link", type: "url" },
-  { key: "photo", label: "Photo", type: "url" },
-  { key: "reaction", label: "Client's reaction", type: "select", options: opts(["yes", "Interested"], ["maybe", "Maybe"], ["no", "Not for us"]) },
-  { key: "notes", label: "Notes", type: "longtext" },
-  // viewing
+  // what you propose: where, how big, what it costs
+  { key: "address", label: "Address", type: "text", placeholder: "Strawinskylaan 3051" },
+  { key: "area_m2", label: "Size", type: "number", unit: "m²" },
+  { key: "asking_rent_m2", label: "Price", type: "money", unit: "€/m²/yr" },
+  // dated by the one-click actions at Viewing and RFP
   { key: "viewing_date", label: "Viewed on", type: "date" },
-  { key: "viewing_score", label: "Score", type: "number" },
-  { key: "viewing_notes", label: "Viewing notes", type: "longtext" },
-  // RFP
   { key: "rfp_sent_at", label: "RFP sent", type: "date" },
   { key: "rfp_received_at", label: "Response in", type: "date" },
-  // the landlord's offer
+  // the landlord's offer, filled in at Proposal
   { key: "offer_area_m2", label: "Area offered", type: "number", unit: "m²" },
   { key: "offer_rent_m2", label: "Rent", type: "money", unit: "€/m²/yr" },
   { key: "offer_service_m2", label: "Service charges", type: "money", unit: "€/m²/yr" },
@@ -201,9 +186,11 @@ export const OPTION_FIELDS: FieldDef[] = [
   { key: "offer_guarantee", label: "Guarantee", type: "text", placeholder: "3 months bank guarantee" },
   { key: "offer_delivery", label: "Delivery", type: "text" },
   { key: "offer_start", label: "Start", type: "date" },
-  { key: "drop_reason", label: "Why dropped", type: "text" },
 ];
 export const OPTION_FIELD_MAP: Record<string, FieldDef> = Object.fromEntries(OPTION_FIELDS.map((d) => [d.key, d]));
+
+/** How a building is called: its address (older rows may only have a name). */
+export const buildingLabel = (data: Record<string, unknown>) => String(data.address || data.name || "Building");
 
 /** The terms you negotiate on, per building: landlord's position, our ask, agreed. */
 export const NEGOTIATION_TERMS = opts(
@@ -412,10 +399,7 @@ export function stageChecks(stage: AccountStatus, c: StageContext): Check[] {
         { label: "Overview sent", done: has(o.overview_sent_at) },
       ];
     case "viewing":
-      return [
-        { label: "At least one building viewed", done: c.options.some((x) => live(x) && atLeast(x, "viewed")) },
-        { label: "Viewed buildings scored", done: c.options.filter((x) => live(x) && atLeast(x, "viewed")).every((x) => has(x.data.viewing_score)) && c.options.some((x) => atLeast(x, "viewed")) },
-      ];
+      return [{ label: "At least one building viewed", done: c.options.some((x) => live(x) && atLeast(x, "viewed")) }];
     case "rfp":
       return [
         { label: "RFP sent", done: has(o.rfp_sent_at) },

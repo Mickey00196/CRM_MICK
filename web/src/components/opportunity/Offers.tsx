@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Building2, Check, CheckCircle2 } from "lucide-react";
-import { NEGOTIATION_TERMS, OPTION_FIELD_MAP, TERM_SIDES, offerMetrics, type FieldDef, type OptionRow, type TermSide } from "@shared/opportunity";
+import { NEGOTIATION_TERMS, OPTION_FIELD_MAP, TERM_SIDES, buildingLabel, offerMetrics, type FieldDef, type OptionRow, type TermSide } from "@shared/opportunity";
 import type { Account } from "@shared/model";
 import { api } from "@/lib/api";
 import { money, num } from "@/lib/format";
@@ -12,7 +12,7 @@ import { Editable, type Value } from "./fields";
 import { OptionDot, isLive, optionStatusLabel, saveOption, statusRank, updateOption } from "./Buildings";
 
 const n = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
-const nameOf = (o: OptionRow) => String(o.data.name ?? "Building");
+const nameOf = (o: OptionRow) => buildingLabel(o.data);
 
 const OFFER_ROWS = [
   "offer_area_m2",
@@ -338,10 +338,9 @@ export function ChosenBuilding({ account, options, canAdopt, onShowOffice }: { a
         </span>
         <div className="min-w-0 flex-1">
           <p className="font-medium">{nameOf(chosen)}</p>
-          <p className="text-[13px] text-muted">{[d.address, d.city].filter(Boolean).join(", ") || "No address yet"}</p>
-          <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 text-sm @lg:grid-cols-4">
-            <Fact label="Area" value={n(d.offer_area_m2) ?? n(d.area_m2) ? `${num(n(d.offer_area_m2) ?? n(d.area_m2))} m²` : null} />
-            <Fact label="Rent" value={n(d.offer_rent_m2) ? `${money(n(d.offer_rent_m2))} /m²` : null} />
+          <dl className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2 text-sm @lg:grid-cols-4">
+            <Fact label="Size" value={n(d.offer_area_m2) ?? n(d.area_m2) ? `${num(n(d.offer_area_m2) ?? n(d.area_m2))} m²` : null} />
+            <Fact label="Rent" value={n(d.offer_rent_m2) ?? n(d.asking_rent_m2) ? `${money(n(d.offer_rent_m2) ?? n(d.asking_rent_m2))} /m²` : null} />
             <Fact label="Net effective" value={m ? `${money(Math.round(m.nerM2))} /m²` : null} />
             <Fact label="Term" value={n(d.offer_term_years) ? `${num(n(d.offer_term_years))} years` : null} />
           </dl>

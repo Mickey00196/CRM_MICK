@@ -20,8 +20,7 @@ const CSP = [
   "script-src 'self'",
   // React sets a few inline style attributes (positions on the lease timeline).
   "style-src 'self' 'unsafe-inline'",
-  // Building photos come from the shortlist tool's image host.
-  "img-src 'self' data: https:",
+  "img-src 'self' data:",
   "font-src 'self'",
   "connect-src 'self'",
   "object-src 'none'",

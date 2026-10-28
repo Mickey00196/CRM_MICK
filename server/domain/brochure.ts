@@ -20,18 +20,11 @@ export function brochureSlug(link: string): string | null {
 interface PublicUnit {
   available_area_m2?: number | null;
   rent_eur_per_m2_year?: number | null;
-  service_charge_eur_per_m2_year?: number | null;
-  availability?: string | null;
-  floor?: string | null;
 }
 interface PublicBuilding {
   building_id: string;
-  name: string;
-  address: string;
-  city: string;
-  submarket?: string | null;
-  energy_label?: string | null;
-  photos?: string[];
+  name?: string;
+  address?: string;
   units?: PublicUnit[];
 }
 export interface PublicShortlist {
@@ -41,27 +34,17 @@ export interface PublicShortlist {
 
 const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
 
-/** One building from the shortlist as a CRM option: total space on offer, the lowest asking rent. */
-export function buildingToOption(b: PublicBuilding, link: string): { source_id: string; data: OptionRow["data"] } {
+/** One building from the shortlist as a CRM option: its address, the space on offer, the lowest asking rent. */
+export function buildingToOption(b: PublicBuilding): { source_id: string; data: OptionRow["data"] } {
   const units = b.units ?? [];
   const areas = units.map((u) => num(u.available_area_m2)).filter((x): x is number => x !== null);
   const rents = units.map((u) => num(u.rent_eur_per_m2_year)).filter((x): x is number => x !== null);
-  const services = units.map((u) => num(u.service_charge_eur_per_m2_year)).filter((x): x is number => x !== null);
-  const photo = (b.photos ?? []).find((p) => /^https?:\/\//i.test(p)) ?? null;
   return {
     source_id: `brochure:${b.building_id}`,
     data: {
-      name: (b.name || b.address || "Building").slice(0, 500),
-      address: (b.address ?? "").slice(0, 500),
-      city: (b.city ?? "").slice(0, 500),
-      submarket: (b.submarket ?? "").slice(0, 500) || null,
-      energy_label: (b.energy_label ?? "").slice(0, 20) || null,
+      address: (b.address || b.name || "Building").slice(0, 500),
       area_m2: areas.length ? Math.round(areas.reduce((s, a) => s + a, 0)) : null,
       asking_rent_m2: rents.length ? Math.min(...rents) : null,
-      service_m2: services.length ? Math.min(...services) : null,
-      available_from: (units.find((u) => u.availability)?.availability ?? "").slice(0, 500) || null,
-      link,
-      photo: photo && photo.length <= 1000 ? photo : null,
     },
   };
 }

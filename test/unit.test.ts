@@ -279,40 +279,22 @@ test("stageChecks reflect what's been filled in", () => {
   assert.ok(viewing.every((c) => c.done), JSON.stringify(viewing));
 });
 
-test("brochure links: only /s/<slug> on any host, mapped to a building", () => {
+test("brochure links: only /s/<slug>; a building comes in as address, size and price", () => {
   assert.equal(brochureSlug("https://office-shortlist.up.railway.app/s/acme-2026"), "acme-2026");
   assert.equal(brochureSlug("https://x.nl/s/abc/"), "abc");
   assert.equal(brochureSlug("https://x.nl/admin/s/abc"), null);
   assert.equal(brochureSlug("https://x.nl/s/../../etc"), null);
   assert.equal(brochureSlug("not a link"), null);
-  const o = buildingToOption(
-    {
-      building_id: "b1",
-      name: "The Atrium",
-      address: "Strawinskylaan 3",
-      city: "Amsterdam",
-      submarket: "Zuidas",
-      energy_label: "A",
-      photos: ["/local.jpg", "https://img.example/a.jpg"],
-      units: [
-        { available_area_m2: 600, rent_eur_per_m2_year: 425, service_charge_eur_per_m2_year: 70, availability: "Q2 2027" },
-        { available_area_m2: 400, rent_eur_per_m2_year: 410, service_charge_eur_per_m2_year: 70 },
-      ],
-    },
-    "https://x.nl/s/acme",
-  );
-  assert.equal(o.source_id, "brochure:b1");
-  assert.deepEqual(o.data, {
+  const o = buildingToOption({
+    building_id: "b1",
     name: "The Atrium",
-    address: "Strawinskylaan 3",
-    city: "Amsterdam",
-    submarket: "Zuidas",
-    energy_label: "A",
-    area_m2: 1000,
-    asking_rent_m2: 410,
-    service_m2: 70,
-    available_from: "Q2 2027",
-    link: "https://x.nl/s/acme",
-    photo: "https://img.example/a.jpg",
+    address: "Strawinskylaan 3051",
+    units: [
+      { available_area_m2: 600, rent_eur_per_m2_year: 425 },
+      { available_area_m2: 400, rent_eur_per_m2_year: 410 },
+    ],
   });
+  assert.equal(o.source_id, "brochure:b1");
+  assert.deepEqual(o.data, { address: "Strawinskylaan 3051", area_m2: 1000, asking_rent_m2: 410 });
+  assert.equal(buildingToOption({ building_id: "b2", name: "Mahler 4", units: [] }).data.address, "Mahler 4", "the name when there's no address");
 });
