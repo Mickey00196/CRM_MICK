@@ -108,6 +108,54 @@ test("only a viewing that happened moves an account on its own", () => {
   assert.equal(advanceStatus("not_now", "viewing", "held"), null);
 });
 
+// ---------- AI company lookup ----------
+import { parseProfile, researchCompany } from "../server/domain/research.js";
+
+test("parseProfile keeps clean, bounded fields from the AI reply", () => {
+  const reply = 'Here you go:\n```json\n' + JSON.stringify({
+    summary: "  Builds route-planning software for European hauliers.  ",
+    industry: "Logistics software",
+    employees: "200-500",
+    headquarters: { city: "Amsterdam", country: "Netherlands" },
+    offices: [
+      { city: "Amsterdam", country: "Netherlands" },
+      { city: "amsterdam", country: "netherlands" },
+      { city: "London", country: "United Kingdom" },
+      { foo: 1 },
+    ],
+    sources: ["https://example.com/about", "javascript:alert(1)", "not a url"],
+  }) + "\n```";
+  const p = parseProfile(reply);
+  assert.equal(p.summary, "Builds route-planning software for European hauliers.");
+  assert.deepEqual(p.offices, [{ city: "Amsterdam", country: "Netherlands" }, { city: "London", country: "United Kingdom" }], "deduped, junk dropped");
+  assert.deepEqual(p.sources, ["https://example.com/about"], "only http(s) links survive");
+  assert.deepEqual(p.headquarters, { city: "Amsterdam", country: "Netherlands" });
+  assert.throws(() => parseProfile("Sorry, I couldn't find anything."), /no summary/);
+  assert.throws(() => parseProfile('{"summary": ""}'), /enough/);
+});
+
+test("researchCompany calls Claude with web search and fetch, and carries on after a pause", async () => {
+  process.env.ANTHROPIC_API_KEY = "test-key";
+  const calls: any[] = [];
+  const reply = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
+  const fake = (async (_url: string, init: RequestInit) => {
+    calls.push(JSON.parse(String(init.body)));
+    return calls.length === 1
+      ? reply({ stop_reason: "pause_turn", content: [{ type: "server_tool_use", id: "s1", name: "web_fetch", input: { url: "https://acme.example" } }] })
+      : reply({ stop_reason: "end_turn", content: [{ type: "text", text: '{"summary": "Acme makes anvils.", "offices": [{"city": "Utrecht", "country": "Netherlands"}]}' }] });
+  }) as unknown as typeof fetch;
+  try {
+    const p = await researchCompany("acme.example", "Acme", fake);
+    assert.equal(p.summary, "Acme makes anvils.");
+    assert.equal(calls.length, 2, "continued after pause_turn");
+    assert.deepEqual(calls[0].tools.map((t: any) => t.name), ["web_fetch", "web_search"]);
+    assert.match(calls[0].messages[0].content, /https:\/\/acme\.example/, "adds https:// to a bare domain");
+    assert.equal(calls[1].messages[1].role, "assistant", "the paused turn is sent back as is");
+  } finally {
+    delete process.env.ANTHROPIC_API_KEY;
+  }
+});
+
 // ---------- readable dates and one-line capture ----------
 import { dueParts, dueText } from "../shared/dates.js";
 import { parseQuick } from "../shared/quick.js";

@@ -340,4 +340,25 @@ alter table custom_field_definitions add constraint custom_field_definitions_ent
                           'terms_agreed', 'agreement', 'invoicing', 'not_now'));
     `,
   },
+  {
+    // AI lookup from the website: what they do and where their offices are.
+    id: "007_ai_profile",
+    sql: `
+      alter table accounts
+        add column ai_profile jsonb,
+        add column ai_status text check (ai_status in ('pending', 'done', 'failed')),
+        add column ai_error text not null default '',
+        add column ai_updated_at timestamptz;
+    `,
+  },
+  {
+    // Every log entry remembers the stage it happened in; stage changes are logged too.
+    id: "008_activity_stage",
+    sql: `
+      alter table activities add column stage text;
+      alter table activities drop constraint activities_channel_check;
+      alter table activities add constraint activities_channel_check
+        check (channel in ('call', 'email', 'linkedin', 'meeting', 'viewing', 'whatsapp', 'note', 'other', 'stage'));
+    `,
+  },
 ];

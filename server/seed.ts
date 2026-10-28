@@ -4,6 +4,7 @@ import { migrate, one, pool, tx, type Db } from "./db.js";
 import { setupAuth } from "./auth.js";
 import { todayISO, addDays } from "./time.js";
 import { insertSql } from "./validate.js";
+import { accountStatusLabel, type AccountStatus } from "../shared/model.js";
 
 const today = todayISO();
 const d = (n: number) => addDays(today, n);
@@ -124,9 +125,17 @@ async function main() {
         const row = await ins(t, "contacts", { owner_id: user.id, account_id: acc.id, lawful_basis: "legitimate_interest", ...c });
         contactIds.push(row.id);
       }
+      // Opportunities started as leads: log the move, a day before the first entry.
+      const first = Math.min(-2, ...a.log.map((l) => l.at));
+      if (a.status !== "lead") {
+        await ins(t, "activities", {
+          owner_id: user.id, account_id: acc.id, channel: "stage", stage: a.status,
+          summary: `Lead → ${accountStatusLabel(a.status as AccountStatus)}`, occurred_at: ts(first - 1, 9),
+        });
+      }
       for (const l of a.log) {
         await ins(t, "activities", {
-          owner_id: user.id, account_id: acc.id, contact_id: contactIds[0] ?? null, channel: l.channel, outcome: l.outcome,
+          owner_id: user.id, account_id: acc.id, contact_id: contactIds[0] ?? null, channel: l.channel, outcome: l.outcome, stage: a.status,
           direction: (l as any).direction ?? "outbound", summary: l.summary, occurred_at: ts(l.at), expect_reply: Boolean((l as any).expect_reply),
         });
       }

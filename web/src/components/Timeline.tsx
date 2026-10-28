@@ -11,8 +11,11 @@ export function Timeline({
   showAccount = false,
   showProject = false,
   empty = "Nothing logged yet.",
+  compact = false,
 }: {
   items: ActivityRow[];
+  /** Narrow layout for the log panel beside the account. */
+  compact?: boolean;
   /** Show which company each entry is about. */
   showAccount?: boolean;
   /** Show which project each entry is about. */
@@ -39,13 +42,20 @@ export function Timeline({
           a.contact_name,
         ].filter(Boolean);
         return (
-          <li key={a.id} className={cn("group grid grid-cols-[5.5rem_1fr_auto] gap-x-4 border-t border-line py-4", !showDay && "border-t-transparent pt-0")}>
-            <time className="num pt-[3px] text-[13px] text-faint" dateTime={a.occurred_at} title={dmyTime(a.occurred_at)}>
+          <li
+            key={a.id}
+            className={cn(
+              "group grid border-t border-line",
+              compact ? "grid-cols-[4.75rem_1fr_auto] gap-x-3 py-3" : "grid-cols-[5.5rem_1fr_auto] gap-x-4 py-4",
+              !showDay && "border-t-transparent pt-0",
+            )}
+          >
+            <time className={cn("num pt-[3px] text-faint", compact ? "text-[12px]" : "text-[13px]")} dateTime={a.occurred_at} title={dmyTime(a.occurred_at)}>
               {showDay ? day : ""}
             </time>
             <div className="min-w-0">
               <p className="text-sm">
-                <span className="font-medium">{channelLabel(a.channel)}</span>
+                <span className="font-medium">{a.channel === "stage" ? "Moved" : channelLabel(a.channel)}</span>
                 {meta.length > 0 && <span className="text-muted"> · {meta.join(" · ")}</span>}
                 {showProject && a.project_id && (
                   <>
@@ -64,7 +74,9 @@ export function Timeline({
                   </>
                 )}
               </p>
-              {a.summary && <p className="mt-1 whitespace-pre-wrap break-words text-sm text-muted">{a.summary}</p>}
+              {a.summary && (
+                <p className={cn("mt-1 whitespace-pre-wrap break-words text-sm", compact ? "text-fg/80" : "text-muted")}>{a.summary}</p>
+              )}
             </div>
             <button
               onClick={() => remove(a)}

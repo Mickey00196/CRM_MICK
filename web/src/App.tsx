@@ -14,6 +14,7 @@ import { ContactPage } from "@/pages/Contact";
 import { Communication } from "@/pages/Communication";
 import { SettingsPage } from "@/pages/Settings";
 import { Review } from "@/pages/Review";
+import { setAiEnabled } from "@/lib/flags";
 
 export default function App() {
   const [authed, setAuthed] = useState<boolean | null>(null);
@@ -23,9 +24,10 @@ export default function App() {
       clearCache();
       setAuthed(false);
     });
-    api<{ user: unknown; timezone: string }>("/me")
+    api<{ user: unknown; timezone: string; ai_enabled?: boolean }>("/me")
       .then((r) => {
         setTimezone(r.timezone);
+        setAiEnabled(Boolean(r.ai_enabled));
         setAuthed(Boolean(r.user));
       })
       .catch(() => setAuthed(false));

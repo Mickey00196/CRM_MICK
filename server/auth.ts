@@ -3,6 +3,7 @@ import { promisify } from "node:util";
 import type { Request, Response, NextFunction } from "express";
 import { one, q, getMeta } from "./db.js";
 import { TIMEZONE } from "./time.js";
+import { aiEnabled } from "./domain/enrich.js";
 
 const scrypt = promisify(crypto.scrypt) as (pw: string, salt: string, len: number) => Promise<Buffer>;
 
@@ -131,7 +132,7 @@ export function requireAppHeader(req: Request, res: Response, next: NextFunction
 
 export async function me(req: Request, res: Response) {
   const user = await sessionUser(req);
-  res.json({ user: user ? { id: user.id, email: user.email, name: user.name } : null, timezone: TIMEZONE });
+  res.json({ user: user ? { id: user.id, email: user.email, name: user.name } : null, timezone: TIMEZONE, ai_enabled: aiEnabled() });
 }
 
 const attempts = new Map<string, { count: number; first: number }>();

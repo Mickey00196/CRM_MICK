@@ -6,6 +6,7 @@ import { csvCell, dmy } from "../csv.js";
 import { LAST_CONTACT, NEXT_STEP, OPEN_TASK_ORDER, PRIMARY_OFFICE } from "../sql.js";
 import {
   ACCOUNT_STATUSES,
+  type AccountStatus,
   BUYING_ROLES,
   GROWTH,
   ICP_FIT,
@@ -15,6 +16,8 @@ import {
   accountStatusLabel,
 } from "../../shared/model.js";
 import { createTask, parseNext } from "../domain/tasks.js";
+import { PENDING_TIMEOUT_MS, aiEnabled, startLookup } from "../domain/enrich.js";
+import { setAccountStatus } from "../domain/funnel.js";
 
 const keys = (opts: readonly { key: string }[]) => opts.map((o) => o.key);
 
@@ -208,7 +211,24 @@ accounts.post("/accounts", async (req, res) => {
     }
     return account;
   });
+  // Look the company up from its website in the background; the account page shows it when it's in.
+  if (aiEnabled() && (result.website || result.domain)) await startLookup(owner, result.id);
   res.status(201).json(result);
+});
+
+/** Run (or rerun) the AI lookup for an account. Returns straight away; the page polls. */
+accounts.post("/accounts/:id/lookup", async (req, res) => {
+  const owner = uid(req);
+  const id = idOf(req.params.id, "That account");
+  if (!aiEnabled()) throw bad("AI lookup is off. Add ANTHROPIC_API_KEY to the crm service in Railway, then try again.");
+  const acc = await db.one<{ website: string; domain: string | null }>(
+    "select website, domain from accounts where id = $1 and owner_id = $2 and archived_at is null",
+    [id, owner],
+  );
+  if (!acc) throw notFound("That account");
+  if (!acc.website && !acc.domain) throw bad("Add the company's website first.");
+  await startLookup(owner, id);
+  res.status(202).json({ ai_status: "pending" });
 });
 
 accounts.get("/accounts/:id", async (req, res) => {
@@ -224,7 +244,7 @@ accounts.get("/accounts/:id", async (req, res) => {
     ),
     db.q(
       `select c.*, (select max(x.occurred_at) from activities x
-                    where x.contact_id = c.id and x.archived_at is null and x.channel <> 'note') as last_contacted_at
+                    where x.contact_id = c.id and x.archived_at is null and x.channel not in ('note', 'stage')) as last_contacted_at
        from contacts c where c.account_id = $1 and c.archived_at is null order by c.name`,
       [id],
     ),
@@ -236,7 +256,7 @@ accounts.get("/accounts/:id", async (req, res) => {
     ),
     db.one(
       `select max(occurred_at) as last_contact_at from activities
-       where account_id = $1 and archived_at is null and channel <> 'note'`,
+       where account_id = $1 and archived_at is null and channel not in ('note', 'stage')`,
       [id],
     ),
     db.q(
@@ -246,16 +266,26 @@ accounts.get("/accounts/:id", async (req, res) => {
       [id],
     ),
   ]);
-  res.json({ account, offices, contacts, tasks, projects, last_contact_at: lc?.last_contact_at ?? null });
+  // A lookup stuck on "pending" (server restarted mid-way) shows as failed so it can be retried.
+  if (account.ai_status === "pending" && Date.now() - new Date(account.ai_updated_at).getTime() > PENDING_TIMEOUT_MS) {
+    account.ai_status = "failed";
+    account.ai_error = "The lookup was interrupted.";
+  }
+  res.json({ account, ai_enabled: aiEnabled(), offices, contacts, tasks, projects, last_contact_at: lc?.last_contact_at ?? null });
 });
 
 accounts.patch("/accounts/:id", async (req, res) => {
   const owner = uid(req);
   const id = idOf(req.params.id, "That account");
-  const cols = accountCols(req.body, true);
+  const { status, ...cols } = accountCols(req.body, true);
   await duplicateDomain(db, owner, cols.domain, id);
-  const { text, values } = updateSql("accounts", id, owner, cols);
-  const row = await db.one(text, values);
+  const row = await tx(async (t) => {
+    // A status change goes through setAccountStatus so it shows up in the log.
+    if (status !== undefined && (await setAccountStatus(t, owner, id, status as AccountStatus)) === null) return null;
+    if (!Object.keys(cols).length) return t.one("select * from accounts where id = $1 and owner_id = $2", [id, owner]);
+    const { text, values } = updateSql("accounts", id, owner, cols);
+    return t.one(text, values);
+  });
   if (!row) throw notFound("That account");
   res.json(row);
 });
@@ -267,8 +297,10 @@ accounts.post("/accounts/bulk", async (req, res) => {
   if (req.body.action === "archive") {
     await db.q("update accounts set archived_at = now() where owner_id = $1 and id = any($2::uuid[]) and archived_at is null", [owner, ids]);
   } else if (req.body.action === "status") {
-    const status = f.oneOf(keys(ACCOUNT_STATUSES), false)(req.body.status, "Status");
-    await db.q("update accounts set status = $3 where owner_id = $1 and id = any($2::uuid[]) and archived_at is null", [owner, ids, status]);
+    const status = f.oneOf(keys(ACCOUNT_STATUSES), false)(req.body.status, "Status") as AccountStatus;
+    await tx(async (t) => {
+      for (const one of ids) await setAccountStatus(t, owner, one, status);
+    });
   } else {
     throw bad("Unknown bulk action.");
   }

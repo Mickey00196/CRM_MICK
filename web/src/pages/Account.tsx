@@ -1,10 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Phone, Mail, Link2, Users, StickyNote, MoreHorizontal, ArrowLeft, CalendarPlus } from "lucide-react";
+import { MoreHorizontal, ArrowLeft, CalendarPlus } from "lucide-react";
 import {
-  ACCOUNT_STATUSES,
   projectStageLabel,
-  CHANNELS,
   ICP_FIT,
   LANGUAGES,
   SIZE_BANDS,
@@ -12,12 +10,10 @@ import {
   taskTypeLabel,
   type AccountDetail,
   type AccountStatus,
-  type ActivityRow,
-  type Channel,
   type Contact,
 } from "@shared/model";
 import { api, useApi } from "@/lib/api";
-import { dmy, relative, todayISO } from "@/lib/format";
+import { relative, todayISO } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ErrorText, Field, Input, Select, Textarea } from "@/components/ui/input";
@@ -25,26 +21,33 @@ import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/dropdo
 import { Tabs, TabList, TabPanelBody } from "@/components/ui/tabs";
 import { Sheet } from "@/components/ui/dialog";
 import { usePageContext, useUI } from "@/components/ui-context";
-import { Timeline } from "@/components/Timeline";
 import { OfficeCard, OfficeForm } from "@/components/Office";
 import { ContactForm } from "@/components/ContactForm";
 import { Skeleton } from "@/components/Skeleton";
 import { TodoItem, dueLabel } from "@/components/TodoItem";
 import { StageFlow } from "@/components/StageFlow";
+import { CompanyAbout } from "@/components/CompanyAbout";
+import { LogPanel } from "@/components/LogPanel";
 
 const TABS = [
   { value: "overview", label: "Overview" },
   { value: "office", label: "Office & lease" },
-  { value: "communication", label: "Log" },
 ];
 
 export function AccountPage() {
   const id = useParams().id!;
   const [params, setParams] = useSearchParams();
   const tab = TABS.some((t) => t.value === params.get("tab")) ? params.get("tab")! : "overview";
-  const { data, error } = useApi<AccountDetail>(`/accounts/${id}`);
-  const ui = useUI();
+  const { data, error, reload } = useApi<AccountDetail>(`/accounts/${id}`);
   usePageContext(data ? { account: { id: data.account.id, name: data.account.name } } : null);
+
+  // While the AI lookup runs, check back every few seconds.
+  const lookingUp = data?.account.ai_status === "pending";
+  useEffect(() => {
+    if (!lookingUp) return;
+    const t = setInterval(reload, 3000);
+    return () => clearInterval(t);
+  }, [lookingUp, reload]);
 
   if (error)
     return (
@@ -58,50 +61,33 @@ export function AccountPage() {
   if (!data) return <Skeleton rows={5} className="max-w-4xl" />;
 
   const { account } = data;
-  const picked = { id: account.id, name: account.name };
-  const log = (channel: Channel) => ui.openLog({ account: picked, channel });
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className="mx-auto max-w-6xl">
       <Link to="/accounts" className="mb-6 inline-flex items-center gap-1 text-[13px] text-muted hover:text-fg">
         <ArrowLeft className="size-3.5" /> Accounts
       </Link>
 
-      <Header data={data} />
-
-      <div className="mt-6 flex flex-wrap gap-1.5">
-        <Button size="sm" onClick={() => ui.openCapture("todo", { account: picked })}>
-          <CalendarPlus /> Plan follow-up
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => log("call")}>
-          <Phone /> Log call
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => log("email")}>
-          <Mail /> Log email
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => log("linkedin")}>
-          <Link2 /> Log LinkedIn
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => log("meeting")}>
-          <Users /> Log meeting
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => log("note")}>
-          <StickyNote /> Add note
-        </Button>
+      {/* Wide screens: the account on the left, its log always on the right. Phones: header, log, details. */}
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_23rem] lg:gap-x-10 xl:grid-cols-[minmax(0,1fr)_26rem]">
+        <div className="min-w-0 lg:col-start-1 lg:row-start-1">
+          <Header data={data} />
+        </div>
+        <LogPanel account={account} className="lg:sticky lg:top-6 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start" />
+        <Tabs
+          value={tab}
+          onValueChange={(v) => setParams(v === "overview" ? {} : { tab: v }, { replace: true })}
+          className="min-w-0 lg:col-start-1 lg:row-start-2"
+        >
+          <TabList tabs={TABS} />
+          <TabPanelBody value="overview">
+            <Overview data={data} />
+          </TabPanelBody>
+          <TabPanelBody value="office">
+            <Offices data={data} />
+          </TabPanelBody>
+        </Tabs>
       </div>
-
-      <Tabs value={tab} onValueChange={(v) => setParams(v === "overview" ? {} : { tab: v }, { replace: true })} className="mt-10">
-        <TabList tabs={TABS} />
-        <TabPanelBody value="overview">
-          <Overview data={data} />
-        </TabPanelBody>
-        <TabPanelBody value="office">
-          <Offices data={data} />
-        </TabPanelBody>
-        <TabPanelBody value="communication">
-          <Communication data={data} />
-        </TabPanelBody>
-      </Tabs>
     </div>
   );
 }
@@ -154,21 +140,28 @@ function Header({ data }: { data: AccountDetail }) {
 
       <StageFlow status={account.status} onChange={setStatus} />
 
-      <div className="mt-6 border-y border-line py-4">
-        <p className="mb-1 text-[13px] text-muted">Next follow-up</p>
-        {next ? (
-          <button onClick={() => ui.openTask(next.id)} className="group flex w-full items-baseline justify-between gap-4 text-left">
-            <span className="text-lg group-hover:text-accent-text">
-              {next.title} <span className="text-sm text-muted">· {taskTypeLabel(next.type)}</span>
-            </span>
-            <span className={cn("num shrink-0 text-sm", next.due_date && next.due_date < today ? "text-late" : "text-muted")}>
-              {next.due_date ? dueLabel(next.due_date, null, today) : "No date"}
-              {next.due_time && ` ${next.due_time}`}
-            </span>
-          </button>
-        ) : (
-          <p className="text-lg text-missing">No follow-up planned</p>
-        )}
+      <div className="mt-6 flex items-center justify-between gap-4 border-y border-line py-4">
+        <div className="min-w-0 flex-1">
+          <p className="mb-1 text-[13px] text-muted">Next follow-up</p>
+          {next ? (
+            <button onClick={() => ui.openTask(next.id)} className="group flex w-full min-w-0 flex-wrap items-baseline gap-x-3 text-left">
+              <span className="truncate text-lg group-hover:text-accent-text">{next.title}</span>
+              <span className={cn("num text-sm", next.due_date && next.due_date < today ? "text-late" : "text-muted")}>
+                {taskTypeLabel(next.type)} · {next.due_date ? dueLabel(next.due_date, next.due_time, today) : "No date"}
+              </span>
+            </button>
+          ) : (
+            <p className="text-lg text-missing">No follow-up planned</p>
+          )}
+        </div>
+        <Button
+          size="sm"
+          variant={next ? "outline" : "default"}
+          onClick={() => ui.openCapture("todo", { account: { id: account.id, name: account.name } })}
+          className="shrink-0"
+        >
+          <CalendarPlus /> Plan follow-up
+        </Button>
       </div>
     </header>
   );
@@ -182,10 +175,11 @@ function Overview({ data }: { data: AccountDetail }) {
   const primary = offices.find((o) => o.is_primary && o.is_current) ?? offices.find((o) => o.is_current);
   const [editing, setEditing] = useState(false);
   const [contactForm, setContactForm] = useState<Contact | "new" | null>(null);
-  const today = todayISO();
 
   return (
     <div className="grid gap-12">
+      <CompanyAbout account={account} aiEnabled={data.ai_enabled} onEditCompany={() => setEditing(true)} />
+
       <section>
         <div className="mb-1 flex items-baseline justify-between">
           <h2 className="label">Follow-ups</h2>
@@ -203,8 +197,6 @@ function Overview({ data }: { data: AccountDetail }) {
           </ul>
         )}
       </section>
-
-      <LatestActivity accountId={account.id} />
 
       <section>
         <div className="mb-3 flex items-baseline justify-between">
@@ -415,25 +407,6 @@ function AccountEdit({ data, onDone }: { data: AccountDetail; onDone: () => void
   );
 }
 
-/** The last few things that happened, so the follow-ups have context. */
-function LatestActivity({ accountId }: { accountId: string }) {
-  const { data: items } = useApi<ActivityRow[]>(`/activities?account_id=${accountId}&limit=3`);
-  if (!items) return null;
-  return (
-    <section>
-      <div className="mb-3 flex items-baseline justify-between">
-        <h2 className="label">Latest activity</h2>
-        {items.length > 0 && (
-          <Link to="?tab=communication" className="text-[13px] text-muted hover:text-fg">
-            Full log
-          </Link>
-        )}
-      </div>
-      <Timeline items={items} empty="Nothing logged yet. Log a call, email or meeting with the buttons above." />
-    </section>
-  );
-}
-
 // ---------- office & lease ----------
 
 function Offices({ data }: { data: AccountDetail }) {
@@ -474,46 +447,6 @@ function Offices({ data }: { data: AccountDetail }) {
           </div>
         </section>
       )}
-    </div>
-  );
-}
-
-// ---------- communication ----------
-
-function Communication({ data }: { data: AccountDetail }) {
-  const [channel, setChannel] = useState("");
-  const [contact, setContact] = useState("");
-  const qs = useMemo(() => {
-    const p = new URLSearchParams({ account_id: data.account.id, limit: "500" });
-    if (channel) p.set("channel", channel);
-    if (contact) p.set("contact_id", contact);
-    return p.toString();
-  }, [data.account.id, channel, contact]);
-  const { data: items } = useApi<ActivityRow[]>(`/activities?${qs}`);
-
-  return (
-    <div>
-      <div className="mb-4 flex flex-wrap gap-2">
-        <Select value={channel} onChange={(e) => setChannel(e.target.value)} className="h-8 w-auto text-[13px]" aria-label="Channel">
-          <option value="">All channels</option>
-          {CHANNELS.map((c) => (
-            <option key={c.key} value={c.key}>
-              {c.label}
-            </option>
-          ))}
-        </Select>
-        {data.contacts.length > 0 && (
-          <Select value={contact} onChange={(e) => setContact(e.target.value)} className="h-8 w-auto text-[13px]" aria-label="Contact">
-            <option value="">All contacts</option>
-            {data.contacts.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </Select>
-        )}
-      </div>
-      {items && <Timeline items={items} showProject empty={channel || contact ? "Nothing logged that matches." : "Nothing logged yet. Use the buttons above to log a call, email or note."} />}
     </div>
   );
 }

@@ -120,7 +120,6 @@ function AccountsList({ data, view, setView }: { data: AccountRow[]; view: strin
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
-  const ui = useUI();
   const today = todayISO();
 
   const rows = useMemo(() => {

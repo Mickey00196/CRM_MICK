@@ -15,7 +15,7 @@ export const NEXT_STEP = `
 export const LAST_CONTACT = `
   left join lateral (
     select max(x.occurred_at) as last_contact_at from activities x
-    where x.account_id = a.id and x.archived_at is null and x.channel <> 'note'
+    where x.account_id = a.id and x.archived_at is null and x.channel not in ('note', 'stage')
   ) lc on true`;
 
 export const PRIMARY_OFFICE = `

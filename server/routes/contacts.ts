@@ -6,7 +6,7 @@ import { OPEN_TASK_ORDER, assertOwned } from "../sql.js";
 import { CONTACT_SPEC } from "./accounts.js";
 
 const LAST_CONTACTED = `(select max(x.occurred_at) from activities x
-  where x.contact_id = c.id and x.archived_at is null and x.channel <> 'note') as last_contacted_at`;
+  where x.contact_id = c.id and x.archived_at is null and x.channel not in ('note', 'stage')) as last_contacted_at`;
 
 export const contacts = Router();
 

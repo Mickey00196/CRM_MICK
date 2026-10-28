@@ -128,6 +128,76 @@ describe("link integrity", () => {
   });
 });
 
+describe("account log and AI lookup", () => {
+  test("stage changes are logged, and each entry remembers its stage", async () => {
+    const id = await account(a, { name: "Log Co" });
+    await a.post("/activities", { account_id: id, channel: "note", summary: "Found them via a broker" });
+    assert.equal((await a.patch(`/accounts/${id}`, { status: "overview_sent" })).status, 200);
+    await a.post("/activities", { account_id: id, channel: "email", summary: "Sent the market overview" });
+    await a.post("/accounts/bulk", { ids: [id], action: "status", status: "viewing" });
+
+    const log = (await a.get(`/activities?account_id=${id}`)).data;
+    const lines = log.map((x: any) => [x.channel, x.stage, x.summary]).reverse();
+    assert.deepEqual(lines, [
+      ["note", "lead", "Found them via a broker"],
+      ["stage", "overview_sent", "Lead → Overview sent"],
+      ["email", "overview_sent", "Sent the market overview"],
+      ["stage", "viewing", "Overview sent → Viewing"],
+    ]);
+    const detail = (await a.get(`/accounts/${id}`)).data;
+    assert.ok(detail.last_contact_at, "the email counts as contact");
+    await a.patch(`/accounts/${id}`, { status: "viewing" });
+    assert.equal((await a.get(`/activities?account_id=${id}`)).data.length, 4, "no entry when the stage doesn't change");
+    assert.equal((await b.get(`/activities?account_id=${id}`)).data.length, 0, "other users see nothing");
+  });
+
+  test("AI lookup is off without a key", async () => {
+    const id = await account(a, { name: "No Key Co", website: "nokey.example" });
+    const detail = (await a.get(`/accounts/${id}`)).data;
+    assert.equal(detail.ai_enabled, false);
+    assert.equal(detail.account.ai_status, null, "nothing starts without a key");
+    const r = await a.post(`/accounts/${id}/lookup`, {});
+    assert.equal(r.status, 400);
+    assert.match(r.data.error, /ANTHROPIC_API_KEY/);
+  });
+
+  test("a new account with a website is looked up in the background", async () => {
+    const realFetch = globalThis.fetch;
+    process.env.ANTHROPIC_API_KEY = "test-key";
+    const profile = {
+      summary: "Makes coffee machines for offices.",
+      industry: "Hospitality equipment",
+      employees: "50-100",
+      headquarters: { city: "Amsterdam", country: "Netherlands" },
+      offices: [{ city: "Amsterdam", country: "Netherlands" }, { city: "Berlin", country: "Germany" }],
+      sources: ["https://brew.example/about"],
+    };
+    globalThis.fetch = (async (url: any, init: any) =>
+      String(url).startsWith("https://api.anthropic.com")
+        ? new Response(JSON.stringify({ stop_reason: "end_turn", content: [{ type: "text", text: JSON.stringify(profile) }] }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          })
+        : realFetch(url, init)) as typeof fetch;
+    try {
+      const id = await account(a, { name: "Brew Co", website: "brew.example" });
+      let acc: any;
+      for (let i = 0; i < 40; i++) {
+        acc = (await a.get(`/accounts/${id}`)).data.account;
+        if (acc.ai_status !== "pending") break;
+        await new Promise((r) => setTimeout(r, 25));
+      }
+      assert.equal(acc.ai_status, "done", acc.ai_error);
+      assert.equal(acc.ai_profile.summary, "Makes coffee machines for offices.");
+      assert.equal(acc.ai_profile.offices.length, 2);
+      assert.equal(acc.industry, "Hospitality equipment", "an empty industry is filled in");
+    } finally {
+      globalThis.fetch = realFetch;
+      delete process.env.ANTHROPIC_API_KEY;
+    }
+  });
+});
+
 describe("accounts and follow-ups", () => {
   test("a logged viewing moves a lead or early opportunity to Viewing", async () => {
     const id = await account(a, { name: "Viewing Co" });

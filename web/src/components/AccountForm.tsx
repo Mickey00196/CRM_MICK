@@ -1,17 +1,18 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LANGUAGES, type Account, type AccountStatus } from "@shared/model";
+import { api, ApiError } from "@/lib/api";
+import { addDays, todayISO, workday } from "@/lib/format";
+import { Button } from "@/components/ui/button";
+import { Chips, ErrorText, Field, Input } from "@/components/ui/input";
+import { NextStepPicker, nextPayload, type NextStepValue } from "./NextStepPicker";
+import { aiEnabled } from "@/lib/flags";
 
 /** A new account is a lead, or already an opportunity if you've sent an overview. */
 const START_OPTIONS: { key: AccountStatus; label: string }[] = [
   { key: "lead", label: "Lead" },
   { key: "overview_sent", label: "Opportunity" },
 ];
-import { api, ApiError } from "@/lib/api";
-import { addDays, todayISO, workday } from "@/lib/format";
-import { Button } from "@/components/ui/button";
-import { Chips, ErrorText, Field, Input } from "@/components/ui/input";
-import { NextStepPicker, nextPayload, type NextStepValue } from "./NextStepPicker";
 
 /** Fast new-account form: name, office basics and a first next step. Everything else can wait. */
 export function AccountForm({ onDone }: { onDone: () => void }) {
@@ -76,7 +77,7 @@ export function AccountForm({ onDone }: { onDone: () => void }) {
         <Input value={f.name} onChange={set("name")} required autoFocus placeholder="Company name" />
       </Field>
       <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-        <Field label="Website">
+        <Field label="Website" hint={aiEnabled() ? "AI looks up what they do and where their offices are" : undefined}>
           <Input value={f.website} onChange={set("website")} placeholder="example.nl" />
         </Field>
         <Field label="Language">

@@ -29,7 +29,7 @@ tasks.get("/todos", async (req, res) => {
             (select o.city from office_locations o where o.account_id = a.id and o.archived_at is null and o.is_current
              order by o.is_primary desc, o.created_at limit 1) as city,
             (select max(x.occurred_at) from activities x
-             where x.account_id = a.id and x.archived_at is null and x.channel <> 'note') as last_contact_at
+             where x.account_id = a.id and x.archived_at is null and x.channel not in ('note', 'stage')) as last_contact_at
      from accounts a
      where a.owner_id = $1 and a.archived_at is null and a.status = any($2::text[])
        and not exists (select 1 from tasks t where t.account_id = a.id and t.status = 'open' and t.archived_at is null)
@@ -71,7 +71,7 @@ tasks.get("/tasks/:id", async (req, res) => {
         ),
         db.one(
           `select x.*, c.name as contact_name from activities x left join contacts c on c.id = x.contact_id
-           where x.account_id = $1 and x.archived_at is null and x.channel <> 'note'
+           where x.account_id = $1 and x.archived_at is null and x.channel not in ('note', 'stage')
            order by x.occurred_at desc limit 1`,
           [task.account_id],
         ),

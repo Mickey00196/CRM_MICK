@@ -47,6 +47,7 @@ activities.get("/activities/weekly", async (req, res) => {
             x.channel, count(*)::int as n
      from activities x left join accounts a on a.id = x.account_id
      where x.owner_id = $1 and x.archived_at is null and (a.id is null or a.archived_at is null)
+       and x.channel <> 'stage'
        and x.occurred_at at time zone $2 >= date_trunc('week', now() at time zone $2) - make_interval(weeks => $3)
      group by 1, 2 order by 1`,
     [owner, TIMEZONE, weeks - 1],

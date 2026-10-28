@@ -123,7 +123,7 @@ export const CHANNELS = [
   { key: "other", label: "Other" },
 ] as const;
 export type Channel = (typeof CHANNELS)[number]["key"];
-export const channelLabel = (k: string) => label(CHANNELS, k);
+export const channelLabel = (k: string) => (k === "stage" ? "Stage" : label(CHANNELS, k));
 /** Channels that count as contact with the client (notes don't). */
 export const CONTACT_CHANNELS: Channel[] = ["call", "email", "linkedin", "meeting", "viewing", "whatsapp", "other"];
 
@@ -309,13 +309,16 @@ export interface ActivityRow {
   contact_id: string | null;
   contact_name?: string | null;
   task_id: string | null;
-  channel: Channel;
+  /** "stage" rows are written by the CRM when an account moves to another stage. */
+  channel: Channel | "stage";
   direction: "outbound" | "inbound";
   outcome: string | null;
   summary: string;
   occurred_at: string;
   expect_reply: boolean;
   source: string;
+  /** The account's stage when this happened (for "stage" rows: the stage it moved to). */
+  stage: AccountStatus | null;
 }
 
 export interface OfficeSummary {
@@ -384,11 +387,25 @@ export interface AccountRow {
   created_at: string;
 }
 
+/** What the AI lookup found about a company from its website and public sources. */
+export interface CompanyProfile {
+  summary: string;
+  industry: string | null;
+  employees: string | null;
+  headquarters: { city: string | null; country: string | null } | null;
+  offices: { city: string | null; country: string | null }[];
+  sources: string[];
+}
+
 export interface Account {
   id: string;
   name: string;
   domain: string | null;
   website: string;
+  ai_profile: CompanyProfile | null;
+  ai_status: "pending" | "done" | "failed" | null;
+  ai_error: string;
+  ai_updated_at: string | null;
   industry: string;
   size_band: string | null;
   status: AccountStatus;
@@ -505,6 +522,8 @@ export interface ProjectDetail {
 
 export interface AccountDetail {
   account: Account;
+  /** Whether the server has an AI key, so the page can offer a lookup. */
+  ai_enabled: boolean;
   offices: OfficeLocation[];
   contacts: Contact[];
   tasks: OpenTask[];

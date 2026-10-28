@@ -52,6 +52,11 @@ export async function logActivity(t: Db, owner: string, body: any) {
     }),
   );
   if (!cols.account_id && !cols.project_id) throw bad("Pick a company or a project.");
+  // Remember which stage the account was in, so the log reads per stage.
+  if (cols.account_id) {
+    const acc = await t.one<{ status: string }>("select status from accounts where id = $1", [cols.account_id]);
+    cols.stage = acc?.status ?? null;
+  }
 
   if (completeTaskId) {
     const open = await t.one(

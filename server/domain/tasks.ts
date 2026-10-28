@@ -118,8 +118,8 @@ export async function completeTask(t: Db, owner: string, id: string, input: Comp
   let activity = null;
   if ((links.account_id || links.project_id) && (channel || note)) {
     activity = await t.one(
-      `insert into activities (owner_id, account_id, contact_id, project_id, task_id, channel, direction, outcome, summary, source)
-       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'todo') returning *`,
+      `insert into activities (owner_id, account_id, contact_id, project_id, task_id, channel, direction, outcome, summary, source, stage)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'todo', (select status from accounts where id = $2)) returning *`,
       [owner, links.account_id, links.contact_id, links.project_id, task.id, channel ?? "note", direction, outcome, note || task.title],
     );
   }
