@@ -80,22 +80,24 @@ export function AccountPage() {
 
       <Header data={data} onEdit={() => setEditing(true)} />
 
+      {/* The opportunity cycle across the full width, with the next follow-up underneath. */}
+      <div className="mt-7">
+        <StageFlow status={account.status} onChange={setStatus} footer={<NextFollowUp data={data} />} />
+      </div>
+
       {/*
-        Wide screens: the tracking card and the log start at the same height; the log stays beside
-        you at full height while the details scroll. Phones: tracking, log, details.
+        Below it: details on the left, the log on the right at full height, staying beside you while
+        the details scroll. Phones: log first, then details.
       */}
-      <div className="mt-7 grid gap-6 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-x-6 xl:grid-cols-[minmax(0,1fr)_28rem] 2xl:grid-cols-[minmax(0,1fr)_32rem]">
-        <div className="min-w-0 lg:col-start-1 lg:row-start-1">
-          <StageFlow status={account.status} onChange={setStatus} footer={<NextFollowUp data={data} />} />
-        </div>
+      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_24rem] xl:grid-cols-[minmax(0,1fr)_28rem] 2xl:grid-cols-[minmax(0,1fr)_32rem]">
         <LogPanel
           account={account}
-          className="lg:sticky lg:top-6 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:h-[calc(100dvh-3rem)] lg:max-h-none lg:self-start"
+          className="lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1 lg:h-[calc(100dvh-3rem)] lg:max-h-none lg:self-start"
         />
         <Tabs
           value={tab}
           onValueChange={(v) => setParams(v === "overview" ? {} : { tab: v }, { replace: true })}
-          className="min-w-0 lg:col-start-1 lg:row-start-2"
+          className="min-w-0 lg:col-start-1 lg:row-start-1"
         >
           <TabList tabs={TABS} variant="segmented" />
           <T.Content value="overview" className="mt-4 focus:outline-none">
