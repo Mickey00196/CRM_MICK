@@ -12,13 +12,16 @@ import { accounts } from "./routes/accounts.js";
 import { contacts } from "./routes/contacts.js";
 import { misc } from "./routes/misc.js";
 import { projects } from "./routes/projects.js";
+import { opportunity } from "./routes/opportunity.js";
+import { FieldError } from "../shared/opportunity.js";
 
 const CSP = [
   "default-src 'self'",
   "script-src 'self'",
   // React sets a few inline style attributes (positions on the lease timeline).
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data:",
+  // Building photos come from the shortlist tool's image host.
+  "img-src 'self' data: https:",
   "font-src 'self'",
   "connect-src 'self'",
   "object-src 'none'",
@@ -73,7 +76,7 @@ export function createApp() {
 
   app.use("/api", requireAuth);
   app.post("/api/logout-everywhere", logoutEverywhere);
-  app.use("/api", tasks, projects, activities, accounts, contacts, misc);
+  app.use("/api", tasks, projects, activities, accounts, opportunity, contacts, misc);
   app.use("/api", (_req, res) => {
     res.status(404).json({ error: "Not found." });
   });
@@ -92,6 +95,7 @@ export function createApp() {
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     if (err instanceof HttpError) return res.status(err.status).json({ error: err.message, ...err.extra });
+    if (err instanceof FieldError) return res.status(400).json({ error: err.message });
     if (err?.type === "entity.parse.failed") return res.status(400).json({ error: "Couldn't read that request." });
     if (err?.code === "23505") return res.status(409).json({ error: "That would create a duplicate." });
     if (err?.code === "23514") return res.status(400).json({ error: "One of the values isn't allowed." });

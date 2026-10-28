@@ -1,4 +1,5 @@
 // Shared vocabulary for the API and the web app.
+import type { OptionRow } from "./opportunity.js";
 
 type Opt<K extends string = string> = { key: K; label: string };
 const label = <K extends string>(opts: readonly Opt<K>[], key: string | null | undefined) =>
@@ -406,6 +407,8 @@ export interface Account {
   ai_status: "pending" | "done" | "failed" | null;
   ai_error: string;
   ai_updated_at: string | null;
+  /** What's captured per stage: the brief, RFP, heads of terms, lease, fee. Keys from shared/opportunity.ts. */
+  opportunity: Record<string, string | number | boolean | null>;
   industry: string;
   size_band: string | null;
   status: AccountStatus;
@@ -528,6 +531,8 @@ export interface AccountDetail {
   contacts: Contact[];
   tasks: OpenTask[];
   projects: ProjectRow[];
+  /** The buildings of the opportunity. */
+  options: OptionRow[];
   last_contact_at: string | null;
 }
 

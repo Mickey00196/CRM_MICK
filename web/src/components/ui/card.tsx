@@ -18,7 +18,7 @@ export function Card({
   bodyClassName?: string;
 }) {
   return (
-    <section className={cn("rounded-xl border border-line bg-surface shadow-[0_1px_2px_rgb(15_20_26/0.04)] [--row-bg:var(--surface)]", className)}>
+    <section className={cn("@container rounded-xl border border-line bg-surface shadow-[0_1px_2px_rgb(15_20_26/0.04)] [--row-bg:var(--surface)]", className)}>
       {title && (
         <header className="flex min-h-12 items-center justify-between gap-3 border-b border-line px-5 py-2.5">
           <h2 className="label flex items-center gap-2">

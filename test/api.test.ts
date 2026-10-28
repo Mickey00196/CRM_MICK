@@ -453,3 +453,127 @@ describe("reminder email scheduling", () => {
     assert.equal(await claimToday(ok), null);
   });
 });
+
+describe("opportunity: brief, buildings, terms and the new office", () => {
+  test("brief fields are validated, merged and cleared", async () => {
+    const id = await account(a, { name: "Brief BV" });
+    let r = await a.patch(`/accounts/${id}/opportunity`, { size_min_m2: "1.200", areas: "Zuidas", req_type: "relocation" });
+    assert.equal(r.status, 200, JSON.stringify(r.data));
+    assert.deepEqual(r.data, { size_min_m2: 1200, areas: "Zuidas", req_type: "relocation" });
+    r = await a.patch(`/accounts/${id}/opportunity`, { areas: null, budget_rent_m2: "395" });
+    assert.deepEqual(r.data, { size_min_m2: 1200, req_type: "relocation", budget_rent_m2: 395 });
+    assert.equal((await a.patch(`/accounts/${id}/opportunity`, { req_type: "castle" })).status, 400);
+    assert.equal((await a.patch(`/accounts/${id}/opportunity`, { adopted_office_id: "x" })).status, 400);
+    assert.equal((await b.patch(`/accounts/${id}/opportunity`, { areas: "x" })).status, 404, "other users can't write");
+    const detail = await a.get(`/accounts/${id}`);
+    assert.equal(detail.data.account.opportunity.budget_rent_m2, 395);
+    assert.deepEqual(detail.data.options, []);
+  });
+
+  test("buildings: add, edit, track terms, choose one, remove", async () => {
+    const id = await account(a, { name: "Options BV" });
+    const one = await a.post(`/accounts/${id}/options`, { data: { name: "The Atrium", area_m2: "1.000", asking_rent_m2: "425" } });
+    assert.equal(one.status, 201, JSON.stringify(one.data));
+    assert.equal(one.data.data.area_m2, 1000);
+    const two = await a.post(`/accounts/${id}/options`, { data: { name: "Mahler 4" }, status: "viewed" });
+    assert.equal(two.data.position, 1);
+    assert.equal((await a.post(`/accounts/${id}/options`, { data: { area_m2: 5 } })).status, 400, "needs a name");
+    assert.equal((await b.post(`/accounts/${id}/options`, { data: { name: "x" } })).status, 404);
+
+    let r = await a.patch(`/options/${one.data.id}`, { data: { offer_rent_m2: "395", area_m2: null }, terms: { rent: { landlord: "€425", ask: "€380" } } });
+    assert.equal(r.status, 200, JSON.stringify(r.data));
+    assert.equal(r.data.data.offer_rent_m2, 395);
+    assert.equal("area_m2" in r.data.data, false);
+    r = await a.patch(`/options/${one.data.id}`, { terms: { rent: { agreed: "€395" } } });
+    assert.deepEqual(r.data.terms, { rent: { landlord: "€425", ask: "€380", agreed: "€395" } });
+    r = await a.patch(`/options/${one.data.id}`, { terms: { rent: { landlord: "", ask: "", agreed: "" } } });
+    assert.deepEqual(r.data.terms, {}, "an empty term disappears");
+    assert.equal((await a.patch(`/options/${one.data.id}`, { terms: { mood: { ask: "x" } } })).status, 400);
+    assert.equal((await a.patch(`/options/${one.data.id}`, { status: "maybe" })).status, 400);
+    assert.equal((await b.patch(`/options/${one.data.id}`, { status: "dropped" })).status, 404);
+
+    await a.patch(`/options/${one.data.id}`, { status: "chosen" });
+    await a.patch(`/options/${two.data.id}`, { status: "chosen" });
+    const rows = await env.q("select id, status from options where account_id = $1 order by position", [id]);
+    assert.deepEqual(rows.map((x) => x.status), ["negotiating", "chosen"], "only one building is chosen");
+
+    assert.equal((await b.req("DELETE", `/options/${two.data.id}`)).status, 404);
+    assert.equal((await a.req("DELETE", `/options/${two.data.id}`)).status, 200);
+    const detail = await a.get(`/accounts/${id}`);
+    assert.deepEqual(detail.data.options.map((o: any) => o.data.name), ["The Atrium"]);
+  });
+
+  test("import from a live shortlist link adds new buildings and keeps your edits", async () => {
+    const id = await account(a, { name: "Import BV" });
+    const { BROCHURE_API_URL } = await import("../server/domain/brochure.js");
+    const realFetch = globalThis.fetch;
+    let asked = "";
+    let buildings = [
+      { building_id: "b1", name: "The Atrium", address: "Strawinskylaan 3", city: "Amsterdam", units: [{ available_area_m2: 900, rent_eur_per_m2_year: 425 }] },
+      { building_id: "b2", name: "Mahler 4", address: "Gustav Mahlerlaan 4", city: "Amsterdam", units: [] },
+    ];
+    globalThis.fetch = (async (input: any, init?: any) => {
+      const url = String(input);
+      if (!url.startsWith(BROCHURE_API_URL)) return realFetch(input, init);
+      asked = url;
+      if (url.endsWith("/gone")) return new Response("{}", { status: 404 });
+      return new Response(JSON.stringify({ display_name: "Import BV shortlist", buildings }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }) as typeof fetch;
+    try {
+      const link = "https://shortlist.example/s/import-bv";
+      let r = await a.post(`/accounts/${id}/options/import`, { url: link });
+      assert.equal(r.status, 200, JSON.stringify(r.data));
+      assert.equal(asked, `${BROCHURE_API_URL}/public/clients/import-bv`, "only the tool's own public endpoint is called");
+      assert.deepEqual([r.data.added, r.data.updated], [2, 0]);
+      const atrium = r.data.options.find((o: any) => o.source_id === "brochure:b1");
+      assert.equal(atrium.data.area_m2, 900);
+
+      // Edit one, remove the other, then import again with a third building.
+      await a.patch(`/options/${atrium.id}`, { data: { area_m2: 850, notes: "Only floors 3-4" } });
+      const mahler = r.data.options.find((o: any) => o.source_id === "brochure:b2");
+      await a.req("DELETE", `/options/${mahler.id}`);
+      buildings = [...buildings, { building_id: "b3", name: "Basisweg 10", address: "Basisweg 10", city: "Amsterdam", units: [] }];
+      r = await a.post(`/accounts/${id}/options/import`, { url: link });
+      assert.deepEqual([r.data.added, r.data.updated, r.data.skipped], [1, 1, 1]);
+      const names = r.data.options.map((o: any) => o.data.name);
+      assert.deepEqual(names, ["The Atrium", "Basisweg 10"], "the removed one stays removed");
+      assert.equal(r.data.options[0].data.area_m2, 850, "your edit is kept");
+
+      const detail = await a.get(`/accounts/${id}`);
+      assert.equal(detail.data.account.opportunity.overview_link, link);
+
+      assert.equal((await a.post(`/accounts/${id}/options/import`, { url: "https://shortlist.example/admin" })).status, 400);
+      const gone = await a.post(`/accounts/${id}/options/import`, { url: "https://shortlist.example/s/gone" });
+      assert.equal(gone.status, 400);
+      assert.match(gone.data.error, /isn't live/);
+      assert.equal((await b.post(`/accounts/${id}/options/import`, { url: link })).status, 404);
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+  });
+
+  test("the signed building becomes the current office", async () => {
+    const id = await account(a, { name: "Move BV", office: { building_name: "Old HQ", lease_end: "2027-12-31" } });
+    await a.patch(`/accounts/${id}/opportunity`, { lease_start: "2027-10-01", lease_end: "2032-09-30", notice_months: 12, rent_year: 380_000, headcount_now: 90 });
+    const opt = await a.post(`/accounts/${id}/options`, {
+      data: { name: "The Atrium", address: "Strawinskylaan 3", city: "Amsterdam", offer_area_m2: 1000, offer_rent_m2: 380, offer_term_years: 5, offer_service_m2: 60, landlord: "Atrium CV" },
+    });
+    assert.equal((await b.post(`/options/${opt.data.id}/adopt`)).status, 404);
+    const r = await a.post(`/options/${opt.data.id}/adopt`);
+    assert.equal(r.status, 201, JSON.stringify(r.data));
+    assert.equal(r.data.building_name, "The Atrium");
+    assert.equal(r.data.is_current, true);
+    assert.equal(r.data.is_primary, true);
+    assert.equal(r.data.lease_end, "2032-09-30");
+    assert.equal(r.data.annual_rent, 380_000);
+    assert.equal(r.data.service_charges, 60_000);
+    assert.equal(r.data.headcount, 90);
+    const offices = await env.q("select building_name, is_current, is_primary from office_locations where account_id = $1 order by created_at", [id]);
+    assert.deepEqual(offices.map((o) => [o.building_name, o.is_current, o.is_primary]), [["Old HQ", false, false], ["The Atrium", true, true]]);
+    const [o] = await env.q("select status from options where id = $1", [opt.data.id]);
+    assert.equal(o.status, "chosen");
+    assert.equal((await a.post(`/options/${opt.data.id}/adopt`)).status, 400, "not twice");
+    const log = await env.q("select summary from activities where account_id = $1 and channel = 'note'", [id]);
+    assert.ok(log.some((x) => /now the current office/.test(x.summary)));
+  });
+});

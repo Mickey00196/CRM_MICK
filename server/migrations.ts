@@ -361,4 +361,29 @@ alter table custom_field_definitions add constraint custom_field_definitions_ent
         check (channel in ('call', 'email', 'linkedin', 'meeting', 'viewing', 'whatsapp', 'note', 'other', 'stage'));
     `,
   },
+  {
+    // What's captured per stage (the brief, RFP, HoT, lease, fee...) and the buildings of an opportunity.
+    id: "009_opportunity_and_options",
+    sql: `
+      alter table accounts add column opportunity jsonb not null default '{}';
+      create table options (
+        id uuid primary key default gen_random_uuid(),
+        owner_id uuid not null references users(id) on delete cascade,
+        account_id uuid not null references accounts(id) on delete cascade,
+        status text not null default 'overview'
+          check (status in ('overview', 'viewed', 'rfp', 'proposal', 'negotiating', 'chosen', 'dropped')),
+        position integer not null default 0,
+        source_id text,
+        data jsonb not null default '{}',
+        terms jsonb not null default '{}',
+        created_at timestamptz not null default now(),
+        updated_at timestamptz not null default now(),
+        archived_at timestamptz
+      );
+      create index options_account_idx on options (account_id, position) where archived_at is null;
+      create unique index options_source_uniq on options (account_id, source_id)
+        where source_id is not null and archived_at is null;
+      ${updatedAtTrigger("options")}
+    `,
+  },
 ];

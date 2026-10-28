@@ -200,3 +200,119 @@ test("parseQuick reads type, date and time from one line (EN and NL)", () => {
   assert.deepEqual(plain, { title: "Update LinkedIn headline", due_date: null, due_time: null, type: null });
   assert.equal(parseQuick("Send 2 brochures", today).title, "Send 2 brochures", "plain numbers stay in the title");
 });
+
+// ---------- opportunity data ----------
+import { coercePatch, offerMetrics, stageChecks, suggestedFee, toNumber, FieldError, OPPORTUNITY_FIELDS, type OptionRow } from "../shared/opportunity.js";
+import { brochureSlug, buildingToOption } from "../server/domain/brochure.js";
+
+const option = (data: OptionRow["data"], extra: Partial<OptionRow> = {}): OptionRow => ({
+  id: "o",
+  account_id: "a",
+  status: "overview",
+  position: 0,
+  source_id: null,
+  data,
+  terms: {},
+  created_at: "",
+  updated_at: "",
+  ...extra,
+});
+
+test("toNumber reads Dutch and English formats", () => {
+  assert.equal(toNumber("1.200", "x"), 1200);
+  assert.equal(toNumber("1 200", "x"), 1200);
+  assert.equal(toNumber("245,50", "x"), 245.5);
+  assert.equal(toNumber("€ 1.234,5", "x"), 1234.5);
+  assert.equal(toNumber("2.5", "x"), 2.5);
+  assert.equal(toNumber("", "x"), null);
+  assert.throws(() => toNumber("lots", "Size"), /Size must be a number/);
+});
+
+test("coercePatch validates per field type and refuses unknown fields", () => {
+  const out = coercePatch(
+    { size_min_m2: "1.500", req_type: "relocation", mandate_signed: true, move_in_ideal: "2027-09-01", areas: "  Zuidas ", fitout_budget: "" },
+    OPPORTUNITY_FIELDS,
+  );
+  assert.deepEqual(out, { size_min_m2: 1500, req_type: "relocation", mandate_signed: true, move_in_ideal: "2027-09-01", areas: "Zuidas", fitout_budget: null });
+  assert.throws(() => coercePatch({ req_type: "castle" }, OPPORTUNITY_FIELDS), FieldError);
+  assert.throws(() => coercePatch({ move_in_ideal: "next spring" }, OPPORTUNITY_FIELDS), /must be a date/);
+  assert.throws(() => coercePatch({ overview_link: "javascript:alert(1)" }, OPPORTUNITY_FIELDS), /web link/);
+  assert.throws(() => coercePatch({ adopted_office_id: "x" }, OPPORTUNITY_FIELDS), /Unknown field/);
+});
+
+test("offerMetrics: net effective rent and all-in cost of an offer", () => {
+  // 1,000 m² at €300 for 5 years, 6 months rent-free, €50/m² fit-out, €60/m² service, 10 spaces at €2,000.
+  const m = offerMetrics(
+    { offer_area_m2: 1000, offer_rent_m2: 300, offer_term_years: 5, offer_rent_free_months: 6, offer_fitout_m2: 50, offer_service_m2: 60, offer_parking_spaces: 10, offer_parking_rate: 2000 },
+    80,
+  )!;
+  assert.equal(m.rentYear, 300_000);
+  assert.equal(m.incentives, 150_000 + 50_000);
+  assert.equal(m.nerM2, 300 - 200_000 / 5000); // 260
+  assert.equal(m.incentivePct, 200_000 / 1_500_000);
+  assert.equal(m.totalYear, (1_500_000 - 200_000 + 80_000 * 5) / 5); // 340,000
+  assert.equal(m.perWorkstationYear, 340_000 / 80);
+  assert.equal(offerMetrics({ offer_rent_m2: 300 }), null, "needs area, rent and term");
+  assert.equal(offerMetrics({ area_m2: 800, offer_rent_m2: 250, offer_term_years: 5 })!.area, 800, "falls back to the listed area");
+});
+
+test("suggestedFee: % of first-year rent, or the fixed fee", () => {
+  assert.equal(suggestedFee({ fee_basis: "pct", fee_pct: 15, rent_year: 300_000 }), 45_000);
+  const chosen = option({ offer_area_m2: 1000, offer_rent_m2: 200, offer_term_years: 5 }, { status: "chosen" });
+  assert.equal(suggestedFee({ fee_pct: 10 }, chosen), 20_000, "uses the chosen offer without a signed rent");
+  assert.equal(suggestedFee({ fee_basis: "fixed", fee_fixed: 25_000, fee_pct: 10, rent_year: 1 }), 25_000);
+  assert.equal(suggestedFee({}), null);
+});
+
+test("stageChecks reflect what's been filled in", () => {
+  const ctx = { opp: {}, options: [], contacts: 0, hasCurrentLease: false };
+  assert.ok(stageChecks("overview_sent", ctx).every((c) => !c.done));
+  const full = stageChecks("overview_sent", {
+    ...ctx,
+    opp: { size_min_m2: 800, areas: "Zuidas", budget_rent_m2: 400, move_in_latest: "2027-06-01", overview_sent_at: "2026-10-01" },
+    options: [option({ name: "Atrium" })],
+  });
+  assert.ok(full.every((c) => c.done), JSON.stringify(full));
+  const dropped = stageChecks("overview_sent", { ...ctx, options: [option({ name: "X" }, { status: "dropped" })] });
+  assert.equal(dropped.find((c) => c.label.startsWith("Buildings"))!.done, false, "dropped buildings don't count");
+  const viewing = stageChecks("viewing", { ...ctx, options: [option({ name: "A", viewing_score: 8 }, { status: "viewed" }), option({ name: "B" })] });
+  assert.ok(viewing.every((c) => c.done), JSON.stringify(viewing));
+});
+
+test("brochure links: only /s/<slug> on any host, mapped to a building", () => {
+  assert.equal(brochureSlug("https://office-shortlist.up.railway.app/s/acme-2026"), "acme-2026");
+  assert.equal(brochureSlug("https://x.nl/s/abc/"), "abc");
+  assert.equal(brochureSlug("https://x.nl/admin/s/abc"), null);
+  assert.equal(brochureSlug("https://x.nl/s/../../etc"), null);
+  assert.equal(brochureSlug("not a link"), null);
+  const o = buildingToOption(
+    {
+      building_id: "b1",
+      name: "The Atrium",
+      address: "Strawinskylaan 3",
+      city: "Amsterdam",
+      submarket: "Zuidas",
+      energy_label: "A",
+      photos: ["/local.jpg", "https://img.example/a.jpg"],
+      units: [
+        { available_area_m2: 600, rent_eur_per_m2_year: 425, service_charge_eur_per_m2_year: 70, availability: "Q2 2027" },
+        { available_area_m2: 400, rent_eur_per_m2_year: 410, service_charge_eur_per_m2_year: 70 },
+      ],
+    },
+    "https://x.nl/s/acme",
+  );
+  assert.equal(o.source_id, "brochure:b1");
+  assert.deepEqual(o.data, {
+    name: "The Atrium",
+    address: "Strawinskylaan 3",
+    city: "Amsterdam",
+    submarket: "Zuidas",
+    energy_label: "A",
+    area_m2: 1000,
+    asking_rent_m2: 410,
+    service_m2: 70,
+    available_from: "Q2 2027",
+    link: "https://x.nl/s/acme",
+    photo: "https://img.example/a.jpg",
+  });
+});

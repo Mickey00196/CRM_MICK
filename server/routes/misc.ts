@@ -95,7 +95,7 @@ misc.get("/search", async (req, res) => {
 /** Everything you've stored, as one JSON file. */
 misc.get("/export.json", async (req, res) => {
   const owner = uid(req);
-  const tables = ["accounts", "office_locations", "contacts", "projects", "tasks", "activities", "documents", "custom_field_definitions"];
+  const tables = ["accounts", "office_locations", "contacts", "projects", "tasks", "activities", "options", "documents", "custom_field_definitions"];
   const out: Record<string, unknown> = { exported_at: new Date().toISOString() };
   for (const t of tables) out[t] = await db.q(`select * from ${t} where owner_id = $1 order by created_at`, [owner]);
   res.setHeader("Content-Disposition", `attachment; filename="crm-export-${new Date().toISOString().slice(0, 10)}.json"`);

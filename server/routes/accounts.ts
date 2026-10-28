@@ -18,6 +18,7 @@ import {
 import { createTask, parseNext } from "../domain/tasks.js";
 import { PENDING_TIMEOUT_MS, aiEnabled, startLookup } from "../domain/enrich.js";
 import { setAccountStatus } from "../domain/funnel.js";
+import { listOptions } from "./opportunity.js";
 
 const keys = (opts: readonly { key: string }[]) => opts.map((o) => o.key);
 
@@ -236,7 +237,7 @@ accounts.get("/accounts/:id", async (req, res) => {
   const id = idOf(req.params.id, "That account");
   const account = await db.one("select * from accounts where id = $1 and owner_id = $2", [id, owner]);
   if (!account) throw notFound("That account");
-  const [offices, contacts, tasks, lc, projects] = await Promise.all([
+  const [offices, contacts, tasks, lc, projects, options] = await Promise.all([
     db.q(
       `select * from office_locations where account_id = $1 and archived_at is null
        order by is_current desc, is_primary desc, lease_end desc nulls last, created_at`,
@@ -265,13 +266,14 @@ accounts.get("/accounts/:id", async (req, res) => {
        order by (p.stage = 'done'), p.stage_changed_at desc`,
       [id],
     ),
+    listOptions(db, id),
   ]);
   // A lookup stuck on "pending" (server restarted mid-way) shows as failed so it can be retried.
   if (account.ai_status === "pending" && Date.now() - new Date(account.ai_updated_at).getTime() > PENDING_TIMEOUT_MS) {
     account.ai_status = "failed";
     account.ai_error = "The lookup was interrupted.";
   }
-  res.json({ account, ai_enabled: aiEnabled(), offices, contacts, tasks, projects, last_contact_at: lc?.last_contact_at ?? null });
+  res.json({ account, ai_enabled: aiEnabled(), offices, contacts, tasks, projects, options, last_contact_at: lc?.last_contact_at ?? null });
 });
 
 accounts.patch("/accounts/:id", async (req, res) => {

@@ -33,18 +33,18 @@ import { StageFlow } from "@/components/StageFlow";
 import { StatusDot } from "@/components/Brand";
 import { CompanyAbout } from "@/components/CompanyAbout";
 import { LogPanel } from "@/components/LogPanel";
-
-const TABS = [
-  { value: "overview", label: "Overview" },
-  { value: "office", label: "Office & lease" },
-];
+import { StagePanel } from "@/components/opportunity/StagePanel";
+import { toast } from "@/components/Toast";
 
 export function AccountPage() {
   const id = useParams().id!;
   const [params, setParams] = useSearchParams();
-  const tab = TABS.some((t) => t.value === params.get("tab")) ? params.get("tab")! : "overview";
   const { data, error, reload } = useApi<AccountDetail>(`/accounts/${id}`);
   const [editing, setEditing] = useState(false);
+  // The step whose details are shown; follows the account's status unless you click another step.
+  const [picked, setPicked] = useState<AccountStatus | null>(null);
+  const status = data?.account.status;
+  useEffect(() => setPicked(null), [id, status]);
   usePageContext(data ? { account: { id: data.account.id, name: data.account.name } } : null);
 
   // While the AI lookup runs, check back every few seconds.
@@ -67,9 +67,23 @@ export function AccountPage() {
   if (!data) return <Skeleton rows={5} className="max-w-4xl" />;
 
   const { account } = data;
+  const selected = picked ?? account.status;
+  // At Lead the stage tab is the company and contacts, so there's no separate Overview tab.
+  const tabs = [
+    { value: "stage", label: accountStatusLabel(selected) },
+    ...(selected === "lead" ? [] : [{ value: "overview", label: "Overview" }]),
+    { value: "office", label: "Office & lease" },
+  ];
+  const tab = tabs.some((t) => t.value === params.get("tab")) ? params.get("tab")! : "stage";
+  const showTab = (v: string) => setParams(v === "stage" ? {} : { tab: v }, { replace: true });
 
-  async function setStatus(status: AccountStatus) {
-    await api(`/accounts/${account.id}`, "PATCH", { status });
+  async function move(to: AccountStatus) {
+    try {
+      await api(`/accounts/${account.id}`, "PATCH", { status: to });
+      setPicked(null);
+    } catch (e) {
+      toast((e as Error).message);
+    }
   }
 
   return (
@@ -80,9 +94,18 @@ export function AccountPage() {
 
       <Header data={data} onEdit={() => setEditing(true)} />
 
-      {/* The opportunity cycle across the full width, with the next follow-up underneath. */}
+      {/* The opportunity cycle across the full width; click a step to see its details underneath. */}
       <div className="mt-7">
-        <StageFlow status={account.status} onChange={setStatus} footer={<NextFollowUp data={data} />} />
+        <StageFlow
+          status={account.status}
+          selected={selected}
+          onSelect={(s) => {
+            setPicked(s === account.status ? null : s);
+            showTab("stage");
+          }}
+          onMove={move}
+          footer={<NextFollowUp data={data} />}
+        />
       </div>
 
       {/*
@@ -94,12 +117,12 @@ export function AccountPage() {
           account={account}
           className="lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1 lg:h-[calc(100dvh-3rem)] lg:max-h-none lg:self-start"
         />
-        <Tabs
-          value={tab}
-          onValueChange={(v) => setParams(v === "overview" ? {} : { tab: v }, { replace: true })}
-          className="min-w-0 lg:col-start-1 lg:row-start-1"
-        >
-          <TabList tabs={TABS} variant="segmented" />
+        <Tabs value={tab} onValueChange={showTab} className="min-w-0 lg:col-start-1 lg:row-start-1">
+          <TabList tabs={tabs} variant="segmented" />
+          <T.Content value="stage" className="mt-4 grid gap-6 focus:outline-none">
+            <StagePanel data={data} stage={selected} onShowOffice={() => showTab("office")} />
+            {selected === "lead" && <Overview data={data} onEdit={() => setEditing(true)} />}
+          </T.Content>
           <T.Content value="overview" className="mt-4 focus:outline-none">
             <Overview data={data} onEdit={() => setEditing(true)} />
           </T.Content>
@@ -238,7 +261,7 @@ function Overview({ data, onEdit }: { data: AccountDetail; onEdit: () => void })
   const small = "text-[13px] font-medium text-muted hover:text-fg";
 
   return (
-    <div className="grid gap-6">
+    <div className="@container grid gap-6">
       <CompanyAbout account={account} aiEnabled={data.ai_enabled} onEditCompany={onEdit} />
 
       <Card
@@ -303,7 +326,7 @@ function Overview({ data, onEdit }: { data: AccountDetail; onEdit: () => void })
         )}
       </Card>
 
-      <div className="grid gap-6 2xl:grid-cols-2">
+      <div className="grid gap-6 @4xl:grid-cols-2">
         <Card title="Company" action={<button onClick={onEdit} className={small}>Edit</button>}>
           <dl className="grid grid-cols-2 gap-x-6 gap-y-4">
             <Info label="Industry" value={account.industry} />
