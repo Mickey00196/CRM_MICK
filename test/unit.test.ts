@@ -87,18 +87,25 @@ test("csvCell neutralises formulas and quotes separators", () => {
 });
 
 // ---------- acquisition funnel ----------
-import { advanceStatus } from "../shared/model.js";
+import { FLOW, advanceStatus, nextStatus, phaseOf } from "../shared/model.js";
 
-test("advanceStatus moves accounts forward on real contact, never back", () => {
-  assert.equal(advanceStatus("target", "call", "no_answer"), "contacted", "an attempt counts as contacted");
-  assert.equal(advanceStatus("target", "email", "sent"), "contacted");
-  assert.equal(advanceStatus("target", "note", null), null, "notes are not contact");
-  assert.equal(advanceStatus("contacted", "call", "meeting_booked"), "in_talks");
-  assert.equal(advanceStatus("target", "meeting", "held"), "in_talks");
-  assert.equal(advanceStatus("contacted", "meeting", "no_show"), null, "a no-show isn't talks yet");
-  assert.equal(advanceStatus("in_talks", "call", "reached"), null, "never backwards");
-  assert.equal(advanceStatus("won", "meeting", "held"), null);
-  assert.equal(advanceStatus("not_now", "call", "meeting_booked"), null, "parked stays parked until you move it");
+test("the flow: lead, seven opportunity steps, invoicing", () => {
+  assert.deepEqual(FLOW, ["lead", "overview_sent", "viewing", "rfp", "proposal", "negotiation", "terms_agreed", "agreement", "invoicing"]);
+  assert.equal(nextStatus("lead"), "overview_sent", "starting an opportunity begins with the overview");
+  assert.equal(nextStatus("agreement"), "invoicing");
+  assert.equal(nextStatus("invoicing"), null);
+  assert.equal(nextStatus("not_now"), null);
+  assert.equal(phaseOf("rfp"), "opportunity");
+  assert.equal(phaseOf("lead"), "lead");
+});
+
+test("only a viewing that happened moves an account on its own", () => {
+  assert.equal(advanceStatus("lead", "viewing", "held"), "viewing");
+  assert.equal(advanceStatus("overview_sent", "viewing", "shortlisted"), "viewing");
+  assert.equal(advanceStatus("overview_sent", "viewing", "no_show"), null);
+  assert.equal(advanceStatus("proposal", "viewing", "held"), null, "never backwards");
+  assert.equal(advanceStatus("lead", "call", "meeting_booked"), null, "everything else is your call");
+  assert.equal(advanceStatus("not_now", "viewing", "held"), null);
 });
 
 // ---------- readable dates and one-line capture ----------

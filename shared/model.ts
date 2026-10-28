@@ -6,18 +6,39 @@ const label = <K extends string>(opts: readonly Opt<K>[], key: string | null | u
 
 // ---------- accounts ----------
 
-/** The acquisition funnel. "Not now" is for parked or lost accounts. */
+/**
+ * An account starts as a Lead (company info and tracking), becomes an Opportunity that runs from
+ * Overview sent to Agreement, and ends in Invoicing. "Not now" is for parked or lost accounts.
+ */
 export const ACCOUNT_STATUSES = [
-  { key: "target", label: "Target" },
-  { key: "contacted", label: "Contacted" },
-  { key: "in_talks", label: "In talks" },
-  { key: "won", label: "Mandate won" },
+  { key: "lead", label: "Lead" },
+  { key: "overview_sent", label: "Overview sent" },
+  { key: "viewing", label: "Viewing" },
+  { key: "rfp", label: "RFP" },
+  { key: "proposal", label: "Proposal" },
+  { key: "negotiation", label: "Negotiation" },
+  { key: "terms_agreed", label: "Terms agreed" },
+  { key: "agreement", label: "Agreement" },
+  { key: "invoicing", label: "Invoicing" },
   { key: "not_now", label: "Not now" },
 ] as const;
 export type AccountStatus = (typeof ACCOUNT_STATUSES)[number]["key"];
 export const accountStatusLabel = (k: string) => label(ACCOUNT_STATUSES, k);
 /** Accounts you are working: each should always have a dated follow-up. */
-export const FOLLOW_UP_STATUSES: AccountStatus[] = ["target", "contacted", "in_talks"];
+export const OPPORTUNITY_STAGES: AccountStatus[] = ["overview_sent", "viewing", "rfp", "proposal", "negotiation", "terms_agreed", "agreement"];
+/** The flow in order, without "Not now". */
+export const FLOW: AccountStatus[] = ["lead", ...OPPORTUNITY_STAGES, "invoicing"];
+export type AccountPhase = "lead" | "opportunity" | "invoicing" | "not_now";
+export const phaseOf = (s: AccountStatus): AccountPhase =>
+  s === "lead" || s === "invoicing" || s === "not_now" ? s : "opportunity";
+export const PHASE_LABEL: Record<AccountPhase, string> = { lead: "Lead", opportunity: "Opportunity", invoicing: "Invoicing", not_now: "Not now" };
+/** The step after this one in the flow, or null at the end (and for "Not now"). */
+export function nextStatus(s: AccountStatus): AccountStatus | null {
+  const i = FLOW.indexOf(s);
+  return i >= 0 && i < FLOW.length - 1 ? FLOW[i + 1] : null;
+}
+/** Leads and opportunities should always have a dated follow-up; invoicing and parked ones don't. */
+export const FOLLOW_UP_STATUSES: AccountStatus[] = ["lead", ...OPPORTUNITY_STAGES];
 
 export const SIZE_BANDS = [
   { key: "1-10", label: "1–10" },
@@ -148,17 +169,12 @@ export const OUTCOMES: Record<Channel, Opt[]> = {
 };
 
 /**
- * Where logging contact moves an account in the funnel, or null to leave it.
- * Any real contact (not a note) moves a Target to Contacted; a booked or held meeting or a
- * viewing moves it to In talks. Never backwards, and Mandate won / Not now are left alone.
+ * Where logging contact moves an account, or null to leave it. Only a viewing that happened moves
+ * things: a Lead or an opportunity at Overview sent goes to Viewing. Every other step is your call.
  */
 export function advanceStatus(current: AccountStatus, channel: string, outcome: string | null): AccountStatus | null {
-  if (current === "won" || current === "not_now") return null;
-  if (!CONTACT_CHANNELS.includes(channel as Channel)) return null;
-  const meeting = (channel === "meeting" || channel === "viewing") && outcome !== "no_show";
-  const want: AccountStatus = meeting || outcome === "meeting_booked" ? "in_talks" : "contacted";
-  const order: AccountStatus[] = ["target", "contacted", "in_talks"];
-  return order.indexOf(want) > order.indexOf(current) ? want : null;
+  if (channel !== "viewing" || outcome === "no_show") return null;
+  return current === "lead" || current === "overview_sent" ? "viewing" : null;
 }
 
 export interface StatusMove {

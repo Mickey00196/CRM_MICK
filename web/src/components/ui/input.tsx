@@ -60,7 +60,7 @@ export function Chips<T extends string>({
           aria-pressed={value === o.key}
           onClick={() => onChange(o.key)}
           className={cn(
-            "rounded-full border px-3 transition-colors",
+            "shrink-0 whitespace-nowrap rounded-full border px-3 transition-colors",
             size === "sm" ? "h-7 text-[13px]" : "h-8 text-sm",
             value === o.key
               ? "border-accent/50 bg-accent-soft font-medium text-accent-text"

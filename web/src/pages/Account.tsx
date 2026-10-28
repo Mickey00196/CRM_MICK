@@ -11,6 +11,7 @@ import {
   buyingRoleLabel,
   taskTypeLabel,
   type AccountDetail,
+  type AccountStatus,
   type ActivityRow,
   type Channel,
   type Contact,
@@ -29,7 +30,7 @@ import { OfficeCard, OfficeForm } from "@/components/Office";
 import { ContactForm } from "@/components/ContactForm";
 import { Skeleton } from "@/components/Skeleton";
 import { TodoItem, dueLabel } from "@/components/TodoItem";
-import { StatusDot } from "@/components/Brand";
+import { StageFlow } from "@/components/StageFlow";
 
 const TABS = [
   { value: "overview", label: "Overview" },
@@ -114,7 +115,7 @@ function Header({ data }: { data: AccountDetail }) {
   const navigate = useNavigate();
   const today = todayISO();
 
-  async function setStatus(status: string) {
+  async function setStatus(status: AccountStatus) {
     await api(`/accounts/${account.id}`, "PATCH", { status });
   }
 
@@ -151,25 +152,9 @@ function Header({ data }: { data: AccountDetail }) {
         </Menu>
       </div>
 
-      <div className="mt-5 inline-flex max-w-full flex-wrap rounded-lg border border-line bg-subtle p-0.5" role="radiogroup" aria-label="Status">
-        {ACCOUNT_STATUSES.map((s) => (
-          <button
-            key={s.key}
-            role="radio"
-            aria-checked={account.status === s.key}
-            onClick={() => account.status !== s.key && setStatus(s.key)}
-            className={cn(
-              "flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors",
-              account.status === s.key ? "bg-surface font-medium text-fg shadow-sm" : "text-muted hover:text-fg",
-            )}
-          >
-            <StatusDot status={s.key} className={account.status === s.key ? undefined : "opacity-60"} />
-            {s.label}
-          </button>
-        ))}
-      </div>
+      <StageFlow status={account.status} onChange={setStatus} />
 
-      <div className="mt-8 border-y border-line py-4">
+      <div className="mt-6 border-y border-line py-4">
         <p className="mb-1 text-[13px] text-muted">Next follow-up</p>
         {next ? (
           <button onClick={() => ui.openTask(next.id)} className="group flex w-full items-baseline justify-between gap-4 text-left">
@@ -182,12 +167,7 @@ function Header({ data }: { data: AccountDetail }) {
             </span>
           </button>
         ) : (
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-lg text-missing">No follow-up planned</span>
-            <Button size="sm" onClick={() => ui.openCapture("todo", { account: { id: account.id, name: account.name } })}>
-              <CalendarPlus /> Plan follow-up
-            </Button>
-          </div>
+          <p className="text-lg text-missing">No follow-up planned</p>
         )}
       </div>
     </header>

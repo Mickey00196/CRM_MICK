@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowDown, ArrowUp, Building2, Columns3, Download, KanbanSquare, List, Plus, Search } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
-import { ACCOUNT_STATUSES, accountStatusLabel, type AccountRow } from "@shared/model";
+import { ACCOUNT_STATUSES, accountStatusLabel, phaseOf, type AccountRow } from "@shared/model";
 import { api, useApi, useStored } from "@/lib/api";
 import { dmy, m2, todayISO } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -17,7 +17,7 @@ import { AccountsBoard } from "./AccountsBoard";
 type ColKey = "status" | "location" | "size" | "lease_end" | "next_step" | "last_contact" | "industry" | "source";
 
 const COLUMNS: { key: ColKey; label: string; sort: (a: AccountRow) => string | number | null; className?: string }[] = [
-  { key: "status", label: "Status", sort: (a) => ACCOUNT_STATUSES.findIndex((s) => s.key === a.status) },
+  { key: "status", label: "Stage", sort: (a) => ACCOUNT_STATUSES.findIndex((s) => s.key === a.status) },
   { key: "location", label: "Office", sort: (a) => (a.office_submarket || a.office_city || "").toLowerCase() || null },
   { key: "size", label: "m²", sort: (a) => a.area_m2, className: "text-right" },
   { key: "lease_end", label: "Lease end", sort: (a) => a.lease_end },
@@ -30,10 +30,9 @@ const COLUMNS: { key: ColKey; label: string; sort: (a: AccountRow) => string | n
 const DEFAULT_COLS: ColKey[] = ["status", "location", "size", "lease_end", "next_step", "last_contact"];
 
 const VIEWS = [
-  { key: "target", label: "Target", match: (a: AccountRow) => a.status === "target" },
-  { key: "contacted", label: "Contacted", match: (a: AccountRow) => a.status === "contacted" },
-  { key: "in_talks", label: "In talks", match: (a: AccountRow) => a.status === "in_talks" },
-  { key: "won", label: "Mandate won", match: (a: AccountRow) => a.status === "won" },
+  { key: "lead", label: "Leads", match: (a: AccountRow) => phaseOf(a.status) === "lead" },
+  { key: "opportunity", label: "Opportunities", match: (a: AccountRow) => phaseOf(a.status) === "opportunity" },
+  { key: "invoicing", label: "Invoicing", match: (a: AccountRow) => a.status === "invoicing" },
   { key: "other", label: "Not now", match: (a: AccountRow) => a.status === "not_now" },
   { key: "all", label: "All", match: (_a: AccountRow) => true },
 ];
@@ -53,7 +52,7 @@ export function Accounts() {
   const ui = useUI();
 
   return (
-    <div className={cn("mx-auto", mode === "board" ? "max-w-7xl" : "max-w-6xl")}>
+    <div className={cn("mx-auto", mode === "board" ? "max-w-[100rem]" : "max-w-6xl")}>
       <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <h1 className="title text-2xl">Accounts</h1>
         <div className="flex items-center gap-2">
@@ -90,7 +89,7 @@ export function Accounts() {
         <EmptyState
           icon={Building2}
           title="No accounts yet"
-          text="An account is a company you're chasing, like a scale-up in Amsterdam you want a mandate from. Plan a follow-up date on each one and it lands in your to-dos. Logging a call or meeting moves it along the funnel."
+          text="An account is a company you're chasing, like a scale-up in Amsterdam you want a mandate from. It starts as a lead, becomes an opportunity once you send an overview, and ends in invoicing. Plan a follow-up date on each one and it lands in your to-dos."
         >
           <Button size="lg" onClick={() => ui.openCapture("account")}>
             <Plus /> New account

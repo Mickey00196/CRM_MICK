@@ -13,7 +13,7 @@ const ACCOUNTS = [
   {
     name: "Northwind Logistics",
     website: "northwind-logistics.example",
-    status: "contacted",
+    status: "negotiation",
     industry: "Logistics",
     office: { building_name: "Atrium", city: "Amsterdam", submarket: "Zuidas", area_m2: 850, headcount: 70, lease_start: "2021-04-01", lease_end: "2028-03-31", notice_months: 12, break_dates: ["2027-03-31"], tenure: "lease", rent_per_m2: 395 },
     contacts: [{ name: "Sanne de Vries", role: "Office manager", email: "sanne@northwind-logistics.example", phone: "+31 6 1234 5678" }],
@@ -23,7 +23,7 @@ const ACCOUNTS = [
   {
     name: "Halden & Roe",
     website: "haldenroe.example",
-    status: "won",
+    status: "viewing",
     industry: "Legal",
     office: { city: "Amsterdam", submarket: "Museumkwartier", area_m2: 520, lease_end: "2027-06-30", notice_months: 6, tenure: "lease" },
     contacts: [
@@ -39,7 +39,7 @@ const ACCOUNTS = [
   {
     name: "Verity Health",
     website: "verityhealth.example",
-    status: "in_talks",
+    status: "proposal",
     industry: "Healthcare",
     office: { city: "Amsterdam", submarket: "Sloterdijk", area_m2: 1400, lease_end: "2027-12-31", notice_months: 12, tenure: "lease" },
     contacts: [{ name: "Mark Visser", role: "Facility manager" }],
@@ -49,7 +49,7 @@ const ACCOUNTS = [
   {
     name: "Stellar Freight",
     website: "stellarfreight.example",
-    status: "target",
+    status: "lead",
     industry: "Logistics",
     office: { city: "Schiphol", submarket: "Schiphol-Rijk", area_m2: 300, lease_end: "2028-09-30", tenure: "flex" },
     contacts: [],
@@ -59,7 +59,7 @@ const ACCOUNTS = [
   {
     name: "Lumen Studio",
     website: "lumenstudio.example",
-    status: "contacted",
+    status: "overview_sent",
     industry: "Creative agency",
     office: { city: "Amsterdam", submarket: "Noord", area_m2: 260, lease_end: "2027-10-31", tenure: "lease" },
     contacts: [{ name: "Eva Smit", role: "Founder", buying_role: "decision_maker" }],
@@ -69,7 +69,7 @@ const ACCOUNTS = [
   {
     name: "Brightwater Capital",
     website: "brightwater.example",
-    status: "target",
+    status: "lead",
     industry: "Finance",
     office: { city: "Amsterdam", submarket: "Zuidas", area_m2: 1100, lease_end: "2029-01-31" },
     contacts: [],
@@ -79,7 +79,7 @@ const ACCOUNTS = [
   {
     name: "Canal Ventures",
     website: "canalventures.example",
-    status: "target",
+    status: "lead",
     industry: "Venture capital",
     office: { city: "Amsterdam", submarket: "Grachtengordel", area_m2: 380, lease_end: "2027-12-31", tenure: "lease" },
     contacts: [],
@@ -89,7 +89,7 @@ const ACCOUNTS = [
   {
     name: "Amstel Media",
     website: "amstelmedia.example",
-    status: "not_now",
+    status: "invoicing",
     industry: "Media",
     office: { city: "Amsterdam", submarket: "Amstel", area_m2: 700, lease_end: "2031-06-30", tenure: "lease" },
     contacts: [],

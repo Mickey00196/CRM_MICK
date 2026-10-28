@@ -47,17 +47,17 @@ export function StageDot({ stage, className }: { stage: ProjectStage; className?
   );
 }
 
-/** Funnel light: open ring for targets, blue ring once contacted, solid blue in talks, ink when won, grey when parked. */
+/** Status light: open ring for leads, blue through the opportunity, ink for invoicing, grey when parked. */
 export function StatusDot({ status, className }: { status: AccountStatus; className?: string }) {
+  const opportunity = status !== "lead" && status !== "invoicing" && status !== "not_now";
   return (
     <span
       aria-hidden="true"
       className={cn(
         "inline-block size-2 shrink-0 rounded-full",
-        status === "target" && "border-[1.5px] border-faint",
-        status === "contacted" && "border-[1.5px] border-accent",
-        status === "in_talks" && "bg-accent shadow-[0_0_0_3px_var(--accent-soft)]",
-        status === "won" && "bg-fg",
+        status === "lead" && "border-[1.5px] border-faint",
+        opportunity && "bg-accent shadow-[0_0_0_3px_var(--accent-soft)]",
+        status === "invoicing" && "bg-fg",
         status === "not_now" && "bg-line-strong",
         className,
       )}

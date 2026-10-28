@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ACCOUNT_STATUSES, LANGUAGES, type Account } from "@shared/model";
+import { LANGUAGES, type Account, type AccountStatus } from "@shared/model";
+
+/** A new account is a lead, or already an opportunity if you've sent an overview. */
+const START_OPTIONS: { key: AccountStatus; label: string }[] = [
+  { key: "lead", label: "Lead" },
+  { key: "overview_sent", label: "Opportunity" },
+];
 import { api, ApiError } from "@/lib/api";
 import { addDays, todayISO, workday } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -13,7 +19,7 @@ export function AccountForm({ onDone }: { onDone: () => void }) {
   const [f, setF] = useState({
     name: "",
     website: "",
-    status: "target",
+    status: "lead",
     language: "nl",
     city: "Amsterdam",
     submarket: "",
@@ -77,7 +83,7 @@ export function AccountForm({ onDone }: { onDone: () => void }) {
           <Chips options={LANGUAGES.map((l) => ({ key: l.key, label: l.key.toUpperCase() }))} value={f.language} onChange={(v) => setF({ ...f, language: v })} />
         </Field>
       </div>
-      <Chips options={ACCOUNT_STATUSES.slice(0, 3)} value={f.status} onChange={(v) => setF({ ...f, status: v })} size="sm" />
+      <Chips options={START_OPTIONS} value={f.status} onChange={(v) => setF({ ...f, status: v })} size="sm" />
 
       <div className="grid gap-3">
         <span className="text-[13px] text-muted">Office</span>

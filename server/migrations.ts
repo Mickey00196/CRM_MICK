@@ -323,4 +323,21 @@ alter table custom_field_definitions add constraint custom_field_definitions_ent
         check (status in ('target', 'contacted', 'in_talks', 'won', 'not_now'));
     `,
   },
+  {
+    // Lead -> Opportunity (Overview sent ... Agreement) -> Invoicing.
+    id: "006_lead_opportunity_invoicing",
+    sql: `
+      alter table accounts drop constraint accounts_status_check;
+      update accounts set status = case status
+        when 'target' then 'lead'
+        when 'contacted' then 'lead'
+        when 'in_talks' then 'overview_sent'
+        when 'won' then 'agreement'
+        else 'not_now' end;
+      alter table accounts alter column status set default 'lead';
+      alter table accounts add constraint accounts_status_check
+        check (status in ('lead', 'overview_sent', 'viewing', 'rfp', 'proposal', 'negotiation',
+                          'terms_agreed', 'agreement', 'invoicing', 'not_now'));
+    `,
+  },
 ];
